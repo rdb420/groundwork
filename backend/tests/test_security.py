@@ -124,3 +124,46 @@ def test_damaged_saved_map_gives_a_clear_message(client, monkeypatch):
         db.commit()
     r = client.post(f"/api/boards/{b['id']}/generate", headers=H, json={"mode": "sop"})
     assert r.status_code == 409 and "damaged data" in r.json()["detail"]
+
+
+# ---- H4: recordings --------------------------------------------------------------------
+
+def test_recording_parts_are_kept_safe(client, monkeypatch):
+    from datetime import timedelta
+
+    from app.config import get_settings
+    from app.db import SessionLocal
+    from app.models import Recording
+    from app.routers import boards as boards_router
+    from app.security import utcnow
+    sign_in(client, "lead@example.com.au")
+    b = client.post("/api/boards", headers=H, json={"title": "Recording"}).json()
+    rid = client.post(f"/api/boards/{b['id']}/recordings", headers=H, json={"consent_note": "Sam agreed"}).json()["id"]
+
+    def part(seq, body=b"audio", name="chunk.webm"):
+        return client.post(f"/api/recordings/{rid}/chunks?seq={seq}", headers=H, files={"file": (name, body)})
+
+    first = part(0, b"FIRST").json()
+    again = part(0, b"SECOND")  # a retry of the same part
+    assert again.status_code == 200 and again.json()["segment_id"] == first["segment_id"]
+    audio = get_settings().data_dir / "recordings" / rid / "00000.webm"
+    assert audio.read_bytes() == b"FIRST"
+    assert part(-1).status_code == 422
+    assert part(1, name="evil.html").status_code == 200
+    assert (get_settings().data_dir / "recordings" / rid / "00001.webm").exists()  # never .html
+    monkeypatch.setattr(boards_router, "CHUNK_LIMIT", 10)
+    assert part(2, b"x" * 11).status_code == 413
+    monkeypatch.setattr(boards_router, "CHUNK_LIMIT", 25 * 1024 * 1024)
+
+    sign_in(client, "colleague@example.com.au")
+    assert part(3).status_code == 403
+    assert client.post(f"/api/recordings/{rid}/end", headers=H).status_code == 403
+
+    sign_in(client, "lead@example.com.au")
+    assert client.post(f"/api/recordings/{rid}/end", headers=H).status_code == 200
+    assert part(3).status_code == 200  # the last part can land just after Stop
+    with SessionLocal() as db:
+        db.get(Recording, rid).ended_at = utcnow() - timedelta(minutes=5)
+        db.commit()
+    assert part(4).status_code == 409
+    assert client.post(f"/api/recordings/{rid}/end", headers=H).status_code == 200  # ending twice is fine

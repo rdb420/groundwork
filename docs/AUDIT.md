@@ -22,7 +22,7 @@ and low. Update the status here in the same commit as the fix.
 | H1 | Stored XSS: the browser-declared type decides inline display, board images are visible to everyone, and there is no Content-Security-Policy. An SVG with a script runs in the portal's origin. | `routers/artifacts.py`, `deploy/Caddyfile` | Fixed: type comes from the extension; only raster images display inline; file downloads carry a sandbox CSP; the app sends a CSP and security headers on every response; map images must be images on a real map |
 | H2 | One bad map breaks a board: saves accept any node shape; a node without an id, a `parentId` loop, or a chain of about 1,000 steps makes checks, generate and review fail with a 500. | `routers/boards.py::save_board`, `ai/context.py` | Fixed: `app/canvas.py` validates every map the server saves or reads from the browser (ids, positions, parents without loops, size limits) and drops dangling connections; both walks are iterative and loop-safe; maps damaged before this give a clear message |
 | H3 | Files marked "unsure" for personal information are sent to cloud models. | `ai/generate.py::_evidence` | Fixed: any linked file not marked No keeps the map away from hosted models (drafts, review, combine); the Share form says so |
-| H4 | The last recording chunk is lost: `/end` is sent before the final chunk uploads. Reusing a `seq` overwrites audio on disk, then fails. Anyone can end anyone's recording. | `canvas/SessionPanel.tsx`, `routers/boards.py` | Open |
+| H4 | The last recording chunk is lost: `/end` is sent before the final chunk uploads. Reusing a `seq` overwrites audio on disk, then fails. Anyone can end anyone's recording. | `canvas/SessionPanel.tsx`, `routers/boards.py` | Fixed: Stop waits for every part to upload (with retries) before ending, leaving the map finishes the same way, and the page warns before closing mid-recording; the server accepts parts for two minutes after the end, keeps the first copy of a repeated part, and only lets the person recording (or an admin) add parts or stop |
 
 ## Medium
 
@@ -46,4 +46,4 @@ and low. Update the status here in the same commit as the fix.
 | L2 | Document and rule-table saves have no version check; the last save wins. | `routers/live.py` | Open |
 | L3 | A recording stays open forever if the tab closes. | `routers/boards.py` | Open |
 | L4 | Backups are unencrypted and sit on the same disk. | `app/backup.py`, `deploy/backup.sh` | Open |
-| L5 | Recording chunks are read whole into memory with no size limit of their own. | `routers/boards.py::upload_chunk` | Open |
+| L5 | Recording chunks are read whole into memory with no size limit of their own. | `routers/boards.py::upload_chunk` | Fixed with H4: parts stream to disk with a 25 MB limit and only audio extensions |

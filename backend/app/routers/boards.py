@@ -1,4 +1,5 @@
 """Process-mapping boards, session recordings and AI drafts."""
+from datetime import timedelta
 from typing import Any
 
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
@@ -12,11 +13,14 @@ from ..canvas import validate_doc
 from ..config import get_settings
 from ..db import get_db
 from ..models import AIDraft, Board, Job, Process, Recording, TranscriptSegment, User
-from ..security import can_see_all, current_user, utcnow
-from ..storage import ALLOWED_EXT
+from ..security import aware, can_see_all, current_user, utcnow
 from ..util import get_or_404
 
 router = APIRouter(prefix="/api", tags=["boards"])
+
+AUDIO_EXT = {".webm", ".m4a", ".mp4", ".ogg", ".wav", ".mp3"}
+CHUNK_LIMIT = 25 * 1024 * 1024  # a 30-second part is well under 1 MB; this stops anything else
+CHUNK_GRACE = timedelta(minutes=2)  # the last part can arrive just after Stop
 
 
 class BoardIn(BaseModel):
@@ -133,19 +137,43 @@ def start_recording(bid: str, body: RecordingIn, request: Request, user: User = 
     return {"id": r.id}
 
 
+def _own_recording(db: DB, rid: str, user: User) -> Recording:
+    """Only the person recording (or an admin) adds to or ends a recording."""
+    r = get_or_404(db, Recording, rid, "Recording")
+    if r.started_by != user.id and user.role != "admin":
+        raise HTTPException(403, "Only the person who started this recording can add to it or stop it.")
+    return r
+
+
 @router.post("/recordings/{rid}/chunks")
 async def upload_chunk(rid: str, seq: int, request: Request, file: UploadFile = File(...),
                        user: User = Depends(current_user), db: DB = Depends(get_db)):
-    r = get_or_404(db, Recording, rid, "Recording")
-    if r.status != "recording":
+    r = _own_recording(db, rid, user)
+    if not 0 <= seq < 100_000:
+        raise HTTPException(422, "That part of the recording is out of range.")
+    if r.status != "recording" and not (r.ended_at and utcnow() - aware(r.ended_at) < CHUNK_GRACE):
         raise HTTPException(409, "This recording has ended.")
+    existing = db.scalar(select(TranscriptSegment).where(TranscriptSegment.recording_id == rid,
+                                                         TranscriptSegment.seq == seq))
+    if existing:  # a retry of a part that already arrived: keep the first copy
+        return {"segment_id": existing.id, "status": existing.status}
     ext = "." + (file.filename or "chunk.webm").rsplit(".", 1)[-1].lower()
-    if ext not in ALLOWED_EXT:
+    if ext not in AUDIO_EXT:
         ext = ".webm"
     d = get_settings().data_dir / "recordings" / rid
     d.mkdir(parents=True, exist_ok=True)
     path = d / f"{seq:05d}{ext}"
-    path.write_bytes(await file.read())
+    tmp = path.with_suffix(path.suffix + ".part")
+    size = 0
+    with tmp.open("wb") as f:
+        while chunk := await file.read(1024 * 1024):
+            size += len(chunk)
+            if size > CHUNK_LIMIT:
+                f.close()
+                tmp.unlink(missing_ok=True)
+                raise HTTPException(413, "That part of the recording is too large. Stop and start a new recording.")
+            f.write(chunk)
+    tmp.replace(path)
     seg = TranscriptSegment(recording_id=rid, seq=seq, audio_path=str(path))
     db.add(seg)
     db.flush()
@@ -161,7 +189,9 @@ async def upload_chunk(rid: str, seq: int, request: Request, file: UploadFile = 
 
 @router.post("/recordings/{rid}/end")
 def end_recording(rid: str, request: Request, user: User = Depends(current_user), db: DB = Depends(get_db)):
-    r = get_or_404(db, Recording, rid, "Recording")
+    r = _own_recording(db, rid, user)
+    if r.status == "ended":
+        return {"ok": True}
     r.status, r.ended_at = "ended", utcnow()
     audit.record(db, "recording.ended", "recording", rid, actor_id=user.id, request=request)
     db.commit()
