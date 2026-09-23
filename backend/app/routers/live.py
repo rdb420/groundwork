@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session as DB
 from .. import audit
 from ..ai.context import structure_checks
 from ..ai.generate import GenerationRefused
+from ..canvas import validate_doc
 from ..config import get_settings
 from ..db import get_db
 from ..live import jev
@@ -93,7 +94,7 @@ def utterance(bid: str, body: UtteranceIn, request: Request, user: User = Depend
     recent = db.scalars(select(LiveUtterance.text).where(LiveUtterance.board_id == bid, LiveUtterance.created_at >= since)
                         .order_by(LiveUtterance.created_at.desc()).limit(3)).all()[::-1]
     text = body.text.strip()
-    state, questions, ctx = build_request(text, list(recent), body.doc, body.last_touched, board.session_pass or "detail")
+    state, questions, ctx = build_request(text, list(recent), validate_doc(body.doc), body.last_touched, board.session_pass or "detail")
     try:
         answers, model, ms = jev.system_one(state, questions)
     except jev.DecisionError as e:
@@ -199,7 +200,7 @@ def rules_put(bid: str, body: RulesIn, request: Request, user: User = Depends(cu
 @router.post("/boards/{bid}/checks")
 def checks(bid: str, body: ChecksIn, user: User = Depends(current_user), db: DB = Depends(get_db)):
     b = get_or_404(db, Board, bid, "Board")
-    return structure_checks(body.doc, b.session_pass or "detail", b.rules)
+    return structure_checks(validate_doc(body.doc), b.session_pass or "detail", b.rules)
 
 
 @router.post("/boards/{bid}/live/review")
@@ -208,7 +209,7 @@ def review(bid: str, body: ReviewIn, request: Request, user: User = Depends(curr
     if body.doc_kind not in {"sop", "wi"}:
         raise HTTPException(422, "Choose an SOP or a work instruction.")
     try:
-        draft = run_review(db, board, user, body.doc, body.doc_kind)
+        draft = run_review(db, board, user, validate_doc(body.doc), body.doc_kind)
     except GenerationRefused as e:
         raise HTTPException(409, str(e)) from e
     audit.record(db, "ai.review_created", "ai_draft", draft.id, actor_id=user.id, actor_type="ai", request=request,

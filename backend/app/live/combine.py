@@ -9,7 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session as DB
 
 from ..ai.context import describe_board
-from ..ai.generate import GenerationRefused, _parse
+from ..ai.generate import GenerationRefused, _parse, saved_map
 from ..ai.providers import ProviderError, complete, is_local
 from ..config import get_settings
 from ..models import AIDraft, Board, Process, User
@@ -46,7 +46,7 @@ def combine_views(db: DB, process: Process, user: User) -> tuple[Board, AIDraft]
         raise GenerationRefused("Combining needs at least two maps of this process, each showing one person's view.")
     if any(b.personal_info for b in boards) and not is_local() and not s.ai_allow_cloud_for_personal_info:
         raise GenerationRefused("One of these maps holds personal information and AI is set to a cloud model.")
-    views = "\n\n".join(f"VIEW OF {b.perspective.upper()} (map \"{b.title}\"):\n{describe_board(b.doc, 'detail', b.rules)}"
+    views = "\n\n".join(f"VIEW OF {b.perspective.upper()} (map \"{b.title}\"):\n{describe_board(saved_map(b), 'detail', b.rules)}"
                         for b in boards)
     prompt = f"PROCESS: {process.name}\n\n{views}\n\n" + TASK.format(
         kinds=", ".join(f"{k} ({v['desc']})" for k, v in KINDS.items()))

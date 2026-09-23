@@ -21,22 +21,32 @@ FLOW_NODES = {"bpmnStart", "bpmnEnd", "bpmnIntermediate", "bpmnTask", "bpmnSubpr
 SEQUENCE_NODES = FLOW_NODES - {"bpmnData"}
 
 
+def _num(v, default: float) -> float:
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return default
+
+
 def _abs_positions(nodes: list[dict]) -> dict[str, tuple[float, float, float, float]]:
-    by_id = {n["id"]: n for n in nodes}
-    out = {}
-
-    def pos(n):
-        x, y = n.get("position", {}).get("x", 0), n.get("position", {}).get("y", 0)
-        parent = by_id.get(n.get("parentId") or "")
-        if parent:
-            px, py, _, _ = pos(parent)
-            x, y = x + px, y + py
-        w = n.get("width") or n.get("measured", {}).get("width") or (n.get("style") or {}).get("width") or 160
-        h = n.get("height") or n.get("measured", {}).get("height") or (n.get("style") or {}).get("height") or 60
-        return float(x), float(y), float(w), float(h)
-
+    """Absolute box of every node. Walks parent chains iteratively and stops at a loop, so a
+    malformed map can't recurse without end."""
+    by_id = {n.get("id"): n for n in nodes}
+    out: dict[str, tuple[float, float, float, float]] = {}
     for n in nodes:
-        out[n["id"]] = pos(n)
+        x = _num((n.get("position") or {}).get("x"), 0)
+        y = _num((n.get("position") or {}).get("y"), 0)
+        seen = {n.get("id")}
+        parent = by_id.get(n.get("parentId") or "")
+        while parent is not None and parent.get("id") not in seen:
+            seen.add(parent.get("id"))
+            x += _num((parent.get("position") or {}).get("x"), 0)
+            y += _num((parent.get("position") or {}).get("y"), 0)
+            parent = by_id.get(parent.get("parentId") or "")
+        measured, style = n.get("measured") or {}, n.get("style") or {}
+        w = _num(n.get("width") or measured.get("width") or style.get("width"), 160) or 160
+        h = _num(n.get("height") or measured.get("height") or style.get("height"), 60) or 60
+        out[str(n.get("id"))] = (x, y, w, h)
     return out
 
 
@@ -113,23 +123,31 @@ def structure_checks(doc: dict, session_pass: str = "detail", rules: list | None
                    "parallel work needs a matching join where the work comes back together.",
             [n["id"] for n in par])
 
-    # Rework loops: edges that return to an element already reached from the start.
-    order, seen, back = {}, set(), []
-
-    def walk(nid, depth):
-        seen.add(nid)
-        order[nid] = depth
-        for e in out_e[nid]:
+    # Rework loops: edges that return to an element still on the current path from the start.
+    # Depth-first with an explicit stack, so a long chain of steps can't exhaust recursion.
+    order: dict[str, int] = {}
+    seen: set[str] = set()
+    back: list[tuple[str, str]] = []
+    for s_node in [n for n in flow if n["type"] == "bpmnStart"] or flow[:1]:
+        if s_node["id"] in seen:
+            continue
+        seen.add(s_node["id"])
+        order[s_node["id"]] = 0
+        stack = [(s_node["id"], 0, iter(out_e[s_node["id"]]))]
+        while stack:
+            nid, depth, edges_out = stack[-1]
+            e = next(edges_out, None)
+            if e is None:
+                order[nid] = 10 ** 9  # finished: later edges into it are not loops
+                stack.pop()
+                continue
             t = e["target"]
             if t in order and order[t] <= depth:
                 back.append((nid, t))
             elif t not in seen:
-                walk(t, depth + 1)
-        order[nid] = 10 ** 9  # finished: later edges into it are not loops
-
-    for s_node in [n for n in flow if n["type"] == "bpmnStart"] or flow[:1]:
-        if s_node["id"] not in seen:
-            walk(s_node["id"], 0)
+                seen.add(t)
+                order[t] = depth + 1
+                stack.append((t, depth + 1, iter(out_e[t])))
     for a, b in back:
         add("ask", f"Work loops back from \"{lab(by_id[a])}\" to \"{lab(by_id[b])}\". How often does that happen? "
                    "Of every ten cases, how many go through without being sent back?", [a, b])

@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session as DB
 from sqlalchemy.orm import selectinload
 
+from ..canvas import MapDataError, validate_doc
 from ..config import get_settings
 from ..models import AIDraft, Artifact, ArtifactProcess, Board, Recording, TranscriptSegment, User
 from .context import describe_board
@@ -95,6 +96,15 @@ def _parse(text: str) -> dict:
     return {"markdown": text, "proposal": None}
 
 
+def saved_map(board: Board) -> dict:
+    """The board's saved map, checked. Maps saved before validation existed may not pass."""
+    try:
+        return validate_doc(board.doc)
+    except MapDataError as e:
+        raise GenerationRefused(f"The saved map \"{board.title}\" has damaged data ({e.why}). "
+                                "Ask the AI lead to repair it.") from e
+
+
 def generate_for_board(db: DB, board: Board, user: User, mode: str, guidance: str = "") -> AIDraft:
     s = get_settings()
     evidence, personal = _evidence(db, board)
@@ -103,7 +113,7 @@ def generate_for_board(db: DB, board: Board, user: User, mode: str, guidance: st
                                 "cloud provider. Switch to the local model or remove the personal information.")
     prompt = "\n\n".join([
         f"PROCESS: {board.process.name if board.process else board.title}",
-        f"MAP:\n{describe_board(board.doc)}",
+        f"MAP:\n{describe_board(saved_map(board))}",
         f"TRANSCRIPT:\n{_transcript(db, board)}",
         f"UPLOADED EVIDENCE:\n{evidence}",
         f"ANALYST GUIDANCE: {guidance.strip() or 'none'}",

@@ -8,9 +8,10 @@ from sqlalchemy.orm import Session as DB
 
 from .. import audit
 from ..ai.generate import GenerationRefused, generate_for_board
+from ..canvas import validate_doc
 from ..config import get_settings
 from ..db import get_db
-from ..models import AIDraft, Board, Job, Recording, TranscriptSegment, User
+from ..models import AIDraft, Board, Job, Process, Recording, TranscriptSegment, User
 from ..security import can_see_all, current_user, utcnow
 from ..storage import ALLOWED_EXT
 from ..util import get_or_404
@@ -73,6 +74,8 @@ def list_boards(user: User = Depends(current_user), db: DB = Depends(get_db)):
 def create_board(body: BoardIn, request: Request, user: User = Depends(current_user), db: DB = Depends(get_db)):
     if body.session_pass not in {"overview", "detail"}:
         raise HTTPException(422, "Choose the overview or the detail pass.")
+    if body.process_id:
+        get_or_404(db, Process, body.process_id, "Process")
     b = Board(title=body.title.strip()[:300] or "Untitled map", process_id=body.process_id,
               created_by=user.id, personal_info=body.personal_info, perspective=body.perspective.strip()[:200],
               session_pass="detail" if body.perspective.strip() else body.session_pass)
@@ -96,9 +99,10 @@ def save_board(bid: str, body: BoardSave, request: Request, user: User = Depends
     b = _board(db, bid, user)
     if body.version != b.version:
         raise HTTPException(409, "Someone else changed this map. Reload to see their changes.")
-    if not isinstance(body.doc.get("nodes"), list) or not isinstance(body.doc.get("edges"), list):
-        raise HTTPException(422, "The map data was incomplete, so it wasn't saved.")
-    b.doc = body.doc
+    doc = validate_doc(body.doc)
+    if body.process_id is not None:
+        get_or_404(db, Process, body.process_id, "Process")
+    b.doc = doc
     for field in ("title", "process_id", "personal_info"):
         v = getattr(body, field)
         if v is not None:

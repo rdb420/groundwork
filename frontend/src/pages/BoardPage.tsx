@@ -35,6 +35,7 @@ function Canvas({ board, me }: { board: BoardRow; me: Me }) {
   const [title, setTitle] = useState(board.title);
   const [flow, setFlow] = useState<Flow>("sequence");
   const [save, setSave] = useState<"saved" | "saving" | "pending" | "conflict" | "error">("saved");
+  const [saveError, setSaveError] = useState("");
   const [panel, setPanel] = useState<"live" | "rules" | "session" | "ai" | "doc" | null>(me.live_enabled ? "live" : "session");
   const [sessionPass, setSessionPass] = useState<"overview" | "detail">((board.session_pass as any) || "detail");
   const [checks, setChecks] = useState<Check[]>([]);
@@ -95,7 +96,9 @@ function Canvas({ board, me }: { board: BoardRow; me: Me }) {
       board.title = title;
       setSave("saved");
     } catch (e) {
-      setSave((e as { status?: number }).status === 409 ? "conflict" : "error");
+      const status = (e as { status?: number }).status;
+      setSaveError(status === 422 ? (e as Error).message : "");
+      setSave(status === 409 ? "conflict" : "error");
     }
   }, [nodes, edges, title, board, getViewport]);
 
@@ -212,7 +215,7 @@ function Canvas({ board, me }: { board: BoardRow; me: Me }) {
   };
 
   const groups = useMemo(() => Array.from(new Set(PALETTE.map((p) => p.group))), []);
-  const saveText = { saved: "Saved", saving: "Saving…", pending: "Unsaved changes", conflict: "Someone else changed this map", error: "Couldn't save. Retrying on your next change." }[save];
+  const saveText = { saved: "Saved", saving: "Saving…", pending: "Unsaved changes", conflict: "Someone else changed this map", error: saveError || "Couldn't save. Retrying on your next change." }[save];
 
   return (
     <div className={`board ${panel ? "with-panel" : ""}`}>
