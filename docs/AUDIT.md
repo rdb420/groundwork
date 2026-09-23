@@ -12,7 +12,7 @@ and low. Update the status here in the same commit as the fix.
 | G2 | CLAUDE.md asks for a test on every state-changing endpoint; withdraw, process edits, admin, parking, document, recording chunks and board-image visibility have none. The frontend has no tests. | Fixed: `tests/test_endpoints.py` covers every state-changing endpoint; vitest covers the op engine, markdown and kinds; each later fix adds its own test |
 | G3 | Every state-changing endpoint should write an audit event; `parking_add`, `PUT /me`, chunk upload and logout do not. | Fixed: all four now audit; `live.heard` records sentences that changed nothing; a test fails if any mutating route skips `audit.record` |
 | G4 | Rollout depends on roadmap items not yet built: coverage view (phase 3 exit), catalogue admin (phase 0), retention and purge, malware scanning before public exposure. | Fixed: Coverage page and `/api/admin/coverage`; Process list page with validated edits and merge; retention settings, daily purge and admin delete-now; ClamAV scanning with quarantine |
-| G5 | Privacy impact assessment and retention period are required before inviting staff; neither exists. | Open |
+| G5 | Privacy impact assessment and retention period are required before inviting staff; neither exists. | Drafted: `docs/PRIVACY.md` assesses each APP, proposes a retention schedule (now in config), a recording consent procedure, risks, open legal questions and actions. Needs review and sign-off by YSH |
 | G6 | Live mapping should run Jev through OpenRouter, and the reviewer through OpenAI. | Fixed: `GW_DECISION_PROVIDER=openrouter` and `GW_AI_PROVIDER=openai` are the defaults in `.env.example`; `scripts/check_providers.py` confirms both answer |
 
 ## High
