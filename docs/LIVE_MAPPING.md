@@ -119,8 +119,9 @@ model unless it is a Jev-compatible server you run (`GW_DECISION_PROVIDER=jev` w
 `GW_DECISION_IS_LOCAL=true`) or `GW_AI_ALLOW_CLOUD_FOR_PERSONAL_INFO=true`. OpenRouter always
 counts as hosted.
 The reviewer and the combiner follow the same rule. In Chrome, speech audio goes to Google; in
-Edge, to Microsoft. For sensitive sessions, type key sentences or swap in local streaming speech
-recognition (roadmap).
+Edge, to Microsoft, whichever decision model you use. So on a map marked as holding personal
+information, listening is switched off and the facilitator types key sentences instead. The
+Recording tab still keeps a local recording. Local streaming speech recognition is on the roadmap.
 
 ## Providers
 
