@@ -13,10 +13,20 @@ services:
       timeout: 5s
       retries: 3
 
+  # Files: malware check, first read, retention and hourly upkeep.
   worker:
     build: { context: ., dockerfile: deploy/Dockerfile, args: { WITH_WHISPER: "${WITH_WHISPER:-false}" } }
     env_file: .env
-    command: ["python", "-m", "app.worker"]
+    command: ["python", "-m", "app.worker", "--kinds", "profile_artifact"]
+    volumes: [ "./data:/data" ]
+    restart: unless-stopped
+    depends_on: [ app ]
+
+  # Transcription on its own, so a large workbook never delays a live session's transcript.
+  transcriber:
+    build: { context: ., dockerfile: deploy/Dockerfile, args: { WITH_WHISPER: "${WITH_WHISPER:-false}" } }
+    env_file: .env
+    command: ["python", "-m", "app.worker", "--kinds", "transcribe_segment"]
     volumes: [ "./data:/data" ]
     restart: unless-stopped
     depends_on: [ app ]

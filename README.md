@@ -30,7 +30,7 @@ uv python install     # once; uv sync also fetches it when missing
 uv sync
 GW_DATA_DIR=../data uv run uvicorn app.main:app --reload --port 8000
 
-# Worker (second terminal)
+# Worker (second terminal): every job kind, transcription first
 cd backend
 GW_DATA_DIR=../data uv run python -m app.worker
 

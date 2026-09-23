@@ -82,7 +82,7 @@ official story and the real one diverge.
 | API | FastAPI, Python 3.12 | The processing work (openpyxl, PDF text, Whisper) is Python. One language for API and worker. |
 | Database | SQLite in WAL mode | One office, one host, tens of users. No database server to run. SQLAlchemy keeps Postgres a config change away. |
 | Files | Host disk with a JSON sidecar per file | Files stay on premises. Each folder describes itself if the database is ever lost. |
-| Queue | `jobs` table polled by one worker | No broker to install. A single UPDATE claims a job. |
+| Queue | `jobs` table polled by two workers | No broker to install. A single UPDATE claims a job. One worker reads files, one transcribes, so a large workbook never delays a live transcript. Failed jobs back off; jobs a crashed worker left running are picked up again. |
 | Frontend | React, Vite, React Flow (MIT) | React Flow gives typed nodes and edges, so the server reads the map as a process. |
 | Canvas model | Typed BPMN nodes in JSON | Chosen over a freehand whiteboard (Excalidraw) because AI and later BPMN export need semantics. Chosen over bpmn-js because staff need sticky notes and photos beside the notation. |
 | TLS | Caddy | Automatic certificates, internal or public, in five lines. |
@@ -276,8 +276,9 @@ list (rename, merge, confirm, retire, assign owner), retention and purge, and ma
   needs a WebSocket and a streaming speech model; not worth it for mapping sessions.
 - **AI generation is synchronous.** A local 14B model can take a minute. Move it to the job
   queue if that becomes a problem.
-- **One worker.** Enough for an office. SQLite serialises writes, so more workers would add
-  little.
+- **Two workers, one database file.** One reads files and one transcribes. SQLite serialises
+  writes and each waits up to 30 seconds for a lock, which is plenty for an office. Very large
+  workbooks get a lighter read, and Office files that expand to an unusual size aren't opened.
 - **In-memory rate limit** on sign-in requests. Resets on restart. Adequate behind Tailscale or a
   LAN; add Caddy rate limiting if the portal is exposed publicly.
 - **Malware scanning needs memory.** The ClamAV container wants about 2 GB. On a small host, set

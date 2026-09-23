@@ -24,9 +24,21 @@ def upload(client, title, **meta):
     return r.json()
 
 
-def drain():
-    while worker.run_once():
-        pass
+def drain(retries: bool = False):
+    """Run every job. With retries, skip the backoff wait so failing jobs run to their last try."""
+    from sqlalchemy import update
+
+    from app.models import Job
+    while True:
+        while worker.run_once():
+            pass
+        if not retries:
+            return
+        with SessionLocal() as db:
+            waiting = db.execute(update(Job).where(Job.status == "queued").values(run_after=None)).rowcount
+            db.commit()
+        if not waiting:
+            return
 
 
 def process_named(client, name):
@@ -203,5 +215,61 @@ def test_scanner_down_retries_then_fails(client, monkeypatch):
     a = upload(client, "Waiting for the scanner")
     drain()
     got = client.get(f"/api/artifacts/{a['id']}").json()
+    assert got["status"] == "received"  # waiting for its next try, not stuck on "reading"
+    drain(retries=True)
+    got = client.get(f"/api/artifacts/{a['id']}").json()
     assert got["status"] == "failed" and got["scan"] == ""
     assert client.get(f"/api/artifacts/{a['id']}/file").status_code == 409
+
+
+# ---- M10: the worker --------------------------------------------------------------------
+
+def test_worker_backs_off_reclaims_and_runs_transcription_first(client):
+    from datetime import timedelta
+
+    from app.models import Job
+    drain(retries=True)
+    with SessionLocal() as db:
+        db.add_all([Job(kind="profile_artifact", ref_id="missing-file"),
+                    Job(kind="transcribe_segment", ref_id="missing-segment")])
+        stuck = Job(kind="profile_artifact", ref_id="missing-too", status="running", attempts=1,
+                    updated_at=utcnow() - timedelta(hours=2))
+        db.add(stuck)
+        db.commit()
+        stuck_id = stuck.id
+    with SessionLocal() as db:
+        first = worker.claim(db)
+        assert first.kind == "transcribe_segment"  # a live session's transcript comes first
+    assert worker.claim(SessionLocal(), ["transcribe_segment"]) is None  # that one is running now
+    assert worker.reclaim() >= 1
+    with SessionLocal() as db:
+        assert db.get(Job, stuck_id).status == "queued"
+    drain(retries=True)
+
+
+def test_oversized_office_files_are_not_opened(tmp_path):
+    import zipfile
+
+    from app.processing import limits
+    from app.processing.xlsx_profile import profile_workbook
+    bomb = tmp_path / "bomb.xlsx"
+    with zipfile.ZipFile(bomb, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr("xl/worksheets/sheet1.xml", b"\0" * (20 * 1024 * 1024))  # compresses about 1000:1
+    assert limits.too_big(bomb)
+    assert "unusually large" in profile_workbook(bomb)["summary"]
+    junk = tmp_path / "junk.xlsx"
+    junk.write_bytes(b"not a zip")
+    assert "isn't a valid Office file" in profile_workbook(junk)["summary"]
+
+
+def test_large_workbooks_get_the_light_read(tmp_path, monkeypatch):
+    from openpyxl import Workbook
+
+    from app.processing import xlsx_profile
+    wb = Workbook()
+    wb.active.append(["a", "=1+1"])
+    path = tmp_path / "big.xlsx"
+    wb.save(path)
+    monkeypatch.setattr(xlsx_profile, "LIGHT_ABOVE", 1)
+    prof = xlsx_profile.profile_workbook(path)
+    assert "light mode" in prof["summary"] and prof["sheets"][0]["formulas"] == 1

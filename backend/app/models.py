@@ -212,6 +212,7 @@ class Job(Base):
     ref_id: Mapped[str] = mapped_column(String(32), index=True)
     status: Mapped[str] = mapped_column(String(20), default="queued", index=True)  # queued | running | done | failed
     attempts: Mapped[int] = mapped_column(Integer, default=0)
+    run_after: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)  # backoff after a failure
     error: Mapped[str] = mapped_column(Text, default="")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
