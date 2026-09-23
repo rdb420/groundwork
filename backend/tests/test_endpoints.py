@@ -115,7 +115,7 @@ def test_session_settings_parking_and_document(client, monkeypatch):
     assert r.json()["status"] == "placed" and audited("parking.updated", p.json()["id"]) == 1
     assert client.patch(f"/api/parking/{p.json()['id']}", headers=H, json={"status": "lost"}).status_code == 422
 
-    r = client.put(f"/api/boards/{bid}/document", headers=H, json={"markdown": "# SOP", "doc_kind": "sop"})
+    r = client.put(f"/api/boards/{bid}/document", headers=H, json={"markdown": "# SOP", "doc_kind": "sop", "version": 0})
     assert r.status_code == 200 and audited("board.document_saved", bid) == 1
     assert client.get(f"/api/boards/{bid}/document").json()["markdown"] == "# SOP"
 

@@ -44,6 +44,7 @@ class ReviewIn(BaseModel):
 class DocumentIn(BaseModel):
     markdown: str = Field(max_length=500_000)
     doc_kind: str = "sop"
+    version: int  # the version the person started from
 
 
 class SettingsIn(BaseModel):
@@ -64,6 +65,7 @@ class ParkingNew(BaseModel):
 
 class RulesIn(BaseModel):
     rules: list
+    version: int  # the version the person started from
 
 
 class ChecksIn(BaseModel):
@@ -185,17 +187,21 @@ def parking_update(pid: str, body: ParkingIn, request: Request, user: User = Dep
 
 @router.get("/boards/{bid}/rules")
 def rules_get(bid: str, user: User = Depends(current_user), db: DB = Depends(get_db)):
-    return access.open_board(db, bid, user).rules or []
+    b = access.open_board(db, bid, user)
+    return {"rules": b.rules or [], "version": b.rules_version or 0}
 
 
 @router.put("/boards/{bid}/rules")
 def rules_put(bid: str, body: RulesIn, request: Request, user: User = Depends(current_user), db: DB = Depends(get_db)):
     b = access.open_board(db, bid, user)
+    if body.version != (b.rules_version or 0):
+        raise HTTPException(409, "Someone else changed the rule tables. Reload them to see their changes, then redo yours.")
     b.rules = normalise(body.rules)
+    b.rules_version = (b.rules_version or 0) + 1
     audit.record(db, "board.rules_saved", "board", bid, actor_id=user.id, request=request,
-                 detail={"tables": len(b.rules), "rows": sum(len(t["rows"]) for t in b.rules)})
+                 detail={"tables": len(b.rules), "rows": sum(len(t["rows"]) for t in b.rules), "version": b.rules_version})
     db.commit()
-    return b.rules
+    return {"rules": b.rules, "version": b.rules_version}
 
 
 @router.post("/boards/{bid}/checks")
@@ -236,15 +242,21 @@ def combine(pid: str, request: Request, user: User = Depends(current_user), db: 
 @router.get("/boards/{bid}/document")
 def get_document(bid: str, user: User = Depends(current_user), db: DB = Depends(get_db)):
     b = access.open_board(db, bid, user)
-    return {"markdown": b.document_markdown, "doc_kind": b.document_kind, "updated_at": b.document_updated_at}
+    return {"markdown": b.document_markdown, "doc_kind": b.document_kind, "updated_at": b.document_updated_at,
+            "version": b.document_version or 0}
 
 
 @router.put("/boards/{bid}/document")
 def put_document(bid: str, body: DocumentIn, request: Request, user: User = Depends(current_user),
                  db: DB = Depends(get_db)):
     b = access.open_board(db, bid, user)
+    if body.doc_kind not in {"sop", "wi"}:
+        raise HTTPException(422, "Choose an SOP or a work instruction.")
+    if body.version != (b.document_version or 0):
+        raise HTTPException(409, "Someone else changed the document. Copy your changes, reload, then redo them.")
     b.document_markdown, b.document_kind, b.document_updated_at = body.markdown, body.doc_kind, utcnow()
+    b.document_version = (b.document_version or 0) + 1
     audit.record(db, "board.document_saved", "board", bid, actor_id=user.id, request=request,
-                 detail={"chars": len(body.markdown), "doc_kind": body.doc_kind})
+                 detail={"chars": len(body.markdown), "doc_kind": body.doc_kind, "version": b.document_version})
     db.commit()
-    return {"ok": True, "updated_at": b.document_updated_at}
+    return {"ok": True, "updated_at": b.document_updated_at, "version": b.document_version}

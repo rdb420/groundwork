@@ -60,7 +60,7 @@ def test_coverage_counts_layers_maps_and_flags(client):
     sign_in(client, "lead@example.com.au")
     b = client.post("/api/boards", headers=H, json={"title": "Overview", "process_id": pid}).json()
     client.put(f"/api/boards/{b['id']}/document", headers=H,
-               json={"markdown": "Step [TO CONFIRM: who] and [TO CONFIRM: when]", "doc_kind": "sop"})
+               json={"markdown": "Step [TO CONFIRM: who] and [TO CONFIRM: when]", "doc_kind": "sop", "version": 0})
     cov = client.get("/api/admin/coverage").json()
     row = next(r for r in cov["processes"] if r["id"] == pid)
     assert row["layers"]["declared"] == 1 and row["layers"]["workaround"] == 1 and row["layers"]["actual"] == 0

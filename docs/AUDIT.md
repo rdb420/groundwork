@@ -43,7 +43,7 @@ and low. Update the status here in the same commit as the fix.
 | Id | Finding | Where | Status |
 |---|---|---|---|
 | L1 | Process edits accept any `status` and allow `parent_id` loops. | `routers/processes.py` | Fixed with G4: status must be proposed, confirmed or retired; parents must exist and can't loop; names stay unique; owner must be an email |
-| L2 | Document and rule-table saves have no version check; the last save wins. | `routers/live.py` | Open |
+| L2 | Document and rule-table saves have no version check; the last save wins. | `routers/live.py` | Fixed: both carry a version; a save from an older version is refused with a way to reload (and copy your text first, for the document) |
 | L3 | A recording stays open forever if the tab closes. | `routers/boards.py` | Open |
 | L4 | Backups are unencrypted and sit on the same disk. | `app/backup.py`, `deploy/backup.sh` | Open |
 | L5 | Recording chunks are read whole into memory with no size limit of their own. | `routers/boards.py::upload_chunk` | Fixed with H4: parts stream to disk with a 25 MB limit and only audio extensions |

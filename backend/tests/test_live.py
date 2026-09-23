@@ -170,9 +170,9 @@ def test_rules_are_normalised(client):
     rules = [{"name": "Breach notice", "inputs": ["days late", "payment plan"], "output": "notice",
               "rows": [{"when": {"days late": "more than 7", "payment plan": "no", "ignored": "x"}, "then": "issue"}]},
              {"name": ""}]
-    out = client.put(f"/api/boards/{b['id']}/rules", headers=H, json={"rules": rules}).json()
+    out = client.put(f"/api/boards/{b['id']}/rules", headers=H, json={"rules": rules, "version": 0}).json()["rules"]
     assert len(out) == 1 and out[0]["rows"][0]["when"] == {"days late": "more than 7", "payment plan": "no"}
-    assert client.get(f"/api/boards/{b['id']}/rules").json()[0]["id"].startswith("rule-")
+    assert client.get(f"/api/boards/{b['id']}/rules").json()["rules"][0]["id"].startswith("rule-")
 
 
 def test_review_validates_changes_rules_and_parking(client, monkeypatch):

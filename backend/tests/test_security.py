@@ -325,3 +325,22 @@ def test_unknown_references_are_refused_cleanly(client):
     assert client.post("/api/processes", headers=H, json={"name": "Orphan", "parent_id": "nope"}).status_code == 404
     assert client.patch("/api/processes/nope", headers=H, json={"status": "confirmed"}).status_code == 404
     assert client.post("/api/processes/nope/combine", headers=H).status_code == 404
+
+
+# ---- L2: the document and rule tables don't overwrite each other ------------------------
+
+def test_document_and_rules_refuse_stale_saves(client):
+    sign_in(client, "lead@example.com.au")
+    bid = client.post("/api/boards", headers=H, json={"title": "Versions"}).json()["id"]
+    url = f"/api/boards/{bid}/document"
+    assert client.get(url).json()["version"] == 0
+    assert client.put(url, headers=H, json={"markdown": "Mine", "doc_kind": "sop", "version": 0}).json()["version"] == 1
+    stale = client.put(url, headers=H, json={"markdown": "Theirs", "doc_kind": "sop", "version": 0})
+    assert stale.status_code == 409 and client.get(url).json()["markdown"] == "Mine"
+    assert client.put(url, headers=H, json={"markdown": "x", "doc_kind": "memo", "version": 1}).status_code == 422
+
+    url = f"/api/boards/{bid}/rules"
+    table = [{"name": "Breach", "inputs": ["days late"], "rows": [{"when": {"days late": "over 7"}, "then": "notice"}]}]
+    assert client.put(url, headers=H, json={"rules": table, "version": 0}).json()["version"] == 1
+    assert client.put(url, headers=H, json={"rules": [], "version": 0}).status_code == 409
+    assert len(client.get(url).json()["rules"]) == 1

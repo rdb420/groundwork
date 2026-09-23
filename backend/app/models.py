@@ -126,6 +126,8 @@ class Board(Base):
     document_kind: Mapped[str] = mapped_column(String(10), default="sop")  # sop | wi
     document_markdown: Mapped[str] = mapped_column(Text, default="")
     document_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    document_version: Mapped[int] = mapped_column(Integer, default=0)  # optimistic concurrency, as for doc
+    rules_version: Mapped[int] = mapped_column(Integer, default=0)
     # Session settings. Overview: standard path only. Detail: everything, one person's view at a time.
     session_pass: Mapped[str] = mapped_column(String(10), default="overview")  # overview | detail
     perspective: Mapped[str] = mapped_column(String(200), default="")  # whose view this map shows, if one person's
