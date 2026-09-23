@@ -51,8 +51,10 @@ cp .env.example .env        # fill in hostname, domains, SMTP, AI and transcript
 docker compose up -d --build
 ```
 
-Choose the HTTPS option in `deploy/Caddyfile` (office network, public subdomain, or Tailscale).
-Schedule `deploy/backup.sh` nightly and copy `data/backups/` off the host.
+That starts the app, a worker for files, a transcriber, ClamAV and Caddy. Choose the HTTPS option
+in `deploy/Caddyfile` (office network, public subdomain, or Tailscale; for Tailscale, start
+everything except `caddy` and follow the comment there). Schedule `deploy/backup.sh` nightly; see
+[Backups](#backups).
 
 To catch sign-in emails while testing: `docker compose --profile dev up -d`, set
 `GW_SMTP_HOST=mailpit`, `GW_SMTP_PORT=1025`, `GW_SMTP_STARTTLS=false`, and open port 8025.

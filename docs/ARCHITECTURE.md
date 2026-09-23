@@ -209,7 +209,8 @@ Take legal advice on recording consent and on whether the lending side has addit
 
 ## 6. Deployment
 
-One Linux host with Docker. Three containers from one image plus Caddy:
+One Linux host with Docker. The app, the worker and the transcriber run from one image, with
+ClamAV and Caddy beside them:
 
 ```
 docker compose up -d --build
@@ -222,7 +223,7 @@ links will fail. Three options, set in `deploy/Caddyfile`:
 |---|---|---|
 | A. Office LAN, Caddy internal certificate | Everyone works in the Salisbury office | Install Caddy's root certificate on office PCs once |
 | B. Public subdomain, real certificate | Staff work from phones or home | Host must be reachable from the internet; review firewall and rate limits |
-| C. Tailscale serve | Small team, some remote work | Every user needs the Tailscale app |
+| C. Tailscale serve | Small team, some remote work | Every user needs the Tailscale app. Run `docker compose up -d app worker transcriber clamav` (no Caddy), then `tailscale serve --bg http://127.0.0.1:8000` on the host |
 
 For a small team with some remote work, C is the safest start. Move to B when the portal
 opens to everyone.

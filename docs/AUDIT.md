@@ -35,7 +35,7 @@ and low. Update the status here in the same commit as the fix.
 | M9 | Live routes skip `_board()`, so tightening board access would miss them. | `routers/live.py` | Fixed: `app/access.py::open_board` is the single check for every map, recording, draft, parking, rules, document and map-image route; a test denies access and expects every one to refuse |
 | M10 | Worker: jobs stuck in `running` after a crash never recover, retries have no backoff, workbooks load fully into memory, and a big workbook delays transcription. | `worker.py`, `processing/xlsx_profile.py` | Fixed: jobs left running are reclaimed at start-up and hourly; failures back off (30 s, 2 min) before the third and last try; workbooks over 150 MB expanded get a streaming read and zip bombs aren't opened; a separate transcriber worker, and transcription first when one worker runs everything |
 | M11 | AI prompts see file metadata and a 400-character summary; extracted text is never used. | `ai/generate.py::_evidence` | Fixed: drafts and reviews get each linked file's extracted text or workbook structure, up to 4,000 characters a file and 40,000 in all, fenced as data |
-| M12 | Deployment option C (Tailscale) proxies `localhost:8000`, which compose never publishes. | `deploy/Caddyfile`, `docker-compose.yml` | Open |
+| M12 | Deployment option C (Tailscale) proxies `localhost:8000`, which compose never publishes. | `deploy/Caddyfile`, `docker-compose.yml` | Fixed: compose publishes the app on 127.0.0.1:8000 only; the Caddyfile and ARCHITECTURE give the exact option C commands and settings |
 | M13 | An unknown `board_id` on upload or `process_id` on a board save returns a 500. | `routers/artifacts.py`, `routers/boards.py` | Open |
 
 ## Low
