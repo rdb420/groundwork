@@ -30,7 +30,7 @@ def due(db: DB) -> dict:
     files, audio = [], []
     if cut := _cutoff(s.retention_withdrawn_days):
         files = [a for a in db.scalars(select(Artifact).where(Artifact.status == "withdrawn")).all()
-                 if a.withdrawn_at is None or aware(a.withdrawn_at) < cut]
+                 if a.withdrawn_at is not None and aware(a.withdrawn_at) < cut]
     if cut := _cutoff(s.retention_audio_days):
         audio = [r for r in db.scalars(select(Recording).where(Recording.status == "ended",
                                                                Recording.audio_purged_at.is_(None))).all()
@@ -45,7 +45,8 @@ def purge_artifact(db: DB, a: Artifact, *, actor_id: str | None, reason: str) ->
         folder = Path(a.stored_path).parent
         artifacts_root = (get_settings().data_dir / "artifacts").resolve()
         if folder.resolve().is_relative_to(artifacts_root):  # never delete outside the store
-            shutil.rmtree(folder, ignore_errors=True)
+            if folder.exists():
+                shutil.rmtree(folder)
     a.status, a.purged_at, a.stored_path, a.profile = "purged", utcnow(), "", None
     audit.record(db, "artifact.purged", "artifact", a.id, actor_id=actor_id,
                  actor_type="user" if actor_id else "system", detail={"reason": reason})
@@ -53,7 +54,8 @@ def purge_artifact(db: DB, a: Artifact, *, actor_id: str | None, reason: str) ->
 
 def purge_audio(db: DB, r: Recording, *, actor_id: str | None, reason: str) -> None:
     folder = get_settings().data_dir / "recordings" / r.id
-    shutil.rmtree(folder, ignore_errors=True)
+    if folder.exists():
+        shutil.rmtree(folder)
     for seg in db.scalars(select(TranscriptSegment).where(TranscriptSegment.recording_id == r.id)).all():
         seg.audio_path = ""
     r.audio_purged_at = utcnow()
