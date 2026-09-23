@@ -130,8 +130,8 @@ def start_recording(bid: str, body: RecordingIn, request: Request, user: User = 
 
 
 @router.post("/recordings/{rid}/chunks")
-async def upload_chunk(rid: str, seq: int, file: UploadFile = File(...), user: User = Depends(current_user),
-                       db: DB = Depends(get_db)):
+async def upload_chunk(rid: str, seq: int, request: Request, file: UploadFile = File(...),
+                       user: User = Depends(current_user), db: DB = Depends(get_db)):
     r = get_or_404(db, Recording, rid, "Recording")
     if r.status != "recording":
         raise HTTPException(409, "This recording has ended.")
@@ -149,6 +149,8 @@ async def upload_chunk(rid: str, seq: int, file: UploadFile = File(...), user: U
         seg.status = "skipped"
     else:
         db.add(Job(kind="transcribe_segment", ref_id=seg.id))
+    audit.record(db, "recording.chunk_received", "recording", rid, actor_id=user.id, request=request,
+                 detail={"seq": seq, "segment_id": seg.id})
     db.commit()
     return {"segment_id": seg.id, "status": seg.status}
 

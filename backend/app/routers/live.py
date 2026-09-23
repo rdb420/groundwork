@@ -105,10 +105,11 @@ def utterance(bid: str, body: UtteranceIn, request: Request, user: User = Depend
     db.flush()
     items = [ParkingItem(board_id=bid, utterance_id=u.id, **p) for p in parking]
     db.add_all(items)
-    if ops or items:
-        audit.record(db, "live.ops_proposed", "board", bid, actor_id=user.id, actor_type="ai", request=request,
-                     detail={"utterance_id": u.id, "model": model, "parked": [p["category"] for p in parking],
-                             "ops": [{k: o.get(k) for k in ("id", "op", "kind", "confidence", "auto")} for o in ops]})
+    # Every sentence is recorded; the audit event says whether it changed or parked anything.
+    audit.record(db, "live.ops_proposed" if ops or items else "live.heard", "board", bid, actor_id=user.id,
+                 actor_type="ai", request=request,
+                 detail={"utterance_id": u.id, "model": model, "parked": [p["category"] for p in parking],
+                         "ops": [{k: o.get(k) for k in ("id", "op", "kind", "confidence", "auto")} for o in ops]})
     db.commit()
     return {"utterance_id": u.id, "ops": ops, "parking": [parking_dict(p) for p in items], "summary": summary,
             "model": model, "latency_ms": ms}
@@ -146,12 +147,16 @@ def parking_list(bid: str, user: User = Depends(current_user), db: DB = Depends(
 
 
 @router.post("/boards/{bid}/parking")
-def parking_add(bid: str, body: ParkingNew, user: User = Depends(current_user), db: DB = Depends(get_db)):
+def parking_add(bid: str, body: ParkingNew, request: Request, user: User = Depends(current_user),
+                db: DB = Depends(get_db)):
     get_or_404(db, Board, bid, "Board")
     if body.category not in PARKING_CATEGORIES:
         raise HTTPException(422, "Unknown parking lot category.")
     p = ParkingItem(board_id=bid, category=body.category, text=body.text.strip())
     db.add(p)
+    db.flush()
+    audit.record(db, "parking.added", "parking_item", p.id, actor_id=user.id, request=request,
+                 detail={"board_id": bid, "category": body.category})
     db.commit()
     return parking_dict(p)
 

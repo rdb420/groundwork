@@ -98,6 +98,7 @@ def logout(request: Request, response: Response, db: DB = Depends(get_db)):
     if secret:
         sess = db.scalar(select(Session).where(Session.token_hash == digest(secret)))
         if sess:
+            audit.record(db, "auth.signed_out", "user", sess.user_id, actor_id=sess.user_id, request=request)
             db.delete(sess)
             db.commit()
     response.delete_cookie(COOKIE, path="/")
@@ -115,8 +116,10 @@ def me(user: User = Depends(current_user)):
 
 
 @router.put("/me")
-def update_me(body: ProfileUpdate, user: User = Depends(current_user), db: DB = Depends(get_db)):
+def update_me(body: ProfileUpdate, request: Request, user: User = Depends(current_user), db: DB = Depends(get_db)):
     user = db.merge(user)
     user.display_name, user.team = body.display_name.strip()[:200], body.team.strip()[:200]
+    audit.record(db, "user.profile_updated", "user", user.id, actor_id=user.id, request=request,
+                 detail={"display_name": user.display_name, "team": user.team})
     db.commit()
     return {"ok": True}
