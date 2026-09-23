@@ -141,10 +141,9 @@ def test_every_mutating_route_writes_an_audit_event():
     """CLAUDE.md: every state-changing endpoint calls audit.record. Read-only POSTs are listed here."""
     import inspect
 
-    from fastapi.routing import APIRoute
-
-    from app.main import app
+    from tests.conftest import api_routes
     read_only = {"/api/boards/{bid}/checks"}
-    missing = [r.path for r in app.routes if isinstance(r, APIRoute) and r.methods & {"POST", "PUT", "PATCH", "DELETE"}
-               and r.path not in read_only and "audit.record" not in inspect.getsource(r.endpoint)]
+    mutating = [r for r in api_routes() if r.methods & {"POST", "PUT", "PATCH", "DELETE"}]
+    assert len(mutating) > 25  # the scan must actually see the routes
+    missing = [r.path for r in mutating if r.path not in read_only and "audit.record" not in inspect.getsource(r.endpoint)]
     assert missing == []

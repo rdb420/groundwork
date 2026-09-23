@@ -270,7 +270,8 @@ list (rename, merge, confirm, retire, assign owner), retention and purge, and ma
 ## 9. Decisions and known limits
 
 - **Boards are shared.** Any signed-in person with a board's link can open it. Tighten in
-  `routers/boards.py::_board` if a board ever holds material only some staff should see.
+  `app/access.py::can_open_board` if a board ever holds material only some staff should see; every
+  map route goes through it, and a test checks that.
 - **Near-live transcription.** Text appears about 30 to 60 seconds behind speech. True streaming
   needs a WebSocket and a streaming speech model; not worth it for mapping sessions.
 - **AI generation is synchronous.** A local 14B model can take a minute. Move it to the job

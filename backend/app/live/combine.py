@@ -8,6 +8,7 @@ outside parties as pools, and returns ordinary changes that the canvas lays out.
 from sqlalchemy import select
 from sqlalchemy.orm import Session as DB
 
+from .. import access
 from ..ai.context import describe_board
 from ..ai.generate import GenerationRefused, _parse, saved_map
 from ..ai.providers import ProviderError, complete, is_local
@@ -40,8 +41,8 @@ Use only add and connect. List elements in the order the work happens."""
 
 def combine_views(db: DB, process: Process, user: User) -> tuple[Board, AIDraft]:
     s = get_settings()
-    boards = db.scalars(select(Board).where(Board.process_id == process.id, Board.perspective != "")
-                        .order_by(Board.created_at)).all()
+    boards = [b for b in db.scalars(select(Board).where(Board.process_id == process.id, Board.perspective != "")
+                                    .order_by(Board.created_at)).all() if access.can_open_board(b, user)]
     if len(boards) < 2:
         raise GenerationRefused("Combining needs at least two maps of this process, each showing one person's view.")
     if any(b.personal_info for b in boards) and not is_local() and not s.ai_allow_cloud_for_personal_info:

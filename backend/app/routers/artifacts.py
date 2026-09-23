@@ -12,7 +12,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session as DB
 from sqlalchemy.orm import selectinload
 
-from .. import audit, scan
+from .. import access, audit, scan
 from ..db import get_db
 from ..models import Artifact, ArtifactProcess, Board, Job, Process, User, uid
 from ..security import can_see_all, current_user, utcnow
@@ -73,7 +73,7 @@ async def upload(request: Request, file: UploadFile = File(...), meta: str = For
     m.check()
     if m.board_id:
         # Canvas images are visible to everyone who can open the map, so only images go there.
-        get_or_404(db, Board, m.board_id, "Map")
+        access.open_board(db, m.board_id, user)
         if Path(file.filename or "").suffix.lower() not in CANVAS_IMAGES:
             raise HTTPException(415, "Only PNG, JPEG, GIF, WebP or SVG images can go on a map. Share other files from Share files.")
     for pid in m.process_ids:
@@ -129,22 +129,28 @@ def list_artifacts(mine: bool = False, process_id: str | None = None, user: User
     return [to_dict(a) for a in db.scalars(q).all()]
 
 
-def _visible(a: Artifact, user: User):
-    if a.uploaded_by != user.id and not can_see_all(user) and not a.board_id:
-        raise HTTPException(404, "File not found.")
+def _visible(db: DB, a: Artifact, user: User):
+    """Your own files, everything for analysts, and images on maps you can open."""
+    if a.uploaded_by == user.id or can_see_all(user):
+        return
+    if a.board_id:
+        board = db.get(Board, a.board_id)
+        if board and access.can_open_board(board, user):
+            return
+    raise HTTPException(404, "File not found.")
 
 
 @router.get("/{aid}")
 def get_artifact(aid: str, user: User = Depends(current_user), db: DB = Depends(get_db)):
     a = get_or_404(db, Artifact, aid, "File")
-    _visible(a, user)
+    _visible(db, a, user)
     return to_dict(a)
 
 
 @router.get("/{aid}/file")
 def download(aid: str, request: Request, user: User = Depends(current_user), db: DB = Depends(get_db)):
     a = get_or_404(db, Artifact, aid, "File")
-    _visible(a, user)
+    _visible(db, a, user)
     if a.status == "purged":
         raise HTTPException(410, "This file was deleted under the retention rules. Ask the person who shared it.")
     if a.scan == "infected" or a.status == "quarantined":

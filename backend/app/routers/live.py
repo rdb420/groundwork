@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session as DB
 
-from .. import audit
+from .. import access, audit
 from ..ai.context import structure_checks
 from ..ai.generate import GenerationRefused
 from ..canvas import validate_doc
@@ -86,7 +86,7 @@ def parking_dict(p: ParkingItem) -> dict:
 @router.post("/boards/{bid}/live/utterance")
 def utterance(bid: str, body: UtteranceIn, request: Request, user: User = Depends(current_user),
               db: DB = Depends(get_db)):
-    board = get_or_404(db, Board, bid, "Board")
+    board = access.open_board(db, bid, user)
     _guard(board)
     if body.mode not in {"listen", "command"} or body.source not in {"speech", "typed"}:
         raise HTTPException(422, "Unknown live mode.")
@@ -118,7 +118,7 @@ def utterance(bid: str, body: UtteranceIn, request: Request, user: User = Depend
 
 @router.get("/boards/{bid}/live/utterances")
 def utterances(bid: str, user: User = Depends(current_user), db: DB = Depends(get_db)):
-    get_or_404(db, Board, bid, "Board")
+    access.open_board(db, bid, user)
     rows = db.scalars(select(LiveUtterance).where(LiveUtterance.board_id == bid)
                       .order_by(LiveUtterance.created_at.desc()).limit(200)).all()
     return [{"id": u.id, "text": u.text, "at": u.created_at, "source": u.source, "ops": u.ops or [],
@@ -127,7 +127,7 @@ def utterances(bid: str, user: User = Depends(current_user), db: DB = Depends(ge
 
 @router.patch("/boards/{bid}/settings")
 def settings(bid: str, body: SettingsIn, request: Request, user: User = Depends(current_user), db: DB = Depends(get_db)):
-    b = get_or_404(db, Board, bid, "Board")
+    b = access.open_board(db, bid, user)
     if body.session_pass is not None:
         if body.session_pass not in {"overview", "detail"}:
             raise HTTPException(422, "Choose the overview or the detail pass.")
@@ -142,7 +142,7 @@ def settings(bid: str, body: SettingsIn, request: Request, user: User = Depends(
 
 @router.get("/boards/{bid}/parking")
 def parking_list(bid: str, user: User = Depends(current_user), db: DB = Depends(get_db)):
-    get_or_404(db, Board, bid, "Board")
+    access.open_board(db, bid, user)
     rows = db.scalars(select(ParkingItem).where(ParkingItem.board_id == bid).order_by(ParkingItem.created_at)).all()
     return [parking_dict(p) for p in rows]
 
@@ -150,7 +150,7 @@ def parking_list(bid: str, user: User = Depends(current_user), db: DB = Depends(
 @router.post("/boards/{bid}/parking")
 def parking_add(bid: str, body: ParkingNew, request: Request, user: User = Depends(current_user),
                 db: DB = Depends(get_db)):
-    get_or_404(db, Board, bid, "Board")
+    access.open_board(db, bid, user)
     if body.category not in PARKING_CATEGORIES:
         raise HTTPException(422, "Unknown parking lot category.")
     p = ParkingItem(board_id=bid, category=body.category, text=body.text.strip())
@@ -166,6 +166,7 @@ def parking_add(bid: str, body: ParkingNew, request: Request, user: User = Depen
 def parking_update(pid: str, body: ParkingIn, request: Request, user: User = Depends(current_user),
                    db: DB = Depends(get_db)):
     p = get_or_404(db, ParkingItem, pid, "Parking lot item")
+    access.open_board(db, p.board_id, user)
     if body.status is not None:
         if body.status not in {"open", "placed", "dismissed"}:
             raise HTTPException(422, "Unknown status.")
@@ -184,12 +185,12 @@ def parking_update(pid: str, body: ParkingIn, request: Request, user: User = Dep
 
 @router.get("/boards/{bid}/rules")
 def rules_get(bid: str, user: User = Depends(current_user), db: DB = Depends(get_db)):
-    return get_or_404(db, Board, bid, "Board").rules or []
+    return access.open_board(db, bid, user).rules or []
 
 
 @router.put("/boards/{bid}/rules")
 def rules_put(bid: str, body: RulesIn, request: Request, user: User = Depends(current_user), db: DB = Depends(get_db)):
-    b = get_or_404(db, Board, bid, "Board")
+    b = access.open_board(db, bid, user)
     b.rules = normalise(body.rules)
     audit.record(db, "board.rules_saved", "board", bid, actor_id=user.id, request=request,
                  detail={"tables": len(b.rules), "rows": sum(len(t["rows"]) for t in b.rules)})
@@ -199,13 +200,13 @@ def rules_put(bid: str, body: RulesIn, request: Request, user: User = Depends(cu
 
 @router.post("/boards/{bid}/checks")
 def checks(bid: str, body: ChecksIn, user: User = Depends(current_user), db: DB = Depends(get_db)):
-    b = get_or_404(db, Board, bid, "Board")
+    b = access.open_board(db, bid, user)
     return structure_checks(validate_doc(body.doc), b.session_pass or "detail", b.rules)
 
 
 @router.post("/boards/{bid}/live/review")
 def review(bid: str, body: ReviewIn, request: Request, user: User = Depends(current_user), db: DB = Depends(get_db)):
-    board = get_or_404(db, Board, bid, "Board")
+    board = access.open_board(db, bid, user)
     if body.doc_kind not in {"sop", "wi"}:
         raise HTTPException(422, "Choose an SOP or a work instruction.")
     try:
@@ -234,14 +235,14 @@ def combine(pid: str, request: Request, user: User = Depends(current_user), db: 
 
 @router.get("/boards/{bid}/document")
 def get_document(bid: str, user: User = Depends(current_user), db: DB = Depends(get_db)):
-    b = get_or_404(db, Board, bid, "Board")
+    b = access.open_board(db, bid, user)
     return {"markdown": b.document_markdown, "doc_kind": b.document_kind, "updated_at": b.document_updated_at}
 
 
 @router.put("/boards/{bid}/document")
 def put_document(bid: str, body: DocumentIn, request: Request, user: User = Depends(current_user),
                  db: DB = Depends(get_db)):
-    b = get_or_404(db, Board, bid, "Board")
+    b = access.open_board(db, bid, user)
     b.document_markdown, b.document_kind, b.document_updated_at = body.markdown, body.doc_kind, utcnow()
     audit.record(db, "board.document_saved", "board", bid, actor_id=user.id, request=request,
                  detail={"chars": len(body.markdown), "doc_kind": body.doc_kind})

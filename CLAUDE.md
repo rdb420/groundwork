@@ -11,7 +11,8 @@ start running business processes belong in a later system, built from what this 
 
 - Match the existing stack. Ask before adding a dependency and record why in the PR.
 - Every state-changing endpoint: `Depends(current_user)` or `require(role)`, an `audit.record(...)`
-  call, and a test. The server enforces access; the UI only reflects it.
+  call, and a test. The server enforces access; the UI only reflects it. Anything scoped to a map
+  opens it with `access.open_board`. Tests enforce both rules.
 - New upload metadata fields go in four places: `models.Artifact`, `ArtifactMeta` in
   `routers/artifacts.py`, `to_dict`, and the Share form. Keep the form short; optional fields go
   behind "Add more detail".

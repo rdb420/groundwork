@@ -239,3 +239,49 @@ def test_housekeeping_clears_expired_sessions_and_links():
         done = housekeeping.run(db)
         db.commit()
     assert done["sessions"] >= 1 and done["tokens"] >= 1
+
+
+# ---- M9: one access point for maps ------------------------------------------------------
+
+def test_every_map_route_goes_through_open_board(client, monkeypatch):
+    from app import access
+    from tests.conftest import api_routes
+    sign_in(client, "lead@example.com.au")
+    b = client.post("/api/boards", headers=H, json={"title": "Private"}).json()
+    bid = b["id"]
+    rid = client.post(f"/api/boards/{bid}/recordings", headers=H, json={"consent_note": "Sam agreed"}).json()["id"]
+    park = client.post(f"/api/boards/{bid}/parking", headers=H, json={"category": "issue", "text": "x"}).json()["id"]
+    img = board_image(client, bid, "p.png", b"\x89PNG", "image/png").json()["id"]
+    from app.db import SessionLocal
+    from app.models import AIDraft
+    with SessionLocal() as db:
+        d = AIDraft(board_id=bid, requested_by=client.get("/api/auth/me").json()["id"], mode="sop", provider="x",
+                    model="x", board_version=1)
+        db.add(d)
+        db.commit()
+        did = d.id
+
+    sign_in(client, "outsider@example.com.au")
+    monkeypatch.setattr(access, "can_open_board", lambda board, user: False)
+    ids = {"bid": bid, "rid": rid, "pid": park, "did": did, "decision": "accept", "aid": img}
+    doc = {"doc": {"nodes": [], "edges": []}, "text": "hello", "rules": [], "markdown": "x", "version": 1,
+           "consent_note": "Sam agreed", "category": "issue", "status": "open", "mode": "sop"}
+    checked = []
+    for r in api_routes():
+        if not any(k in r.path for k in ("{bid}", "{rid}", "{did}", "/parking/{pid}")):
+            continue
+        if r.path.startswith("/api/admin"):
+            continue
+        url = r.path.format(**ids)
+        for method in r.methods:
+            if method == "GET":
+                res = client.get(url)
+            elif "chunks" in url:
+                res = client.post(url + "?seq=9", headers=H, files={"file": ("c.webm", b"x")})
+            else:
+                res = client.request(method, url, headers=H, json=doc)
+            checked.append(url)
+            assert res.status_code == 404, (method, url, res.status_code, res.text)
+    assert client.get(f"/api/artifacts/{img}/file").status_code == 404
+    assert all(x["id"] != bid for x in client.get("/api/boards").json())
+    assert len(checked) >= 20

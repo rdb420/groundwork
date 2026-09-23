@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session as DB
 
-from .. import audit
+from .. import access, audit
 from ..ai.generate import GenerationRefused, generate_for_board
 from ..canvas import validate_doc
 from ..config import get_settings
@@ -60,18 +60,12 @@ def board_dict(b: Board, with_doc: bool = False) -> dict:
     return d
 
 
-def _board(db: DB, bid: str, user: User) -> Board:
-    """Boards are shared workspaces: any signed-in person can open one they have the link to.
-    Tighten here if a board ever holds material only some staff should see."""
-    return get_or_404(db, Board, bid, "Board")
-
-
 @router.get("/boards")
 def list_boards(user: User = Depends(current_user), db: DB = Depends(get_db)):
     q = select(Board).order_by(Board.updated_at.desc())
     if not can_see_all(user):
         q = q.where(Board.created_by == user.id)
-    return [board_dict(b) for b in db.scalars(q).all()]
+    return [board_dict(b) for b in db.scalars(q).all() if access.can_open_board(b, user)]
 
 
 @router.post("/boards")
@@ -92,7 +86,7 @@ def create_board(body: BoardIn, request: Request, user: User = Depends(current_u
 
 @router.get("/boards/{bid}")
 def get_board(bid: str, user: User = Depends(current_user), db: DB = Depends(get_db)):
-    return board_dict(_board(db, bid, user), with_doc=True)
+    return board_dict(access.open_board(db, bid, user), with_doc=True)
 
 
 @router.put("/boards/{bid}")
@@ -100,7 +94,7 @@ def save_board(bid: str, body: BoardSave, request: Request, user: User = Depends
                db: DB = Depends(get_db)):
     """Optimistic concurrency: the client sends the version it loaded. A mismatch means
     someone else saved first; the client reloads rather than overwriting their work."""
-    b = _board(db, bid, user)
+    b = access.open_board(db, bid, user)
     if body.version != b.version:
         raise HTTPException(409, "Someone else changed this map. Reload to see their changes.")
     doc = validate_doc(body.doc)
@@ -125,7 +119,7 @@ def save_board(bid: str, body: BoardSave, request: Request, user: User = Depends
 @router.post("/boards/{bid}/recordings")
 def start_recording(bid: str, body: RecordingIn, request: Request, user: User = Depends(current_user),
                     db: DB = Depends(get_db)):
-    _board(db, bid, user)
+    access.open_board(db, bid, user)
     if len(body.consent_note.strip()) < 3:
         raise HTTPException(422, "Record who agreed to be recorded before you start.")
     r = Recording(board_id=bid, started_by=user.id, consent_note=body.consent_note.strip())
@@ -140,6 +134,7 @@ def start_recording(bid: str, body: RecordingIn, request: Request, user: User = 
 def _own_recording(db: DB, rid: str, user: User) -> Recording:
     """Only the person recording (or an admin) adds to or ends a recording."""
     r = get_or_404(db, Recording, rid, "Recording")
+    access.open_board(db, r.board_id, user)
     if r.started_by != user.id and user.role != "admin":
         raise HTTPException(403, "Only the person who started this recording can add to it or stop it.")
     return r
@@ -200,7 +195,7 @@ def end_recording(rid: str, request: Request, user: User = Depends(current_user)
 
 @router.get("/boards/{bid}/transcript")
 def transcript(bid: str, user: User = Depends(current_user), db: DB = Depends(get_db)):
-    _board(db, bid, user)
+    access.open_board(db, bid, user)
     rows = db.execute(
         select(Recording, TranscriptSegment).join(TranscriptSegment, TranscriptSegment.recording_id == Recording.id)
         .where(Recording.board_id == bid).order_by(Recording.started_at, TranscriptSegment.seq)).all()
@@ -213,7 +208,7 @@ def transcript(bid: str, user: User = Depends(current_user), db: DB = Depends(ge
 @router.post("/boards/{bid}/generate")
 def generate(bid: str, body: GenerateIn, request: Request, user: User = Depends(current_user),
              db: DB = Depends(get_db)):
-    b = _board(db, bid, user)
+    b = access.open_board(db, bid, user)
     if body.mode not in {"sop", "workflow", "questions"}:
         raise HTTPException(422, "Choose an SOP draft, a workflow draft or interview questions.")
     try:
@@ -234,7 +229,7 @@ def draft_dict(d: AIDraft) -> dict:
 
 @router.get("/boards/{bid}/drafts")
 def drafts(bid: str, user: User = Depends(current_user), db: DB = Depends(get_db)):
-    _board(db, bid, user)
+    access.open_board(db, bid, user)
     return [draft_dict(d) for d in db.scalars(
         select(AIDraft).where(AIDraft.board_id == bid).order_by(AIDraft.created_at.desc())).all()]
 
@@ -244,6 +239,7 @@ def decide(did: str, decision: str, request: Request, user: User = Depends(curre
     if decision not in {"accept", "discard"}:
         raise HTTPException(404, "Unknown action.")
     d = get_or_404(db, AIDraft, did, "Draft")
+    access.open_board(db, d.board_id, user)
     d.status = "accepted" if decision == "accept" else "discarded"
     audit.record(db, f"ai.draft_{d.status}", "ai_draft", did, actor_id=user.id, request=request)
     db.commit()
