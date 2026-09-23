@@ -64,13 +64,22 @@ def run() -> Path:
             cmd = [age, *[a for r in recipients for a in ("-r", r)], "-o", str(archive)]
             proc = subprocess.Popen(cmd, stdin=subprocess.PIPE)  # noqa: S603  arguments are ours, no shell
             assert proc.stdin is not None
+            failure: BaseException | None = None
             try:
                 _write_archive(proc.stdin, snap, s.data_dir)
+            except BaseException as e:
+                failure = e
             finally:
-                proc.stdin.close()
-            if proc.wait() != 0:
+                try:
+                    proc.stdin.close()
+                except BaseException as e:
+                    failure = failure or e
+                exit_code = proc.wait()
+            if failure is not None or exit_code != 0:
                 archive.unlink(missing_ok=True)
-                raise BackupError(f"age failed to encrypt the backup (exit {proc.returncode}).")
+                if exit_code != 0:
+                    raise BackupError(f"age failed to encrypt the backup (exit {exit_code}).") from failure
+                raise BackupError("Failed while writing the encrypted backup.") from failure
         else:
             log.warning("Backup is not encrypted. Set GW_BACKUP_AGE_RECIPIENTS before copying backups off the host.")
             with archive.open("wb") as f:
