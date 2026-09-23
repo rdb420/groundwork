@@ -402,3 +402,6 @@ td.flags { color: var(--muted); font-size: 0.9rem; }
 caption { text-align: left; padding: 0.4rem 0; }
 .stack { display: grid; gap: 0.8rem; }
 .processes .bar { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+td.actions { white-space: nowrap; }
+td.actions button + button { margin-left: 0.4rem; }

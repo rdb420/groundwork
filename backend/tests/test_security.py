@@ -183,3 +183,59 @@ def test_a_batch_with_a_new_process_name_creates_it_once(client):
                 data={"meta": json.dumps({"title": "Other case", "personal_info": "no",
                                           "new_process_names": ["KEY REGISTER UPKEEP"]})})
     assert len([p for p in client.get("/api/processes").json() if p["name"].lower() == "key register upkeep"]) == 1
+
+
+# ---- M6: roles and sessions ------------------------------------------------------------
+
+def test_roles_follow_config_and_admins_can_revoke(client, monkeypatch):
+    from app.config import get_settings
+    s = get_settings()
+    monkeypatch.setattr(s, "analyst_emails", s.analyst_emails + ",temp-analyst@example.com.au")
+    sign_in(client, "temp-analyst@example.com.au")
+    assert client.get("/api/auth/me").json()["role"] == "analyst"
+    monkeypatch.setattr(s, "analyst_emails", "lead@example.com.au")
+    assert client.get("/api/auth/me").json()["role"] == "contributor"  # no new sign-in needed
+    assert client.get("/api/admin/coverage").status_code == 403
+
+    sign_in(client, "leaving@example.com.au")
+    me = client.get("/api/auth/me").json()
+    leaver_cookie = client.cookies.get("gw_session")
+    sign_in(client, "boss@example.com.au")
+    boss = client.get("/api/auth/me").json()
+    people = client.get("/api/admin/users").json()
+    assert next(p for p in people if p["id"] == me["id"])["sessions"] >= 1
+    assert client.post(f"/api/admin/users/{me['id']}/sign-out", headers=H).json()["sessions"] >= 1
+    assert client.post(f"/api/admin/users/{boss['id']}/access", headers=H, json={"blocked": True}).status_code == 422
+    assert client.post(f"/api/admin/users/{me['id']}/access", headers=H, json={"blocked": True}).status_code == 200
+
+    client.cookies.clear()
+    client.cookies.set("gw_session", leaver_cookie)
+    assert client.get("/api/auth/me").status_code == 401
+    from tests.conftest import SENT
+    SENT.pop("leaving@example.com.au", None)
+    client.post("/api/auth/request", json={"email": "leaving@example.com.au"})
+    assert "leaving@example.com.au" not in SENT  # no link for someone whose access was removed
+
+    sign_in(client, "boss@example.com.au")
+    client.post(f"/api/admin/users/{me['id']}/access", headers=H, json={"blocked": False})
+    sign_in(client, "leaving@example.com.au")
+    assert client.get("/api/auth/me").status_code == 200
+
+
+def test_housekeeping_clears_expired_sessions_and_links():
+    from datetime import timedelta
+
+    from app import housekeeping
+    from app.db import SessionLocal
+    from app.models import MagicToken, Session, User
+    from app.security import utcnow
+    with SessionLocal() as db:
+        u = User(email="old@example.com.au")
+        db.add(u)
+        db.flush()
+        db.add(Session(token_hash="x" * 64, user_id=u.id, expires_at=utcnow() - timedelta(days=1)))
+        db.add(MagicToken(email=u.email, token_hash="y" * 64, expires_at=utcnow() - timedelta(days=2)))
+        db.commit()
+        done = housekeeping.run(db)
+        db.commit()
+    assert done["sessions"] >= 1 and done["tokens"] >= 1

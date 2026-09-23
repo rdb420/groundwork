@@ -102,10 +102,11 @@ backend/app/
   worker.py            job loop, daily retention
   scan.py              ClamAV malware check for uploads
   retention.py         purge withdrawn files and old session audio
+  housekeeping.py      hourly upkeep: expired sessions and sign-in links
   backup.py            snapshot, archive, restore check
   seed.py              starter process catalogue (confirm with the business)
 frontend/src/
-  pages/               Login, Verify, Home, Share, Library, Boards, BoardPage, Coverage, ProcessList, Retention
+  pages/               Login, Verify, Home, Share, Library, Boards, BoardPage, Coverage, ProcessList, People, Retention
   canvas/              BPMN and context nodes, palette, op engine, live, recording, document and AI panels
 backend/scripts/       live_eval.py, labelled sample sentences, fake_models.py (stand-ins for testing)
 deploy/                Dockerfile, Caddyfile, backup script

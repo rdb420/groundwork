@@ -55,8 +55,10 @@ def request_link(body: LinkRequest, request: Request, db: DB = Depends(get_db)):
     ip = request.client.host if request.client else ""
     if _rate_limited(f"e:{email}") or _rate_limited(f"i:{ip}", limit=20):
         raise HTTPException(429, "Too many sign-in requests. Wait ten minutes and try again.")
-    if not email_allowed(email):
-        audit.record(db, "auth.link_refused", "user", detail={"email": email}, actor_type="system", request=request)
+    blocked = db.scalar(select(User.blocked).where(User.email == email))
+    if not email_allowed(email) or blocked:
+        audit.record(db, "auth.link_refused", "user", detail={"email": email, "blocked": bool(blocked)},
+                     actor_type="system", request=request)
         db.commit()
         return GENERIC  # same reply either way, so the form can't be used to probe addresses
     s = get_settings()
@@ -81,8 +83,10 @@ def verify(body: VerifyRequest, request: Request, response: Response, db: DB = D
         db.add(user)
         db.flush()
         audit.record(db, "user.created", "user", user.id, actor_id=user.id, request=request)
+    elif user.blocked:
+        raise HTTPException(403, "Your access to Groundwork has been removed. Ask the AI lead if that's a mistake.")
     else:
-        user.role = max(user.role, role_for(user.email), key=["contributor", "analyst", "admin"].index)
+        user.role = role_for(user.email)
     secret = create_session(db, user)
     audit.record(db, "auth.signed_in", "user", user.id, actor_id=user.id, request=request)
     db.commit()

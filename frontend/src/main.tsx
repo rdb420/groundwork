@@ -15,6 +15,7 @@ import BoardPage from "./pages/BoardPage";
 import CoveragePage from "./pages/Coverage";
 import ProcessList from "./pages/ProcessList";
 import Retention from "./pages/Retention";
+import People from "./pages/People";
 
 const RANK = { contributor: 0, analyst: 1, admin: 2 } as const;
 
@@ -42,6 +43,7 @@ createRoot(document.getElementById("root")!).render(
             <Route path="coverage" element={<Protected role="analyst"><CoveragePage /></Protected>} />
             <Route path="processes" element={<Protected role="analyst"><ProcessList /></Protected>} />
             <Route path="retention" element={<Protected role="admin"><Retention /></Protected>} />
+            <Route path="people" element={<Protected role="admin"><People /></Protected>} />
           </Route>
           <Route path="/maps/:id" element={<Protected><BoardPage /></Protected>} />
           <Route path="*" element={<Navigate to="/" replace />} />

@@ -26,7 +26,8 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(320), unique=True, index=True)
     display_name: Mapped[str] = mapped_column(String(200), default="")
     team: Mapped[str] = mapped_column(String(200), default="")
-    role: Mapped[str] = mapped_column(String(20), default="contributor")  # contributor | analyst | admin
+    role: Mapped[str] = mapped_column(String(20), default="contributor")  # contributor | analyst | admin, from config
+    blocked: Mapped[bool] = mapped_column(Boolean, default=False)  # an admin removed their access
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     last_seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 

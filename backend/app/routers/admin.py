@@ -3,15 +3,15 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session as DB
 
 from .. import audit, retention
 from ..config import get_settings
 from ..db import get_db
-from ..models import AIDraft, Artifact, ArtifactProcess, AuditEvent, Board, Job, Process, Recording, User
-from ..security import require
-from ..util import get_or_404
+from ..models import AIDraft, Artifact, ArtifactProcess, AuditEvent, Board, Job, Process, Recording, Session, User
+from ..security import require, role_for, utcnow
+from ..util import deleted, get_or_404
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
@@ -154,5 +154,47 @@ def purge_recording_audio(rid: str, body: PurgeIn, request: Request, user: User 
     retention.purge_audio(db, r, actor_id=user.id, reason=body.reason.strip())
     audit.record(db, "recording.purge_requested", "recording", rid, actor_id=user.id, request=request,
                  detail={"reason": body.reason.strip()})
+    db.commit()
+    return {"ok": True}
+
+
+# ---- People -----------------------------------------------------------------------------
+
+@router.get("/users")
+def users(user: User = Depends(require("admin")), db: DB = Depends(get_db)):
+    """Everyone who has signed in. Roles come from GW_ADMIN_EMAILS and GW_ANALYST_EMAILS."""
+    live = dict(db.execute(select(Session.user_id, func.count()).where(Session.expires_at > utcnow())
+                           .group_by(Session.user_id)).tuples().all())
+    return [{"id": u.id, "email": u.email, "display_name": u.display_name, "team": u.team, "role": role_for(u.email),
+             "blocked": u.blocked, "last_seen_at": u.last_seen_at, "sessions": live.get(u.id, 0)}
+            for u in db.scalars(select(User).order_by(User.email)).all()]
+
+
+class AccessIn(BaseModel):
+    blocked: bool
+
+
+@router.post("/users/{uid}/sign-out")
+def sign_out_everywhere(uid: str, request: Request, user: User = Depends(require("admin")), db: DB = Depends(get_db)):
+    """End every session this person has, for example a lost phone or someone leaving."""
+    target = get_or_404(db, User, uid, "Person")
+    n = deleted(db, delete(Session).where(Session.user_id == target.id))
+    audit.record(db, "user.signed_out_everywhere", "user", target.id, actor_id=user.id, request=request,
+                 detail={"sessions": n})
+    db.commit()
+    return {"sessions": n}
+
+
+@router.post("/users/{uid}/access")
+def set_access(uid: str, body: AccessIn, request: Request, user: User = Depends(require("admin")),
+               db: DB = Depends(get_db)):
+    """Remove or restore someone's access. Removing it also ends their sessions."""
+    target = get_or_404(db, User, uid, "Person")
+    if target.id == user.id:
+        raise HTTPException(422, "You can't remove your own access.")
+    target.blocked = body.blocked
+    n = deleted(db, delete(Session).where(Session.user_id == target.id)) if body.blocked else 0
+    audit.record(db, "user.access_removed" if body.blocked else "user.access_restored", "user", target.id,
+                 actor_id=user.id, request=request, detail={"sessions_ended": n})
     db.commit()
     return {"ok": True}

@@ -9,7 +9,7 @@ from pathlib import Path
 
 from sqlalchemy import select, update
 
-from . import audit, retention, scan
+from . import audit, housekeeping, retention, scan
 from .config import get_settings
 from .db import SessionLocal, init_db
 from .models import Artifact, Job, TranscriptSegment
@@ -108,12 +108,24 @@ def run_retention() -> dict:
     return done
 
 
+def run_housekeeping() -> dict:
+    with SessionLocal() as db:
+        done = housekeeping.run(db)
+        db.commit()
+    if any(done.values()):
+        log.info("housekeeping %s", done)
+    return done
+
+
 def main():
     logging.basicConfig(level=logging.INFO)
     init_db()
     log.info("worker started")
-    last_retention = 0.0
+    last_retention = last_upkeep = 0.0
     while True:
+        if time.time() - last_upkeep > 3600:
+            last_upkeep = time.time()
+            run_housekeeping()
         if get_settings().retention_auto and time.time() - last_retention > 86400:
             last_retention = time.time()
             run_retention()

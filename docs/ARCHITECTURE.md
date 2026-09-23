@@ -193,7 +193,9 @@ history. Staff will upload them, whatever the form says. The design assumes this
 - Audit events cover every state-changing request (a test enforces it): sign-in and out, uploads,
   downloads, withdrawals and purges, process changes and merges, board saves, recordings, live
   sentences and every AI draft decision.
-- Tokens and session secrets are stored only as hashes.
+- Tokens and session secrets are stored only as hashes. Roles follow `GW_ADMIN_EMAILS` and
+  `GW_ANALYST_EMAILS` on every request. Admins can sign someone out everywhere or remove their access
+  (People page). The worker clears expired sessions and sign-in links hourly.
 - The app sends a Content-Security-Policy (scripts from its own origin only), nosniff, no-referrer,
   frame denial and a microphone-only permissions policy on every response; Caddy adds HSTS. File
   types come from the extension, never the browser's claim. Only raster images display inline;

@@ -64,8 +64,13 @@ def current_user(request: Request, db: DB = Depends(get_db)) -> User:
     if not sess or aware(sess.expires_at) < utcnow():
         raise HTTPException(401, "Your session has ended. Sign in again.")
     user = sess.user
+    if user.blocked:
+        raise HTTPException(401, "Your access to Groundwork has been removed. Ask the AI lead if that's a mistake.")
     if request.method not in ("GET", "HEAD", "OPTIONS") and request.headers.get("x-requested-with") != "groundwork":
         raise HTTPException(403, "Request blocked. Reload the page and try again.")
+    # Roles come from GW_ADMIN_EMAILS and GW_ANALYST_EMAILS, so removing an address takes effect
+    # on the person's next request, not their next sign-in.
+    user.role = role_for(user.email)
     user.last_seen_at = utcnow()
     db.commit()
     return user
