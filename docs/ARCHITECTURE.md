@@ -194,7 +194,10 @@ history. Staff will upload them, whatever the form says. The design assumes this
   downloads, withdrawals and purges, process changes and merges, board saves, recordings, live
   sentences and every AI draft decision.
 - Tokens and session secrets are stored only as hashes.
-- Caddy sets HSTS, nosniff, no-referrer, frame denial, and limits microphone access to the site.
+- The app sends a Content-Security-Policy (scripts from its own origin only), nosniff, no-referrer,
+  frame denial and a microphone-only permissions policy on every response; Caddy adds HSTS. File
+  types come from the extension, never the browser's claim. Only raster images display inline;
+  everything else downloads, under a sandbox policy.
 
 Before inviting all staff, complete the privacy impact assessment in
 [PRIVACY.md](PRIVACY.md) against the Australian Privacy Principles: what is collected, why, who can

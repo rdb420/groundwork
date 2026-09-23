@@ -16,6 +16,8 @@
 	request_body {
 		max_size 110MB
 	}
+	# The app sends its own Content-Security-Policy, nosniff, frame and referrer headers (app/main.py),
+	# so every option below gets them. Caddy adds HSTS, which only makes sense behind HTTPS.
 	header {
 		Strict-Transport-Security "max-age=31536000"
 		X-Content-Type-Options "nosniff"

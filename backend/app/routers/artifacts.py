@@ -3,6 +3,7 @@ what each is and which process it belongs to. Files wait on the host for process
 import json
 import mimetypes
 import shutil
+from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse
@@ -13,7 +14,7 @@ from sqlalchemy.orm import selectinload
 
 from .. import audit, scan
 from ..db import get_db
-from ..models import Artifact, ArtifactProcess, Job, Process, User, uid
+from ..models import Artifact, ArtifactProcess, Board, Job, Process, User, uid
 from ..security import can_see_all, current_user, utcnow
 from ..storage import artifact_dir, safe_name, save_upload, write_sidecar
 from ..util import get_or_404
@@ -21,6 +22,8 @@ from .processes import find_or_propose
 
 router = APIRouter(prefix="/api/artifacts", tags=["artifacts"])
 
+INLINE_IMAGES = {".png", ".jpg", ".jpeg", ".gif", ".webp"}
+CANVAS_IMAGES = INLINE_IMAGES | {".svg"}
 KINDS = {"spreadsheet", "procedure", "form", "report", "email", "photo", "diagram", "other"}
 LAYERS = {"declared", "system", "actual", "workaround", "unsure"}
 FREQ = {"", "daily", "weekly", "monthly", "quarterly", "yearly", "adhoc"}
@@ -68,6 +71,13 @@ async def upload(request: Request, file: UploadFile = File(...), meta: str = For
     except (ValidationError, json.JSONDecodeError):
         raise HTTPException(422, "Add a title so others can find this file.") from None
     m.check()
+    if m.board_id:
+        # Canvas images are visible to everyone who can open the map, so only images go there.
+        get_or_404(db, Board, m.board_id, "Map")
+        if Path(file.filename or "").suffix.lower() not in CANVAS_IMAGES:
+            raise HTTPException(415, "Only PNG, JPEG, GIF, WebP or SVG images can go on a map. Share other files from Share files.")
+    for pid in m.process_ids:
+        get_or_404(db, Process, pid, "Process")
 
     a = Artifact(id=uid(), uploaded_by=user.id, original_filename=safe_name(file.filename or "file"), stored_path="",
                  sha256="", title=m.title.strip(), description=m.description, kind=m.kind, layer=m.layer,
@@ -81,7 +91,8 @@ async def upload(request: Request, file: UploadFile = File(...), meta: str = For
         shutil.rmtree(d, ignore_errors=True)
         raise
     a.stored_path, a.size_bytes, a.sha256 = str(path), size, sha
-    a.mime_type = file.content_type or mimetypes.guess_type(a.original_filename)[0] or ""
+    # The server decides the type from the extension it allowed; the browser's claim is ignored.
+    a.mime_type = mimetypes.guess_type(a.original_filename)[0] or "application/octet-stream"
 
     duplicate = db.scalar(select(Artifact).where(Artifact.sha256 == sha, Artifact.status != "withdrawn"))
     db.add(a)
@@ -92,8 +103,7 @@ async def upload(request: Request, file: UploadFile = File(...), meta: str = For
         if name.strip():
             pids.add(find_or_propose(db, name, user, request).id)
     for pid in pids:
-        if db.get(Process, pid):
-            db.add(ArtifactProcess(artifact_id=a.id, process_id=pid, step_note=m.step_note))
+        db.add(ArtifactProcess(artifact_id=a.id, process_id=pid, step_note=m.step_note))
 
     db.add(Job(kind="profile_artifact", ref_id=a.id))
     audit.record(db, "artifact.uploaded", "artifact", a.id, actor_id=user.id, request=request,
@@ -143,9 +153,14 @@ def download(aid: str, request: Request, user: User = Depends(current_user), db:
         raise HTTPException(409, "This file is still being checked for malware. Try again in a minute.")
     audit.record(db, "artifact.downloaded", "artifact", a.id, actor_id=user.id, request=request)
     db.commit()
-    inline = a.mime_type.startswith("image/")
-    return FileResponse(a.stored_path, media_type=a.mime_type or None, filename=a.original_filename,
-                        content_disposition_type="inline" if inline else "attachment")
+    # Only raster images display in the browser. Everything else, SVG included, downloads, and the
+    # sandbox policy stops any script in a file from running in the portal's origin.
+    ext = Path(a.stored_path).suffix.lower()
+    mime = mimetypes.guess_type(f"x{ext}")[0] or "application/octet-stream"
+    return FileResponse(a.stored_path, media_type=mime, filename=a.original_filename,
+                        content_disposition_type="inline" if ext in INLINE_IMAGES else "attachment",
+                        headers={"Content-Security-Policy": "default-src 'none'; img-src 'self'; sandbox",
+                                 "X-Content-Type-Options": "nosniff", "Cache-Control": "private, no-store"})
 
 
 @router.post("/{aid}/withdraw")

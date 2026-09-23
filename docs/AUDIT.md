@@ -19,7 +19,7 @@ and low. Update the status here in the same commit as the fix.
 
 | Id | Finding | Where | Status |
 |---|---|---|---|
-| H1 | Stored XSS: the browser-declared type decides inline display, board images are visible to everyone, and there is no Content-Security-Policy. An SVG with a script runs in the portal's origin. | `routers/artifacts.py`, `deploy/Caddyfile` | Open |
+| H1 | Stored XSS: the browser-declared type decides inline display, board images are visible to everyone, and there is no Content-Security-Policy. An SVG with a script runs in the portal's origin. | `routers/artifacts.py`, `deploy/Caddyfile` | Fixed: type comes from the extension; only raster images display inline; file downloads carry a sandbox CSP; the app sends a CSP and security headers on every response; map images must be images on a real map |
 | H2 | One bad map breaks a board: saves accept any node shape; a node without an id, a `parentId` loop, or a chain of about 1,000 steps makes checks, generate and review fail with a 500. | `routers/boards.py::save_board`, `ai/context.py` | Open |
 | H3 | Files marked "unsure" for personal information are sent to cloud models. | `ai/generate.py::_evidence` | Open |
 | H4 | The last recording chunk is lost: `/end` is sent before the final chunk uploads. Reusing a `seq` overwrites audio on disk, then fails. Anyone can end anyone's recording. | `canvas/SessionPanel.tsx`, `routers/boards.py` | Open |
