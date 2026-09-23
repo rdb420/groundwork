@@ -11,12 +11,13 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session as DB
 from sqlalchemy.orm import selectinload
 
-from .. import audit
+from .. import audit, scan
 from ..db import get_db
 from ..models import Artifact, ArtifactProcess, Job, Process, User, uid
-from ..security import can_see_all, current_user
+from ..security import can_see_all, current_user, utcnow
 from ..storage import artifact_dir, safe_name, save_upload, write_sidecar
 from ..util import get_or_404
+from .processes import find_or_propose
 
 router = APIRouter(prefix="/api/artifacts", tags=["artifacts"])
 
@@ -55,7 +56,7 @@ def to_dict(a: Artifact) -> dict:
         "original_filename": a.original_filename, "mime_type": a.mime_type, "size_bytes": a.size_bytes,
         "status": a.status, "uploaded_at": a.uploaded_at, "uploaded_by": a.uploader.email if a.uploader else None,
         "processes": [{"id": p.id, "name": p.name} for p in a.processes], "profile": a.profile,
-        "board_id": a.board_id,
+        "board_id": a.board_id, "scan": a.scan,
     }
 
 
@@ -88,13 +89,8 @@ async def upload(request: Request, file: UploadFile = File(...), meta: str = For
 
     pids = set(m.process_ids)
     for name in m.new_process_names:
-        name = name.strip()
-        if name:
-            p = Process(name=name[:200], created_by=user.id)
-            db.add(p)
-            db.flush()
-            pids.add(p.id)
-            audit.record(db, "process.proposed", "process", p.id, actor_id=user.id, detail={"name": name}, request=request)
+        if name.strip():
+            pids.add(find_or_propose(db, name, user, request).id)
     for pid in pids:
         if db.get(Process, pid):
             db.add(ArtifactProcess(artifact_id=a.id, process_id=pid, step_note=m.step_note))
@@ -115,7 +111,7 @@ async def upload(request: Request, file: UploadFile = File(...), meta: str = For
 def list_artifacts(mine: bool = False, process_id: str | None = None, user: User = Depends(current_user),
                    db: DB = Depends(get_db)):
     q = (select(Artifact).options(selectinload(Artifact.processes), selectinload(Artifact.uploader))
-         .where(Artifact.status != "withdrawn", Artifact.board_id.is_(None)).order_by(Artifact.uploaded_at.desc()))
+         .where(Artifact.status.not_in(("withdrawn", "purged")), Artifact.board_id.is_(None)).order_by(Artifact.uploaded_at.desc()))
     if mine or not can_see_all(user):
         q = q.where(Artifact.uploaded_by == user.id)
     if process_id:
@@ -139,6 +135,12 @@ def get_artifact(aid: str, user: User = Depends(current_user), db: DB = Depends(
 def download(aid: str, request: Request, user: User = Depends(current_user), db: DB = Depends(get_db)):
     a = get_or_404(db, Artifact, aid, "File")
     _visible(a, user)
+    if a.status == "purged":
+        raise HTTPException(410, "This file was deleted under the retention rules. Ask the person who shared it.")
+    if a.scan == "infected" or a.status == "quarantined":
+        raise HTTPException(403, "The malware check flagged this file, so it can't be downloaded. Ask an admin.")
+    if scan.enabled() and a.scan == "":
+        raise HTTPException(409, "This file is still being checked for malware. Try again in a minute.")
     audit.record(db, "artifact.downloaded", "artifact", a.id, actor_id=user.id, request=request)
     db.commit()
     inline = a.mime_type.startswith("image/")
@@ -153,7 +155,9 @@ def withdraw(aid: str, request: Request, user: User = Depends(current_user), db:
     a = get_or_404(db, Artifact, aid, "File")
     if a.uploaded_by != user.id and user.role != "admin":
         raise HTTPException(403, "Only the person who uploaded this can withdraw it.")
-    a.status = "withdrawn"
+    if a.status == "purged":
+        raise HTTPException(409, "This file has already been deleted.")
+    a.status, a.withdrawn_at = "withdrawn", utcnow()
     audit.record(db, "artifact.withdrawn", "artifact", a.id, actor_id=user.id, request=request)
     db.commit()
     return {"ok": True}

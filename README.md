@@ -92,18 +92,20 @@ backend/app/
   config.py            every setting (env prefix GW_)
   models.py            tables
   security.py          tokens, sessions, roles, CSRF header
-  routers/             auth, artifacts, processes, boards (maps, recordings, AI), admin
+  routers/             auth, artifacts, processes (catalogue, merge), boards (maps, recordings, AI), admin (coverage, retention, purge)
   ai/context.py        canvas to structured text
   ai/generate.py       prompts, personal-info guard, draft storage
   ai/providers.py      Ollama, Anthropic and OpenAI-compatible over HTTP
   live/                live mapping: Jev client, vocabulary, spans, interpreter, reviewer, rule tables, combiner
   routers/live.py      sentence in, map changes out; passes, parking lot, rules, checks, review, combine, document
   processing/          workbook profiler, document text extraction
-  worker.py            job loop
+  worker.py            job loop, daily retention
+  scan.py              ClamAV malware check for uploads
+  retention.py         purge withdrawn files and old session audio
   backup.py            snapshot, archive, restore check
   seed.py              starter process catalogue (confirm with the business)
 frontend/src/
-  pages/               Login, Verify, Home, Share, Library, Boards, BoardPage
+  pages/               Login, Verify, Home, Share, Library, Boards, BoardPage, Coverage, ProcessList, Retention
   canvas/              BPMN and context nodes, palette, op engine, live, recording, document and AI panels
 backend/scripts/       live_eval.py, labelled sample sentences, fake_models.py (stand-ins for testing)
 deploy/                Dockerfile, Caddyfile, backup script

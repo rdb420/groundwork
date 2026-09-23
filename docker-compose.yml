@@ -21,6 +21,13 @@ services:
     restart: unless-stopped
     depends_on: [ app ]
 
+  # Malware scanning for uploads. Needs about 2 GB of memory and a few minutes to load signatures
+  # on first start. Set GW_CLAMAV_HOST=clamav in .env to use it; leave it empty to switch off.
+  clamav:
+    image: clamav/clamav:stable
+    volumes: [ "clamav_db:/var/lib/clamav" ]
+    restart: unless-stopped
+
   caddy:
     image: caddy:2
     ports: [ "80:80", "443:443" ]
@@ -39,5 +46,6 @@ services:
     ports: [ "8025:8025" ]
 
 volumes:
+  clamav_db:
   caddy_data:
   caddy_config:

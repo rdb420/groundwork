@@ -9,7 +9,8 @@ from pathlib import Path
 
 from sqlalchemy import select, update
 
-from . import audit
+from . import audit, retention, scan
+from .config import get_settings
 from .db import SessionLocal, init_db
 from .models import Artifact, Job, TranscriptSegment
 from .processing.text_extract import profile_document
@@ -23,11 +24,20 @@ IMAGE = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".heic", ".svg"}
 
 def profile_artifact(db, aid: str):
     a = db.get(Artifact, aid)
-    if not a or a.status == "withdrawn":
+    if not a or a.status in {"withdrawn", "purged", "quarantined"}:
         return
     a.status = "processing"
     db.commit()
     path = Path(a.stored_path)
+    if scan.enabled():
+        found = scan.scan_file(path)  # ScannerUnavailable fails the job, which retries later
+        if found:
+            a.status, a.scan, a.profile = "quarantined", "infected", {"type": "blocked", "summary": f"Blocked by the malware check ({found})."}
+            audit.record(db, "artifact.quarantined", "artifact", aid, actor_type="system", detail={"signature": found})
+            return
+        a.scan = "clean"
+    else:
+        a.scan = "off"
     ext = path.suffix.lower()
     if ext in {".xlsx", ".xlsm"}:
         prof = profile_workbook(path)
@@ -41,7 +51,7 @@ def profile_artifact(db, aid: str):
 
 def transcribe_segment(db, sid: str):
     seg = db.get(TranscriptSegment, sid)
-    if not seg:
+    if not seg or not seg.audio_path:
         return
     seg.text, seg.status = transcribe(Path(seg.audio_path)), "done"
 
@@ -89,11 +99,24 @@ def run_once() -> bool:
         db.close()
 
 
+def run_retention() -> dict:
+    with SessionLocal() as db:
+        done = retention.run(db)
+        db.commit()
+    if any(done.values()):
+        log.info("retention purged %s", done)
+    return done
+
+
 def main():
     logging.basicConfig(level=logging.INFO)
     init_db()
     log.info("worker started")
+    last_retention = 0.0
     while True:
+        if get_settings().retention_auto and time.time() - last_retention > 86400:
+            last_retention = time.time()
+            run_retention()
         if not run_once():
             time.sleep(2)
 

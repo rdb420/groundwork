@@ -12,11 +12,18 @@ import Share from "./pages/Share";
 import Library from "./pages/Library";
 import Boards from "./pages/Boards";
 import BoardPage from "./pages/BoardPage";
+import CoveragePage from "./pages/Coverage";
+import ProcessList from "./pages/ProcessList";
+import Retention from "./pages/Retention";
 
-function Protected({ children }: { children: React.ReactNode }) {
+const RANK = { contributor: 0, analyst: 1, admin: 2 } as const;
+
+// The server enforces every role check; this only keeps people off pages that would refuse them.
+function Protected({ children, role = "contributor" }: { children: React.ReactNode; role?: keyof typeof RANK }) {
   const { me, loading } = useSession();
   if (loading) return <div className="loading">Loading…</div>;
   if (!me) return <Navigate to="/login" replace />;
+  if (RANK[me.role] < RANK[role]) return <Navigate to="/" replace />;
   return <>{children}</>;
 }
 
@@ -32,6 +39,9 @@ createRoot(document.getElementById("root")!).render(
             <Route path="share" element={<Share />} />
             <Route path="library" element={<Library />} />
             <Route path="maps" element={<Boards />} />
+            <Route path="coverage" element={<Protected role="analyst"><CoveragePage /></Protected>} />
+            <Route path="processes" element={<Protected role="analyst"><ProcessList /></Protected>} />
+            <Route path="retention" element={<Protected role="admin"><Retention /></Protected>} />
           </Route>
           <Route path="/maps/:id" element={<Protected><BoardPage /></Protected>} />
           <Route path="*" element={<Navigate to="/" replace />} />

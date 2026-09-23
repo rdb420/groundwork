@@ -24,6 +24,16 @@ class Settings(BaseSettings):
     max_upload_mb: int = 100
     backup_keep_days: int = 30
 
+    # Retention (see docs/PRIVACY.md). 0 keeps forever. With retention_auto the worker purges what is
+    # due once a day; otherwise an admin runs it from the Retention page.
+    retention_withdrawn_days: int = 30  # files withdrawn by their contributor
+    retention_audio_days: int = 90  # session audio, counted from the end of the recording
+    retention_auto: bool = False
+
+    # Malware scanning of uploads with ClamAV (clamd over TCP). Empty host switches scanning off.
+    clamav_host: str = ""
+    clamav_port: int = 3310
+
     # Auth
     allowed_email_domains: str = ""  # comma separated; empty accepts any domain (dev only)
     admin_emails: str = ""  # comma separated; admin role

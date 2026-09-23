@@ -57,6 +57,7 @@ export type ProcessRow = {
   description: string;
   parent_id: string | null;
   status: string;
+  owner_email: string;
   artifact_count: number;
   board_count: number;
 };
@@ -76,6 +77,7 @@ export type Artifact = {
   status: string;
   uploaded_at: string;
   uploaded_by: string | null;
+  scan: string;
   processes: { id: string; name: string }[];
   profile: { summary?: string; review_flags?: string[]; sheets?: { name: string; state: string; formulas: number; dimensions: string }[]; preview?: string } | null;
 };

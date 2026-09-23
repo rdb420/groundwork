@@ -91,8 +91,11 @@ class Artifact(Base):
     if_it_disappeared: Mapped[str] = mapped_column(Text, default="")
 
     # Pipeline
-    status: Mapped[str] = mapped_column(String(20), default="received")  # received | processing | processed | failed | withdrawn
+    status: Mapped[str] = mapped_column(String(20), default="received")  # received | processing | processed | failed | withdrawn | quarantined | purged
     profile: Mapped[dict | None] = mapped_column(JSON, nullable=True)  # output of processors
+    scan: Mapped[str] = mapped_column(String(20), default="")  # "" not yet | clean | infected | off (no scanner)
+    withdrawn_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    purged_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     board_id: Mapped[str | None] = mapped_column(ForeignKey("boards.id"), nullable=True)  # set for canvas images
 
     processes: Mapped[list["Process"]] = relationship(secondary="artifact_processes")
@@ -140,6 +143,7 @@ class Recording(Base):
     ended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     consent_note: Mapped[str] = mapped_column(Text)  # who agreed to be recorded
     status: Mapped[str] = mapped_column(String(20), default="recording")  # recording | ended
+    audio_purged_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 class TranscriptSegment(Base):

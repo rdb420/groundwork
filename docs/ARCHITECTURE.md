@@ -51,7 +51,7 @@ official story and the real one diverge.
  +----------------+      |  /api/artifacts  uploads + metadata          |
                          |  /api/processes  process catalogue           |
                          |  /api/boards     maps, recordings, AI drafts |
-                         |  /api/admin      coverage, audit log         |
+                         |  /api/admin      coverage, retention, audit  |
                          +---------------------------------------------+
                                 |                 |
                      SQLite (WAL)          /data on host disk
@@ -63,8 +63,10 @@ official story and the real one diverge.
                                 v          backups/
                          +-------------+
                          | worker      |  polls the jobs table
+                         |  scan       |  ClamAV (clamd) before anything reads a file
                          |  profile    |  spreadsheets, PDFs, Word
                          |  transcribe |  faster-whisper or Whisper server
+                         |  retention  |  daily purge when GW_RETENTION_AUTO=true
                          +-------------+
                                 |
              optional:  Jev through OpenRouter (live mapping decisions, hosted)
@@ -180,17 +182,24 @@ history. Staff will upload them, whatever the form says. The design assumes this
   drafting refuses a cloud provider unless `GW_AI_ALLOW_CLOUD_FOR_PERSONAL_INFO=true`.
 - Contributors see only their own uploads. Analysts and admins see everything. Deny by default
   on the server; the UI hides nothing the server would allow.
-- Withdrawn files disappear from use but stay on disk for the audit trail until purged under a
-  retention rule (roadmap: admin purge with its own audit event).
-- Audit events cover sign-in, uploads, downloads, withdrawals, process proposals, board saves,
-  recordings and every AI draft decision.
+- Withdrawn files disappear from use at once and are deleted from disk after
+  `GW_RETENTION_WITHDRAWN_DAYS`; session audio after `GW_RETENTION_AUDIO_DAYS`. The worker runs
+  this daily when `GW_RETENTION_AUTO=true`; otherwise an admin runs it from the Retention page.
+  Admins can also delete one file at once, with a reason (Library, "Delete now"). A purge keeps the
+  database row, marked deleted, so the audit trail still shows what was shared and when it went.
+- Every upload is checked by ClamAV (`clamav` service, `GW_CLAMAV_HOST`) before its first read. A
+  flagged file is quarantined and can't be downloaded. While scanning is on, a file can't be
+  downloaded until it has been checked.
+- Audit events cover every state-changing request (a test enforces it): sign-in and out, uploads,
+  downloads, withdrawals and purges, process changes and merges, board saves, recordings, live
+  sentences and every AI draft decision.
 - Tokens and session secrets are stored only as hashes.
 - Caddy sets HSTS, nosniff, no-referrer, frame denial, and limits microphone access to the site.
 
-Before inviting all staff, run a short privacy impact assessment against the Australian Privacy
-Principles: what is collected, why, who can see it, how long it is kept, and how it is deleted.
-Set a retention period for raw uploads and recordings. Take legal advice on recording consent
-and on whether the lending side has additional obligations.
+Before inviting all staff, complete the privacy impact assessment in
+[PRIVACY.md](PRIVACY.md) against the Australian Privacy Principles: what is collected, why, who can
+see it, how long it is kept, and how it is deleted. Confirm the retention periods it proposes.
+Take legal advice on recording consent and on whether the lending side has additional obligations.
 
 ## 6. Deployment
 
@@ -238,20 +247,20 @@ with at least one map, drafts accepted versus discarded, and the open `[TO CONFI
 
 Ordered by value to the discovery work.
 
-1. Coverage view: processes by evidence layer, contributor and map status.
-2. Admin screens for the process catalogue (rename, merge, confirm, retire, assign owner).
-3. Evidence ledger view per process, combining artifacts, map elements and transcript quotes.
-4. BPMN 2.0 XML export, so maps open in other tools.
-5. Deeper workbook review: formula-pattern anomalies, hard-coded values inside formula ranges,
+Done: the coverage view (processes by evidence layer, contributor and map status), the process
+list (rename, merge, confirm, retire, assign owner), retention and purge, and malware scanning.
+
+1. Evidence ledger view per process, combining artifacts, map elements and transcript quotes.
+2. BPMN 2.0 XML export, so maps open in other tools.
+3. Deeper workbook review: formula-pattern anomalies, hard-coded values inside formula ranges,
    lookup chains across files.
-6. OCR for scanned PDFs and photos of paper forms.
-7. Search across extracted text and transcripts.
-8. Retention and purge controls.
-9. Real-time co-editing (Yjs) if facilitated sessions outgrow autosave with conflict detection.
-10. Speaker labels in transcripts.
-11. Local streaming speech recognition for live mapping, replacing the browser's cloud service.
-12. Run the session reviewer on the server so it continues when the facilitator's tab closes.
-13. Compound sentences: split with an LLM and interpret each part, as in TypeSafe's smart-home demo.
+4. OCR for scanned PDFs and photos of paper forms.
+5. Search across extracted text and transcripts.
+6. Real-time co-editing (Yjs) if facilitated sessions outgrow autosave with conflict detection.
+7. Speaker labels in transcripts.
+8. Local streaming speech recognition for live mapping, replacing the browser's cloud service.
+9. Run the session reviewer on the server so it continues when the facilitator's tab closes.
+10. Compound sentences: split with an LLM and interpret each part, as in TypeSafe's smart-home demo.
 
 ## 9. Decisions and known limits
 
@@ -265,6 +274,5 @@ Ordered by value to the discovery work.
   little.
 - **In-memory rate limit** on sign-in requests. Resets on restart. Adequate behind Tailscale or a
   LAN; add Caddy rate limiting if the portal is exposed publicly.
-- **No malware scanning** of uploads. Files are never executed or rendered by the server, and
-  downloads are sent as attachments (images inline). Add ClamAV to the worker before opening the
-  portal to the internet.
+- **Malware scanning needs memory.** The ClamAV container wants about 2 GB. On a small host, set
+  `GW_CLAMAV_HOST` empty during the private pilot and switch it on before opening the portal wider.

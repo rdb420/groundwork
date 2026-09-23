@@ -388,3 +388,17 @@ fieldset.options legend { font-weight: 700; margin-bottom: 0.4rem; }
 
 .bpmn-task:has(.task-icon) { padding-left: 1.6rem; }
 .ruletable th input, .ruletable td input:not([type=checkbox]) { min-width: 72px; }
+
+/* Coverage, process list, retention */
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.8rem; margin: 1.5rem 0; }
+.tiles > div { background: var(--panel); border: 1.5px solid var(--line); border-radius: var(--radius-m); padding: 0.8rem 1rem; }
+.tiles dt { color: var(--muted); font-size: 0.9rem; }
+.tiles dd { margin: 0.2rem 0 0; font-size: 1.6rem; font-weight: 700; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+td.zero { color: var(--muted); }
+tr.grouprow th { font-weight: 700; }
+th.indent, li.indent { padding-left: 1.4rem; }
+td.flags { color: var(--muted); font-size: 0.9rem; }
+caption { text-align: left; padding: 0.4rem 0; }
+.stack { display: grid; gap: 0.8rem; }
+.processes .bar { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
