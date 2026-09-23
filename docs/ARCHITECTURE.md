@@ -67,7 +67,9 @@ official story and the real one diverge.
                          |  transcribe |  faster-whisper or Whisper server
                          +-------------+
                                 |
-             optional:  Ollama on the inference box (local AI, default for personal info)
+             optional:  Jev through OpenRouter (live mapping decisions, hosted)
+                        OpenAI (drafting and session review, hosted)
+                        Ollama on the inference box (local AI, the choice for personal info)
                         Anthropic API (cloud AI, blocked for personal info by default)
 ```
 
@@ -82,11 +84,11 @@ official story and the real one diverge.
 | Frontend | React, Vite, React Flow (MIT) | React Flow gives typed nodes and edges, so the server reads the map as a process. |
 | Canvas model | Typed BPMN nodes in JSON | Chosen over a freehand whiteboard (Excalidraw) because AI and later BPMN export need semantics. Chosen over bpmn-js because staff need sticky notes and photos beside the notation. |
 | TLS | Caddy | Automatic certificates, internal or public, in five lines. |
-| AI | Plain HTTP to Ollama or Anthropic | No vendor SDK. Switching provider is an environment variable. |
+| AI | Plain HTTP to OpenAI, OpenRouter (Jev), Ollama or Anthropic | No vendor SDK. Switching provider is an environment variable. |
 
 ### Live mapping
 
-Sessions can build the map as people talk. A System One decision model (TypeSafe Jev in v1)
+Sessions can build the map as people talk. A System One decision model (TypeSafe Jev, through OpenRouter)
 reads each finished sentence and picks one change from options code gives it; a reasoning model
 reviews the whole session every five minutes and keeps the map, the rule tables and the written
 SOP or work instruction aligned. Sessions run in two passes (overview, then one person's view in

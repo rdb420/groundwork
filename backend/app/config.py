@@ -1,12 +1,17 @@
 """Runtime configuration. Every value can be set in .env or the environment (prefix GW_)."""
+import os
 from functools import lru_cache
 from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# The repo-root .env (shared with docker compose) is read first; a backend/.env overrides it.
+# GW_ENV_FILES replaces the list (comma separated); the tests set it empty to ignore local files.
+ENV_FILES = tuple(f for f in os.environ.get("GW_ENV_FILES", "../.env,.env").split(",") if f) or None
+
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_prefix="GW_", extra="ignore")
+    model_config = SettingsConfigDict(env_file=ENV_FILES, env_prefix="GW_", extra="ignore")
 
     # Identity
     org_name: str = "YSH"
@@ -37,7 +42,7 @@ class Settings(BaseSettings):
     mail_from: str = "groundwork@localhost"
 
     # AI
-    ai_provider: str = "none"  # none | ollama | anthropic
+    ai_provider: str = "none"  # none | ollama | anthropic | openai
     ollama_url: str = "http://localhost:11434"
     ollama_model: str = "qwen3:14b"
     anthropic_api_key: str = ""
@@ -50,12 +55,14 @@ class Settings(BaseSettings):
     openai_model: str = ""  # set explicitly, e.g. the GPT model you have access to
     openai_is_local: bool = False  # true if openai_url points at a model on your own hardware
 
-    # Live mapping: a System One decision model (TypeSafe Jev, or a Jev-compatible server
-    # such as Laya or OpenJev running on your own hardware)
-    decision_provider: str = "none"  # none | jev
-    decision_url: str = "https://api.typesafe.ai/v1/systemone"
-    decision_api_key: str = ""
-    decision_model: str = "jev-latest"
+    # Live mapping: a System One decision model. openrouter runs TypeSafe Jev through OpenRouter's
+    # System One API; jev calls TypeSafe directly or a Jev-compatible server you run (Laya, OpenJev).
+    decision_provider: str = "none"  # none | openrouter | jev
+    decision_url: str = "https://api.typesafe.ai/v1/systemone"  # used by the jev provider
+    decision_api_key: str = ""  # used by the jev provider
+    openrouter_url: str = "https://openrouter.ai/api/v1/systemone"
+    openrouter_api_key: str = ""
+    decision_model: str = "jev-latest"  # OpenRouter routes this to ~typesafe/jev-latest
     decision_is_local: bool = False  # true when decision_url is a server you run
     decision_max_options: int = 20  # keep Choice questions portable to Laya and OpenJev
     live_auto_threshold: float = 0.75  # at or above this confidence, changes apply without a click
@@ -66,6 +73,11 @@ class Settings(BaseSettings):
     whisper_model: str = "small.en"
     transcription_url: str = ""  # openai_compatible endpoint, e.g. http://inference:8000/v1/audio/transcriptions
     transcription_api_key: str = ""
+
+    @property
+    def decision_local(self) -> bool:
+        """OpenRouter is always hosted; only a jev URL on your own hardware counts as local."""
+        return self.decision_provider == "jev" and self.decision_is_local
 
     @property
     def db_url(self) -> str:

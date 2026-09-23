@@ -256,3 +256,40 @@ def test_new_columns_added_to_old_database(tmp_path):
         assert {"document_markdown", "session_pass", "perspective", "rules"} <= cols
     finally:
         dbmod._engine = old_engine
+
+
+def test_openrouter_route_and_privacy(client, monkeypatch):
+    from app.live import jev
+    enable(monkeypatch, decision_provider="openrouter", openrouter_api_key="", decision_is_local=True)
+    try:
+        jev.system_one({}, {})
+        raise AssertionError("expected a missing-key error")
+    except jev.DecisionError as e:
+        assert "GW_OPENROUTER_API_KEY" in str(e)
+
+    enable(monkeypatch, decision_provider="openrouter", openrouter_api_key="or-key", decision_is_local=True)
+    sent = {}
+
+    class Resp:
+        status_code = 200
+        headers: dict = {}
+
+        def json(self):
+            return {"model": "typesafe/jev-1.13-20260917", "answers": {"x": {"type": "noul", "noul": 0.9}}}
+
+    def post(url, json, headers, timeout):
+        sent.update(url=url, headers=headers, body=json)
+        return Resp()
+
+    monkeypatch.setattr(jev.httpx, "post", post)
+    answers, model, _ = jev.system_one({"latest": "hi"}, {"x": jev.noul("?")})
+    assert sent["url"] == "https://openrouter.ai/api/v1/systemone"
+    assert sent["headers"]["Authorization"] == "Bearer or-key"
+    assert sent["body"]["model"] == "jev-latest"
+    assert model.startswith("typesafe/jev") and answers["x"]["noul"] == 0.9
+
+    # OpenRouter is hosted, so GW_DECISION_IS_LOCAL can't open personal-information maps to it.
+    sign_in(client, "lead@example.com.au")
+    b = new_board(client, personal_info=True)
+    assert say(client, b, "The tenant pays").status_code == 409
+    assert client.get("/api/auth/me").json()["live_local"] is False

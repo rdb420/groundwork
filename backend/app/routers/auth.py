@@ -111,7 +111,7 @@ def me(user: User = Depends(current_user)):
     return {"id": user.id, "email": user.email, "display_name": user.display_name, "team": user.team,
             "role": user.role, "org_name": s.org_name, "app_name": s.app_name,
             "ai_enabled": s.ai_provider != "none", "transcription_enabled": s.transcription_provider != "none",
-            "live_enabled": s.decision_provider != "none", "live_local": s.decision_is_local,
+            "live_enabled": s.decision_provider != "none", "live_local": s.decision_local,
             "review_minutes": s.review_minutes, "live_auto_threshold": s.live_auto_threshold}
 
 

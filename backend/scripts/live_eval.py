@@ -3,10 +3,11 @@
 Record a mock mapping session, write down what should have happened for each sentence, then:
 
     cd backend
-    GW_DECISION_PROVIDER=jev GW_DECISION_API_KEY=... python -m scripts.live_eval scripts/eval/sample.jsonl
+    uv run python -m scripts.live_eval scripts/eval/sample.jsonl      # uses the settings in .env
 
-Run the same file against hosted Jev and a local Laya or OpenJev server (change GW_DECISION_URL
-and GW_DECISION_MODEL) to compare them on your own conversations before trusting either.
+Run the same file against Jev on OpenRouter and a local Laya or OpenJev server
+(GW_DECISION_PROVIDER=jev with GW_DECISION_URL and GW_DECISION_MODEL) to compare them on your own
+conversations before trusting either.
 
 Each line: {"text": "...", "expect": {"action": "add", "kind": "workaround"}, "doc": optional canvas,
             "pass": "overview" or "detail" (default detail)}

@@ -61,9 +61,16 @@ To catch sign-in emails while testing: `docker compose --profile dev up -d`, set
 
 | Setting | Values |
 |---|---|
-| `GW_AI_PROVIDER` | `none`, `ollama` (local, point `GW_OLLAMA_URL` at the inference box), `anthropic`, `openai` (any OpenAI-compatible endpoint) |
-| `GW_DECISION_PROVIDER` | `none`, `jev` (hosted TypeSafe Jev, or a Laya or OpenJev server via `GW_DECISION_URL`) |
+| `GW_AI_PROVIDER` | `none`, `openai` (OpenAI with `GW_OPENAI_API_KEY` and `GW_OPENAI_MODEL`, or any OpenAI-compatible endpoint), `ollama` (local, point `GW_OLLAMA_URL` at the inference box), `anthropic` |
+| `GW_DECISION_PROVIDER` | `none`, `openrouter` (TypeSafe Jev through OpenRouter's System One API, with `GW_OPENROUTER_API_KEY`), `jev` (TypeSafe directly, or a Laya or OpenJev server via `GW_DECISION_URL`) |
 | `GW_TRANSCRIPTION_PROVIDER` | `none`, `faster_whisper` (build with `WITH_WHISPER=true`, or `uv sync --extra whisper` locally), `openai_compatible` (a Whisper server URL) |
+
+The default set-up runs live mapping on Jev through OpenRouter and drafting and review on OpenAI.
+Put both keys in `.env`, then check they answer:
+
+```bash
+cd backend && uv run python -m scripts.check_providers
+```
 
 Maps and files flagged as holding personal information never go to a cloud model unless
 `GW_AI_ALLOW_CLOUD_FOR_PERSONAL_INFO=true`.

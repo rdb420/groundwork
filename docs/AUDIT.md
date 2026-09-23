@@ -13,7 +13,7 @@ and low. Update the status here in the same commit as the fix.
 | G3 | Every state-changing endpoint should write an audit event; `parking_add`, `PUT /me`, chunk upload and logout do not. | Fixed: all four now audit; `live.heard` records sentences that changed nothing; a test fails if any mutating route skips `audit.record` |
 | G4 | Rollout depends on roadmap items not yet built: coverage view (phase 3 exit), catalogue admin (phase 0), retention and purge, malware scanning before public exposure. | Open |
 | G5 | Privacy impact assessment and retention period are required before inviting staff; neither exists. | Open |
-| G6 | Live mapping should run Jev through OpenRouter, and the reviewer through OpenAI. | Open |
+| G6 | Live mapping should run Jev through OpenRouter, and the reviewer through OpenAI. | Fixed: `GW_DECISION_PROVIDER=openrouter` and `GW_AI_PROVIDER=openai` are the defaults in `.env.example`; `scripts/check_providers.py` confirms both answer |
 
 ## High
 

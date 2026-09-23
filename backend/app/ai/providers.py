@@ -12,7 +12,17 @@ class ProviderError(RuntimeError):
 
 
 def complete(system: str, user: str, *, json_mode: bool = True) -> tuple[str, str, str]:
-    """Returns (text, provider, model)."""
+    """Returns (text, provider, model). Network failures and odd replies become ProviderError, which
+    the routes turn into a message the person can act on."""
+    try:
+        return _complete(system, user, json_mode)
+    except httpx.HTTPError as e:
+        raise ProviderError(f"Couldn't reach the AI model ({type(e).__name__}). Try again in a minute.") from e
+    except (KeyError, IndexError, TypeError, ValueError) as e:
+        raise ProviderError("The AI model sent back a reply in an unexpected shape. Try again.") from e
+
+
+def _complete(system: str, user: str, json_mode: bool) -> tuple[str, str, str]:
     s = get_settings()
     if s.ai_provider == "ollama":
         body = {"model": s.ollama_model, "stream": False,
@@ -39,6 +49,8 @@ def complete(system: str, user: str, *, json_mode: bool = True) -> tuple[str, st
     if s.ai_provider == "openai":
         if not s.openai_model:
             raise ProviderError("GW_OPENAI_MODEL is not set.")
+        if not s.openai_api_key and "api.openai.com" in s.openai_url:
+            raise ProviderError("GW_OPENAI_API_KEY is not set. Add it to .env and restart.")
         headers = {"Authorization": f"Bearer {s.openai_api_key}"} if s.openai_api_key else {}
         body = {"model": s.openai_model,
                 "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]}

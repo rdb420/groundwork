@@ -3,6 +3,7 @@ import tempfile
 
 import pytest
 
+os.environ["GW_ENV_FILES"] = ""  # ignore the developer's .env
 os.environ["GW_DATA_DIR"] = tempfile.mkdtemp(prefix="gw-test-")
 os.environ["GW_ALLOWED_EMAIL_DOMAINS"] = "example.com.au"
 os.environ["GW_ANALYST_EMAILS"] = "lead@example.com.au"

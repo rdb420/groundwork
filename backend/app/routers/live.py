@@ -71,7 +71,7 @@ class ChecksIn(BaseModel):
 
 def _guard(board: Board):
     s = get_settings()
-    if board.personal_info and not s.decision_is_local and not s.ai_allow_cloud_for_personal_info:
+    if board.personal_info and not s.decision_local and not s.ai_allow_cloud_for_personal_info:
         raise HTTPException(409, "This map is marked as containing personal information, and live mapping uses a "
                                  "hosted decision model. Point GW_DECISION_URL at a local Jev-compatible server "
                                  "such as Laya, or untick personal information on the map.")
