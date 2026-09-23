@@ -43,8 +43,9 @@ export default function SessionPanel({ boardId, transcriptionOn, onRecordingChan
       } catch (e) {
         const status = (e as { status?: number }).status ?? 0;
         if (attempt >= RETRIES.length || (status >= 400 && status < 500 && status !== 429)) {
-          setError(`Part ${n + 1} of the recording didn't upload: ${(e as Error).message}`);
-          return;
+          const message = `Part ${n + 1} of the recording didn't upload: ${(e as Error).message}`;
+          setError(message);
+          throw new Error(message);
         }
         await wait(RETRIES[attempt]);
       }
@@ -92,7 +93,7 @@ export default function SessionPanel({ boardId, transcriptionOn, onRecordingChan
     running.current = false;
     await stopCurrent.current();
     stream.current?.getTracks().forEach((t) => t.stop());
-    await Promise.allSettled(uploads.current);
+    await Promise.all(uploads.current);
     await api.send("POST", `/api/recordings/${rid}/end`);
   };
 
