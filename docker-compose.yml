@@ -1,0 +1,43 @@
+# Groundwork on one host.
+#   docker compose up -d --build            production-style: app, worker, caddy
+#   docker compose --profile dev up -d      adds Mailpit to catch sign-in emails at :8025
+services:
+  app:
+    build: { context: ., dockerfile: deploy/Dockerfile, args: { WITH_WHISPER: "${WITH_WHISPER:-false}" } }
+    env_file: .env
+    volumes: [ "./data:/data" ]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  worker:
+    build: { context: ., dockerfile: deploy/Dockerfile, args: { WITH_WHISPER: "${WITH_WHISPER:-false}" } }
+    env_file: .env
+    command: ["python", "-m", "app.worker"]
+    volumes: [ "./data:/data" ]
+    restart: unless-stopped
+    depends_on: [ app ]
+
+  caddy:
+    image: caddy:2
+    ports: [ "80:80", "443:443" ]
+    environment:
+      GW_HOSTNAME: "${GW_HOSTNAME:-groundwork.local}"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+    depends_on: [ app ]
+
+  mailpit:
+    image: axllent/mailpit
+    profiles: [ "dev" ]
+    ports: [ "8025:8025" ]
+
+volumes:
+  caddy_data:
+  caddy_config:

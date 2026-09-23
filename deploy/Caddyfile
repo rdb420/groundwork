@@ -1,0 +1,27 @@
+# HTTPS in front of the app. Pick ONE of the options below for the site block.
+#
+# Option A, office network: Caddy issues its own certificate. Install Caddy's root certificate
+# on office PCs once (docker compose exec caddy cat /data/caddy/pki/authorities/local/root.crt)
+# or browsers will warn. Point GW_HOSTNAME at the host with a DNS record or hosts-file entry.
+#
+# Option B, a real subdomain (e.g. groundwork.yshproperty.com.au) with DNS pointing at the host
+# and ports 80/443 reachable: remove "tls internal" and Caddy fetches a public certificate.
+#
+# Option C, Tailscale: skip Caddy and run `tailscale serve --bg https / http://localhost:8000`
+# on the host. Staff on the tailnet get a trusted *.ts.net certificate.
+
+{$GW_HOSTNAME} {
+	tls internal
+	encode zstd gzip
+	request_body {
+		max_size 110MB
+	}
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "no-referrer"
+		X-Frame-Options "DENY"
+		Permissions-Policy "camera=(), geolocation=(), microphone=(self)"
+	}
+	reverse_proxy app:8000
+}

@@ -1,0 +1,15 @@
+{"text": "It all starts when rent falls due on a Monday", "expect": {"action": "add", "kind": "start"}}
+{"text": "First thing I do is check the bank feed in Xero", "expect": {"action": "add", "kind": "task"}}
+{"text": "Then I copy anyone who hasn't paid into my own arrears spreadsheet", "expect": {"action": "add", "kind": "workaround"}}
+{"text": "Sometimes the bank feed is a day behind so it looks like people haven't paid", "expect": {"action": "add", "kind": "issue"}}
+{"text": "If they're more than a week late Dean has to approve a breach notice", "expect": {"action": "add", "kind": "control"}}
+{"text": "It's usually about fifteen rooms a week", "expect": {"action": "add", "kind": "metric"}}
+{"text": "Right, and how long have you been doing it that way?", "expect": {"action": "nothing"}}
+{"text": "Actually that's not a spreadsheet, it's a list in the property software", "expect": {"action": "update"}}
+{"text": "I'm not sure who follows up after the notice goes out", "expect": {"action": "add", "kind": "question"}}
+{"text": "Add a decision after the bank feed check: has the tenant paid", "expect": {"action": "add", "kind": "decision"}}
+{"text": "The bank feed is always a day behind on Mondays", "pass": "overview", "expect": {"action": "add", "kind": "issue"}}
+{"text": "Then we send the tenant a reminder text", "pass": "overview", "expect": {"action": "add", "kind": "task"}}
+{"text": "The tenant usually pays by bank transfer", "expect": {"action": "add", "kind": "external_party"}}
+{"text": "That happens because the bank only updates overnight", "expect": {"action": "add", "kind": "issue"}}
+{"text": "Nobody really knows how disputes get sorted out, it depends who picks it up", "expect": {"action": "add", "kind": "unclear"}}
