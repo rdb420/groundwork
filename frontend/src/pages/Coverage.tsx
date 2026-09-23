@@ -16,7 +16,7 @@ type Coverage = {
     drafts: { accepted: number; discarded: number; draft: number }; to_confirm: number };
 };
 
-const SHOWN = ["declared", "system", "actual", "workaround"] as const;
+const SHOWN = ["declared", "system", "actual", "workaround", "unsure"] as const;
 
 // Where the evidence is and where it isn't: files per process by what they show, who shared them,
 // and how far mapping has got. The measures come from the rollout plan in docs/ARCHITECTURE.md.
