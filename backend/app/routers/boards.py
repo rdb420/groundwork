@@ -146,6 +146,8 @@ async def upload_chunk(rid: str, seq: int, request: Request, file: UploadFile = 
     r = _own_recording(db, rid, user)
     if not 0 <= seq < 100_000:
         raise HTTPException(422, "That part of the recording is out of range.")
+    if r.audio_purged_at is not None:
+        raise HTTPException(409, "Audio for this recording has been purged.")
     if r.status != "recording" and not (r.ended_at and utcnow() - aware(r.ended_at) < CHUNK_GRACE):
         raise HTTPException(409, "This recording has ended.")
     existing = db.scalar(select(TranscriptSegment).where(TranscriptSegment.recording_id == rid,

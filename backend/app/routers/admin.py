@@ -151,6 +151,8 @@ def purge_artifact(aid: str, body: PurgeIn, request: Request, user: User = Depen
 def purge_recording_audio(rid: str, body: PurgeIn, request: Request, user: User = Depends(require("admin")),
                           db: DB = Depends(get_db)):
     r = get_or_404(db, Recording, rid, "Recording")
+    if r.status != "ended":
+        raise HTTPException(409, "Audio can only be purged after the recording has ended.")
     retention.purge_audio(db, r, actor_id=user.id, reason=body.reason.strip())
     audit.record(db, "recording.purge_requested", "recording", rid, actor_id=user.id, request=request,
                  detail={"reason": body.reason.strip()})
