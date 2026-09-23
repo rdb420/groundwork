@@ -28,7 +28,7 @@ and low. Update the status here in the same commit as the fix.
 
 | Id | Finding | Where | Status |
 |---|---|---|---|
-| M5 | Sharing several files with one new process name creates that process once per file. | `routers/artifacts.py::upload`, `pages/Share.tsx` | Open |
+| M5 | Sharing several files with one new process name creates that process once per file. | `routers/artifacts.py::upload`, `pages/Share.tsx` | Fixed: uploads reuse a live process with the same name in any case (`find_or_propose`) |
 | M6 | Roles never go down after an address leaves `GW_ADMIN_EMAILS`; sessions can't be revoked. | `routers/auth.py::verify` | Open |
 | M7 | A combined map is accepted on first open without anyone choosing to keep it. Live auto-apply is not stated in CLAUDE.md. | `pages/BoardPage.tsx`, `CLAUDE.md` | Open |
 | M8 | Browser speech recognition sends audio to Google or Microsoft even on personal-information maps with a local decision model. | `canvas/LivePanel.tsx` | Open |

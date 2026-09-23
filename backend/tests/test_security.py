@@ -167,3 +167,19 @@ def test_recording_parts_are_kept_safe(client, monkeypatch):
         db.commit()
     assert part(4).status_code == 409
     assert client.post(f"/api/recordings/{rid}/end", headers=H).status_code == 200  # ending twice is fine
+
+
+# ---- M5: one new process per name ------------------------------------------------------
+
+def test_a_batch_with_a_new_process_name_creates_it_once(client):
+    sign_in(client, "staff@example.com.au")
+    meta = {"personal_info": "no", "new_process_names": ["Key register upkeep"]}
+    for i in range(3):
+        client.post("/api/artifacts", headers=H, files={"file": (f"f{i}.txt", f"f{i}".encode(), "text/plain")},
+                    data={"meta": json.dumps({"title": f"File {i}", **meta})})
+    named = [p for p in client.get("/api/processes").json() if p["name"] == "Key register upkeep"]
+    assert len(named) == 1 and named[0]["artifact_count"] == 3
+    client.post("/api/artifacts", headers=H, files={"file": ("g.txt", b"g", "text/plain")},
+                data={"meta": json.dumps({"title": "Other case", "personal_info": "no",
+                                          "new_process_names": ["KEY REGISTER UPKEEP"]})})
+    assert len([p for p in client.get("/api/processes").json() if p["name"].lower() == "key register upkeep"]) == 1
