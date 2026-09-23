@@ -36,13 +36,13 @@ and low. Update the status here in the same commit as the fix.
 | M10 | Worker: jobs stuck in `running` after a crash never recover, retries have no backoff, workbooks load fully into memory, and a big workbook delays transcription. | `worker.py`, `processing/xlsx_profile.py` | Fixed: jobs left running are reclaimed at start-up and hourly; failures back off (30 s, 2 min) before the third and last try; workbooks over 150 MB expanded get a streaming read and zip bombs aren't opened; a separate transcriber worker, and transcription first when one worker runs everything |
 | M11 | AI prompts see file metadata and a 400-character summary; extracted text is never used. | `ai/generate.py::_evidence` | Fixed: drafts and reviews get each linked file's extracted text or workbook structure, up to 4,000 characters a file and 40,000 in all, fenced as data |
 | M12 | Deployment option C (Tailscale) proxies `localhost:8000`, which compose never publishes. | `deploy/Caddyfile`, `docker-compose.yml` | Fixed: compose publishes the app on 127.0.0.1:8000 only; the Caddyfile and ARCHITECTURE give the exact option C commands and settings |
-| M13 | An unknown `board_id` on upload or `process_id` on a board save returns a 500. | `routers/artifacts.py`, `routers/boards.py` | Open |
+| M13 | An unknown `board_id` on upload or `process_id` on a board save returns a 500. | `routers/artifacts.py`, `routers/boards.py` | Fixed: uploads check the map and processes, boards check the process on create and save, new processes check their parent; each answers 404 |
 
 ## Low
 
 | Id | Finding | Where | Status |
 |---|---|---|---|
-| L1 | Process edits accept any `status` and allow `parent_id` loops. | `routers/processes.py` | Open |
+| L1 | Process edits accept any `status` and allow `parent_id` loops. | `routers/processes.py` | Fixed with G4: status must be proposed, confirmed or retired; parents must exist and can't loop; names stay unique; owner must be an email |
 | L2 | Document and rule-table saves have no version check; the last save wins. | `routers/live.py` | Open |
 | L3 | A recording stays open forever if the tab closes. | `routers/boards.py` | Open |
 | L4 | Backups are unencrypted and sit on the same disk. | `app/backup.py`, `deploy/backup.sh` | Open |

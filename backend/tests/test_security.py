@@ -311,3 +311,17 @@ def test_drafts_read_file_contents_within_a_budget(client, monkeypatch):
     assert "<<<FILE \"Breach policy\"" in evidence and "[rest of the file trimmed]" in evidence
     assert len(evidence) < gen.EVIDENCE_FILE_CHARS + 1500
     assert "between <<< and >>>" in seen["system"]
+
+
+# ---- M13: unknown references are a 404, not a 500 --------------------------------------
+
+def test_unknown_references_are_refused_cleanly(client):
+    sign_in(client, "lead@example.com.au")
+    assert client.post("/api/boards", headers=H, json={"title": "x", "process_id": "nope"}).status_code == 404
+    b = client.post("/api/boards", headers=H, json={"title": "x"}).json()
+    r = client.put(f"/api/boards/{b['id']}", headers=H, json={"version": 1, "doc": {"nodes": [], "edges": []},
+                                                               "process_id": "nope"})
+    assert r.status_code == 404
+    assert client.post("/api/processes", headers=H, json={"name": "Orphan", "parent_id": "nope"}).status_code == 404
+    assert client.patch("/api/processes/nope", headers=H, json={"status": "confirmed"}).status_code == 404
+    assert client.post("/api/processes/nope/combine", headers=H).status_code == 404
