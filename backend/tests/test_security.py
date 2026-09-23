@@ -344,3 +344,24 @@ def test_document_and_rules_refuse_stale_saves(client):
     assert client.put(url, headers=H, json={"rules": table, "version": 0}).json()["version"] == 1
     assert client.put(url, headers=H, json={"rules": [], "version": 0}).status_code == 409
     assert len(client.get(url).json()["rules"]) == 1
+
+
+# ---- L3: recordings nobody stopped ------------------------------------------------------
+
+def test_abandoned_recordings_are_ended(client):
+    from datetime import timedelta
+
+    from app import housekeeping
+    from app.db import SessionLocal
+    from app.models import Recording
+    from app.security import utcnow
+    sign_in(client, "lead@example.com.au")
+    bid = client.post("/api/boards", headers=H, json={"title": "Abandoned"}).json()["id"]
+    old = client.post(f"/api/boards/{bid}/recordings", headers=H, json={"consent_note": "Sam agreed"}).json()["id"]
+    live = client.post(f"/api/boards/{bid}/recordings", headers=H, json={"consent_note": "Sam agreed"}).json()["id"]
+    with SessionLocal() as db:
+        db.get(Recording, old).started_at = utcnow() - timedelta(hours=2)
+        db.commit()
+        assert housekeeping.run(db)["recordings_ended"] >= 1
+        db.commit()
+        assert db.get(Recording, old).status == "ended" and db.get(Recording, live).status == "recording"

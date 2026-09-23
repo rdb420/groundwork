@@ -104,7 +104,7 @@ backend/app/
   worker.py            job loop, daily retention
   scan.py              ClamAV malware check for uploads
   retention.py         purge withdrawn files and old session audio
-  housekeeping.py      hourly upkeep: expired sessions and sign-in links
+  housekeeping.py      hourly upkeep: expired sessions and links, recordings nobody stopped
   backup.py            snapshot, archive, restore check
   seed.py              starter process catalogue (confirm with the business)
 frontend/src/
