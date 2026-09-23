@@ -52,7 +52,7 @@ holding personal information, or where it is unsure, are refused by every hosted
 | 8 Cross-border disclosure | Take reasonable steps so overseas recipients don't breach the APPs | Hosted models are refused for anything marked as holding personal information, or unsure. Live mapping audio is sent to the browser vendor | Confirm the data handling terms of OpenRouter, TypeSafe and OpenAI (retention, training use, location) (A5). Tell facilitators not to use live speech on sensitive sessions; the Live tab switches speech off on maps marked personal |
 | 9 Government identifiers | Don't adopt them | Not adopted. They may appear inside shared files | Covered by A2 and A3 |
 | 10 Quality | Keep information accurate and complete | Maps and drafts carry `[TO CONFIRM]` markers; drafts cite their evidence | None |
-| 11 Security | Protect from misuse, loss and unauthorised access; destroy when no longer needed | Email sign-in with single-use links, HttpOnly session cookies, server-side role checks, a CSRF guard, HTTPS with a strict content security policy, ClamAV scanning, audit log of every change, files stored on YSH's host, retention and purge | Encrypt off-host backups (see `deploy/backup.sh`); restrict host access to named administrators (A6) |
+| 11 Security | Protect from misuse, loss and unauthorised access; destroy when no longer needed | Email sign-in with single-use links, HttpOnly session cookies, server-side role checks, a CSRF guard, HTTPS with a strict content security policy, ClamAV scanning, audit log of every change, files stored on YSH's host, retention and purge, backups encrypted with age before they leave the host | Turn on backup encryption and the off-host copy; restrict host access to named administrators (A6) |
 | 12 Access | Give people access to their information | Staff see their own uploads; analysts can find anything by person | Agree how a customer's access request would be searched and answered (A7) |
 | 13 Correction | Correct information on request | Contributors can withdraw files; admins can delete them; maps and documents are editable | None |
 
@@ -126,5 +126,5 @@ setting should stay false.
 | A3 | Regular review of files marked yes or unsure | | Open |
 | A4 | Script for telling session participants about recording | | Done: section 6 |
 | A5 | Confirm OpenRouter, TypeSafe and OpenAI data terms | | Open |
-| A6 | Encrypted off-host backups and named host administrators | | Open: backups can be encrypted with `GW_BACKUP_PASSPHRASE_FILE` |
+| A6 | Encrypted off-host backups and named host administrators | | Open: set `GW_BACKUP_AGE_RECIPIENTS` and `GW_BACKUP_COPY_TO` (README, Backups); name the administrators |
 | A7 | Procedure for customer access requests | | Open |

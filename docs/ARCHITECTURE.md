@@ -232,8 +232,9 @@ opens to everyone.
 authentication before relying on it; a transactional email service is often simpler.
 
 **Backups.** `deploy/backup.sh` runs a consistent SQLite snapshot and archives all files, then
-opens the archive to confirm it reads. Schedule it nightly and copy `data/backups/` off the
-host.
+opens the archive to confirm it reads. With `GW_BACKUP_AGE_RECIPIENTS` set, the archive is
+encrypted with age as it is written, to public keys whose private halves live off the host, and
+`GW_BACKUP_COPY_TO` copies it elsewhere (never unencrypted). Schedule it nightly. See the README.
 
 ## 7. Rollout plan
 

@@ -23,6 +23,10 @@ class Settings(BaseSettings):
     database_url: str = ""  # defaults to sqlite in data_dir
     max_upload_mb: int = 100
     backup_keep_days: int = 30
+    # age public keys (age1...), comma separated. Set them and every backup is encrypted to them.
+    backup_age_recipients: str = ""
+    # Optional private key file for checking encrypted backups on this host. Better kept elsewhere.
+    backup_age_identity_file: str = ""
 
     # Retention (see docs/PRIVACY.md). 0 keeps forever. With retention_auto the worker purges what is
     # due once a day; otherwise an admin runs it from the Retention page.

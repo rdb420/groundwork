@@ -59,6 +59,22 @@ everything except `caddy` and follow the comment there). Schedule `deploy/backup
 To catch sign-in emails while testing: `docker compose --profile dev up -d`, set
 `GW_SMTP_HOST=mailpit`, `GW_SMTP_PORT=1025`, `GW_SMTP_STARTTLS=false`, and open port 8025.
 
+## Backups
+
+`deploy/backup.sh` takes a consistent snapshot of the database and every stored file, checks it,
+and keeps `GW_BACKUP_KEEP_DAYS` of them in `data/backups/`. Schedule it nightly from the host's
+crontab.
+
+Backups hold tenant and borrower information, so encrypt them before they leave the host:
+
+1. On a machine other than the host, run `age-keygen -o groundwork-backup.key`. Keep that file
+   there and in your password manager.
+2. Put the public key it prints (`age1...`) in `.env` as `GW_BACKUP_AGE_RECIPIENTS`.
+3. Set `GW_BACKUP_COPY_TO` to an rsync destination off the host. `backup.sh` refuses to copy
+   unencrypted backups.
+4. Test a restore now and then where the key lives:
+   `age -d -i groundwork-backup.key groundwork-....tar.gz.age | tar tz`.
+
 ## AI and transcription
 
 | Setting | Values |
