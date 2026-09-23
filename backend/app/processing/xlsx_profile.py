@@ -4,10 +4,13 @@ It records what a reviewer needs before opening the file: sheets and their visib
 ranges, tables, defined names, formula density, external links, data validation and macros.
 It never modifies the workbook.
 """
+import logging
 import zipfile
 from pathlib import Path
 
 from openpyxl import load_workbook
+
+log = logging.getLogger("groundwork.worker")
 
 
 def profile_workbook(path: Path) -> dict:
@@ -38,8 +41,8 @@ def profile_workbook(path: Path) -> dict:
     names = []
     try:
         names = [{"name": n, "refers_to": str(dn.attr_text)} for n, dn in wb.defined_names.items()][:200]
-    except Exception:  # openpyxl versions differ here
-        pass
+    except Exception:  # openpyxl versions differ here; names are a nice-to-have
+        log.info("couldn't read defined names in %s", path.name)
     with zipfile.ZipFile(path) as z:
         members = z.namelist()
     has_macros = any(m.endswith("vbaProject.bin") for m in members)

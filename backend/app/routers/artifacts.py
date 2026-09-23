@@ -8,7 +8,8 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Uplo
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field, ValidationError
 from sqlalchemy import select
-from sqlalchemy.orm import Session as DB, selectinload
+from sqlalchemy.orm import Session as DB
+from sqlalchemy.orm import selectinload
 
 from .. import audit
 from ..db import get_db
@@ -64,7 +65,7 @@ async def upload(request: Request, file: UploadFile = File(...), meta: str = For
     try:
         m = ArtifactMeta.model_validate(json.loads(meta))
     except (ValidationError, json.JSONDecodeError):
-        raise HTTPException(422, "Add a title so others can find this file.")
+        raise HTTPException(422, "Add a title so others can find this file.") from None
     m.check()
 
     a = Artifact(id=uid(), uploaded_by=user.id, original_filename=safe_name(file.filename or "file"), stored_path="",

@@ -229,7 +229,7 @@ function Canvas({ board, me }: { board: BoardRow; me: Me }) {
           {layersOpen && (
             <div className="layers-pop" role="group" aria-label="Show on the map">
               {(Object.keys(LAYERS) as Layer[]).map((l) => (
-                <label key={l} className="check"><input type="checkbox" checked={!hidden.has(l)} onChange={() => setHidden((h) => { const n = new Set(h); n.has(l) ? n.delete(l) : n.add(l); return n; })} />{LAYERS[l].label}</label>
+                <label key={l} className="check"><input type="checkbox" checked={!hidden.has(l)} onChange={() => setHidden((h) => { const n = new Set(h); if (n.has(l)) n.delete(l); else n.add(l); return n; })} />{LAYERS[l].label}</label>
               ))}
               <p className="quiet small">The standard path always shows. Hidden elements stay on the map.</p>
             </div>

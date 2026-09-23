@@ -8,6 +8,7 @@ Portability notes, from each project's README at the time of writing:
   GW_DECISION_MAX_OPTIONS (default 20).
 """
 import time
+from typing import Any
 
 import httpx
 
@@ -42,7 +43,7 @@ def system_one(state, questions: dict) -> tuple[dict, str, int]:
 
 
 def noul(q: str, true: str | None = None, false: str | None = None) -> dict:
-    out = {"type": "noul", "instructions": q}
+    out: dict[str, Any] = {"type": "noul", "instructions": q}
     if true or false:
         out["criteria"] = {"true": true or "Yes", "false": false or "No"}
     return out

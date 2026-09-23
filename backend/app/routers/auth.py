@@ -19,8 +19,7 @@ from ..config import get_settings
 from ..db import get_db
 from ..mailer import send_magic_link
 from ..models import MagicToken, Session, User
-from ..security import (COOKIE, aware, create_session, current_user, digest, email_allowed, new_secret,
-                        role_for, utcnow)
+from ..security import COOKIE, aware, create_session, current_user, digest, email_allowed, new_secret, role_for, utcnow
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 _hits: dict[str, deque] = defaultdict(deque)

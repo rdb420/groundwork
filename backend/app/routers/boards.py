@@ -1,4 +1,6 @@
 """Process-mapping boards, session recordings and AI drafts."""
+from typing import Any
+
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -42,7 +44,7 @@ class GenerateIn(BaseModel):
 
 
 def board_dict(b: Board, with_doc: bool = False) -> dict:
-    d = {"id": b.id, "title": b.title, "process_id": b.process_id,
+    d: dict[str, Any] = {"id": b.id, "title": b.title, "process_id": b.process_id,
          "process_name": b.process.name if b.process else None, "version": b.version,
          "updated_at": b.updated_at, "created_at": b.created_at, "personal_info": b.personal_info,
          "node_count": len(b.doc.get("nodes", [])), "session_pass": b.session_pass or "detail",
@@ -181,7 +183,7 @@ def generate(bid: str, body: GenerateIn, request: Request, user: User = Depends(
     try:
         draft = generate_for_board(db, b, user, body.mode, body.guidance)
     except GenerationRefused as e:
-        raise HTTPException(409, str(e))
+        raise HTTPException(409, str(e)) from e
     audit.record(db, "ai.draft_created", "ai_draft", draft.id, actor_id=user.id, actor_type="ai", request=request,
                  detail={"board_id": bid, "mode": body.mode, "provider": draft.provider, "model": draft.model,
                          "board_version": draft.board_version})

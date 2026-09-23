@@ -8,7 +8,7 @@ and low. Update the status here in the same commit as the fix.
 
 | Id | Gap | Status |
 |---|---|---|
-| G1 | No git history, no CI, no linter, no backend type checks. | Open |
+| G1 | No git history, no CI, no linter, no backend type checks. | Fixed: repo on GitHub; CI runs ruff, mypy, pytest, eslint, vitest, the build and the image |
 | G2 | CLAUDE.md asks for a test on every state-changing endpoint; withdraw, process edits, admin, parking, document, recording chunks and board-image visibility have none. The frontend has no tests. | Open |
 | G3 | Every state-changing endpoint should write an audit event; `parking_add`, `PUT /me`, chunk upload and logout do not. | Open |
 | G4 | Rollout depends on roadmap items not yet built: coverage view (phase 3 exit), catalogue admin (phase 0), retention and purge, malware scanning before public exposure. | Open |

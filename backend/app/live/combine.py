@@ -53,7 +53,7 @@ def combine_views(db: DB, process: Process, user: User) -> tuple[Board, AIDraft]
     try:
         raw, provider, model = complete(SYSTEM.format(org=s.org_name), prompt)
     except ProviderError as e:
-        raise GenerationRefused(str(e))
+        raise GenerationRefused(str(e)) from e
     out = _parse(raw)
     changes = [c for c in validate(out.get("changes") or [], {"nodes": [], "edges": []})
                if c["op"] in {"add", "connect"}]

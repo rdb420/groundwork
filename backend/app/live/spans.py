@@ -50,7 +50,9 @@ def actor_candidates(text: str, limit: int = 18) -> list[str]:
     """Short phrases that could name a person, role, team or organisation: "the tenant", "Dean",
     "the bank", "accounts team". Names of outside parties become pool labels, so they must be short."""
     words = [w.strip(",.;:!?\"'()") for w in text.split()]
-    seen, named, other = set(), [], []
+    seen: set[str] = set()
+    named: list[str] = []
+    other: list[str] = []
     for n in (1, 2, 3):
         for i in range(0, max(0, len(words) - n) + 1):
             ws = _clean(words[i:i + n])

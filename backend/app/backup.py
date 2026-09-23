@@ -9,7 +9,7 @@ import sqlite3
 import tarfile
 import tempfile
 import time
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 from .config import get_settings
@@ -19,7 +19,7 @@ def run() -> Path:
     s = get_settings()
     out_dir = s.data_dir / "backups"
     out_dir.mkdir(exist_ok=True)
-    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    stamp = datetime.now(UTC).strftime("%Y%m%d-%H%M%S")
     archive = out_dir / f"groundwork-{stamp}.tar.gz"
     with tempfile.TemporaryDirectory() as tmp:
         snap = Path(tmp) / "groundwork.db"

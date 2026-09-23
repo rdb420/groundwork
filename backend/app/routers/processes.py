@@ -28,8 +28,8 @@ class ProcessPatch(BaseModel):
 
 @router.get("")
 def list_processes(user: User = Depends(current_user), db: DB = Depends(get_db)):
-    counts = dict(db.execute(select(ArtifactProcess.process_id, func.count()).group_by(ArtifactProcess.process_id)).all())
-    boards = dict(db.execute(select(Board.process_id, func.count()).group_by(Board.process_id)).all())
+    counts = dict(db.execute(select(ArtifactProcess.process_id, func.count()).group_by(ArtifactProcess.process_id)).tuples().all())
+    boards = dict(db.execute(select(Board.process_id, func.count()).group_by(Board.process_id)).tuples().all())
     rows = db.scalars(select(Process).where(Process.status != "retired").order_by(Process.name)).all()
     return [{"id": p.id, "name": p.name, "description": p.description, "parent_id": p.parent_id,
              "status": p.status, "owner_email": p.owner_email,

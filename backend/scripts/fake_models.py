@@ -7,8 +7,11 @@ Then run the API with:
     GW_DECISION_PROVIDER=jev GW_DECISION_URL=http://localhost:8095/v1/systemone
     GW_AI_PROVIDER=openai GW_OPENAI_URL=http://localhost:8095/v1/chat/completions GW_OPENAI_MODEL=fake
 """
-import json, re
+import json
+import re
+
 from fastapi import FastAPI, Request
+
 app = FastAPI()
 CONTEXT = {"issue", "workaround", "external_party", "risk"}
 

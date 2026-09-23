@@ -41,9 +41,18 @@ Plain words, sentence case, active voice, Australian spelling. Name things the w
 ("Share files", not "Upload artifacts"). Errors say what happened and what to do next. No em
 dashes.
 
+## Tooling
+
+uv manages the backend (Python pinned in `backend/.python-version`) and pnpm the frontend. Add
+dependencies with `uv add` / `uv add --dev` and `pnpm add` / `pnpm add -D`, never pip or npm, and
+commit the lock file with the change.
+
 ## Checks
 
+CI runs these on every push and pull request (`.github/workflows/ci.yml`). Run them before you
+commit:
+
 ```bash
-cd backend && uv run pytest -q
-cd frontend && pnpm run build
+cd backend && uv run ruff check app tests scripts && uv run mypy app && uv run pytest -q
+cd frontend && pnpm run lint && pnpm run test && pnpm run build
 ```

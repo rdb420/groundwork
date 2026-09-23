@@ -4,7 +4,7 @@ Tokens and session secrets are random, sent once, and stored only as SHA-256 has
 """
 import hashlib
 import secrets
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from fastapi import Depends, HTTPException, Request
 from sqlalchemy import select
@@ -27,12 +27,12 @@ def digest(secret: str) -> str:
 
 
 def utcnow() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def aware(dt: datetime) -> datetime:
     """SQLite drops tzinfo on read; treat stored values as UTC."""
-    return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+    return dt if dt.tzinfo else dt.replace(tzinfo=UTC)
 
 
 def role_for(email: str) -> str:

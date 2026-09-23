@@ -68,11 +68,13 @@ To catch sign-in emails while testing: `docker compose --profile dev up -d`, set
 Maps and files flagged as holding personal information never go to a cloud model unless
 `GW_AI_ALLOW_CLOUD_FOR_PERSONAL_INFO=true`.
 
-## Tests
+## Checks
+
+CI runs the same checks on every push and pull request.
 
 ```bash
-cd backend && uv run pytest -q
-cd frontend && pnpm run build
+cd backend && uv run ruff check app tests scripts && uv run mypy app && uv run pytest -q
+cd frontend && pnpm run lint && pnpm run test && pnpm run build
 ```
 
 ## Layout

@@ -1,8 +1,8 @@
 import json
 
 from app.config import get_settings
-from app.live import review as rv
 from app.live import combine as cb
+from app.live import review as rv
 from app.routers import live as live_router
 from tests.conftest import sign_in
 
@@ -239,7 +239,9 @@ def test_combine_views(client, monkeypatch):
 
 def test_new_columns_added_to_old_database(tmp_path):
     import sqlite3
+
     from sqlalchemy import create_engine, inspect
+
     from app import db as dbmod
     path = tmp_path / "old.db"
     con = sqlite3.connect(path)

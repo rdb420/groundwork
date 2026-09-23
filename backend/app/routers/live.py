@@ -97,7 +97,7 @@ def utterance(bid: str, body: UtteranceIn, request: Request, user: User = Depend
     try:
         answers, model, ms = jev.system_one(state, questions)
     except jev.DecisionError as e:
-        raise HTTPException(502, str(e))
+        raise HTTPException(502, str(e)) from e
     ops, parking, summary = plan(answers, ctx, body.mode, text)
     u = LiveUtterance(board_id=bid, created_by=user.id, source=body.source, text=text, model=model,
                       latency_ms=ms, answers=summary, ops=ops)
@@ -205,10 +205,10 @@ def review(bid: str, body: ReviewIn, request: Request, user: User = Depends(curr
     try:
         draft = run_review(db, board, user, body.doc, body.doc_kind)
     except GenerationRefused as e:
-        raise HTTPException(409, str(e))
+        raise HTTPException(409, str(e)) from e
     audit.record(db, "ai.review_created", "ai_draft", draft.id, actor_id=user.id, actor_type="ai", request=request,
                  detail={"board_id": bid, "provider": draft.provider, "model": draft.model,
-                         "changes": len(draft.proposal["changes"])})
+                         "changes": len((draft.proposal or {}).get("changes", []))})
     db.commit()
     return draft_dict(draft)
 
@@ -219,9 +219,9 @@ def combine(pid: str, request: Request, user: User = Depends(current_user), db: 
     try:
         board, draft = combine_views(db, process, user)
     except GenerationRefused as e:
-        raise HTTPException(409, str(e))
+        raise HTTPException(409, str(e)) from e
     audit.record(db, "ai.views_combined", "board", board.id, actor_id=user.id, actor_type="ai", request=request,
-                 detail={"process_id": pid, "draft_id": draft.id, "sources": draft.proposal["sources"]})
+                 detail={"process_id": pid, "draft_id": draft.id, "sources": (draft.proposal or {}).get("sources", [])})
     db.commit()
     return board_dict(board)
 

@@ -4,7 +4,8 @@ import json
 import re
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session as DB, selectinload
+from sqlalchemy.orm import Session as DB
+from sqlalchemy.orm import selectinload
 
 from ..config import get_settings
 from ..models import AIDraft, Artifact, ArtifactProcess, Board, Recording, TranscriptSegment, User
@@ -111,7 +112,7 @@ def generate_for_board(db: DB, board: Board, user: User, mode: str, guidance: st
     try:
         raw, provider, model = complete(SYSTEM.format(org=s.org_name), prompt)
     except ProviderError as e:
-        raise GenerationRefused(str(e))
+        raise GenerationRefused(str(e)) from e
     out = _parse(raw)
     draft = AIDraft(board_id=board.id, requested_by=user.id, mode=mode, provider=provider, model=model,
                     board_version=board.version, markdown=str(out.get("markdown", "")),

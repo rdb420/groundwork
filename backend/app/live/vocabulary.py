@@ -86,4 +86,4 @@ def kind_of(node: dict) -> str:
     for k, (nt, _) in NODE_FOR_KIND.items():
         if nt == t:
             return k
-    return {"sticky": "note", "text": "note"}.get(t, "note")
+    return {"sticky": "note", "text": "note"}.get(t or "", "note")
