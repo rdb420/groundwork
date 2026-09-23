@@ -49,6 +49,29 @@ def test_only_images_go_on_maps_and_references_must_exist(client):
     assert r.status_code == 404
 
 
+# ---- H3: "unsure" counts as personal information --------------------------------------
+
+def test_unsure_files_stay_out_of_cloud_models(client, monkeypatch):
+    from app.ai import generate as gen
+    monkeypatch.setattr(gen, "is_local", lambda: False)
+    monkeypatch.setattr(gen, "complete", lambda *a, **k: ('{"markdown": "x"}', "anthropic", "m"))
+    sign_in(client, "lead@example.com.au")
+    pid = client.post("/api/processes", headers=H, json={"name": "Unsure evidence"}).json()["id"]
+    b = client.post("/api/boards", headers=H, json={"title": "Unsure", "process_id": pid}).json()
+
+    def upload(pi):
+        return client.post("/api/artifacts", headers=H, files={"file": ("f.txt", pi.encode(), "text/plain")},
+                           data={"meta": json.dumps({"title": pi, "personal_info": pi, "process_ids": [pid]})}).json()
+
+    no = upload("no")
+    assert client.post(f"/api/boards/{b['id']}/generate", headers=H, json={"mode": "sop"}).status_code == 200
+    unsure = upload("unsure")
+    r = client.post(f"/api/boards/{b['id']}/generate", headers=H, json={"mode": "sop"})
+    assert r.status_code == 409 and "personal information" in r.json()["detail"]
+    for a in (no, unsure):
+        client.post(f"/api/artifacts/{a['id']}/withdraw", headers=H)
+
+
 # ---- H2: one bad map breaks a board ----------------------------------------------------
 
 def task(nid, x=0, **kw):

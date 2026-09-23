@@ -60,7 +60,8 @@ def _evidence(db: DB, board: Board) -> tuple[str, bool]:
     arts = db.scalars(select(Artifact).join(ArtifactProcess)
                       .where(ArtifactProcess.process_id == board.process_id, Artifact.status != "withdrawn")
                       .options(selectinload(Artifact.uploader))).all()
-    personal = any(a.personal_info == "yes" for a in arts)
+    # "Not sure" counts as personal: a hosted model only sees files someone has said are free of it.
+    personal = any(a.personal_info != "no" for a in arts)
     if not arts:
         return "No documents have been uploaded against this process yet.", personal
     lines = []
@@ -109,8 +110,9 @@ def generate_for_board(db: DB, board: Board, user: User, mode: str, guidance: st
     s = get_settings()
     evidence, personal = _evidence(db, board)
     if (board.personal_info or personal) and not is_local() and not s.ai_allow_cloud_for_personal_info:
-        raise GenerationRefused("This map or its documents contain personal information, and AI is set to a "
-                                "cloud provider. Switch to the local model or remove the personal information.")
+        raise GenerationRefused("This map or its files hold personal information, or someone wasn't sure, and AI "
+                                "is set to a cloud provider. Switch to the local model, or mark the files that are "
+                                "free of personal information as No.")
     prompt = "\n\n".join([
         f"PROCESS: {board.process.name if board.process else board.title}",
         f"MAP:\n{describe_board(saved_map(board))}",
