@@ -234,7 +234,8 @@ def test_combine_views(client, monkeypatch):
     drafts = client.get(f"/api/boards/{r.json()['id']}/drafts").json()
     assert drafts[0]["mode"] == "combine"
     assert [c["op"] for c in drafts[0]["proposal"]["changes"]] == ["add", "add", "connect"]
-    assert all(c["auto"] for c in drafts[0]["proposal"]["changes"])
+    # A combined map is a proposal: nothing lands until a person keeps it (audit M7).
+    assert not any(c["auto"] for c in drafts[0]["proposal"]["changes"]) and drafts[0]["status"] == "draft"
 
 
 def test_new_columns_added_to_old_database(tmp_path):

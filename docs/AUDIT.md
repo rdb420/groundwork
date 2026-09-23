@@ -30,7 +30,7 @@ and low. Update the status here in the same commit as the fix.
 |---|---|---|---|
 | M5 | Sharing several files with one new process name creates that process once per file. | `routers/artifacts.py::upload`, `pages/Share.tsx` | Fixed: uploads reuse a live process with the same name in any case (`find_or_propose`) |
 | M6 | Roles never go down after an address leaves `GW_ADMIN_EMAILS`; sessions can't be revoked. | `routers/auth.py::verify` | Fixed: roles follow the settings on every request; admins can sign someone out everywhere or remove access (People page); the worker clears expired sessions and links hourly |
-| M7 | A combined map is accepted on first open without anyone choosing to keep it. Live auto-apply is not stated in CLAUDE.md. | `pages/BoardPage.tsx`, `CLAUDE.md` | Open |
+| M7 | A combined map is accepted on first open without anyone choosing to keep it. Live auto-apply is not stated in CLAUDE.md. | `pages/BoardPage.tsx`, `CLAUDE.md` | Fixed: combined maps open as suggestions with Keep all and Discard all, and are laid out once; CLAUDE.md states the live auto-apply exception |
 | M8 | Browser speech recognition sends audio to Google or Microsoft even on personal-information maps with a local decision model. | `canvas/LivePanel.tsx` | Open |
 | M9 | Live routes skip `_board()`, so tightening board access would miss them. | `routers/live.py` | Open |
 | M10 | Worker: jobs stuck in `running` after a crash never recover, retries have no backoff, workbooks load fully into memory, and a big workbook delays transcription. | `worker.py`, `processing/xlsx_profile.py` | Open |

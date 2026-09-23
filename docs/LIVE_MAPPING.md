@@ -27,7 +27,8 @@ For the detail pass, map **one person's view at a time** (create the map as "One
 Each map shows what that person does and what they wait for from others, so its owner can check
 it. When a process has two or more of these, **Combine** on the Maps page builds a single map
 with a lane per person and joins their hand-offs. Where views disagree, the combiner keeps both
-and adds a question.
+and adds a question. The combined map opens with every element as a suggestion: keep or drop
+them one by one, or use Keep all or Discard all.
 
 ## How a sentence becomes a change
 

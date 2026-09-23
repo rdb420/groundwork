@@ -119,18 +119,32 @@ function Canvas({ board, me }: { board: BoardRow; me: Me }) {
     return () => clearTimeout(t);
   }, [nodes, edges, sessionPass, rules]);
 
-  // A combined map arrives as a set of changes from the combiner. Lay them out once, on first open.
+  // A combined map arrives as proposed changes from the combiner. Lay them out once as suggestions
+  // (autosave keeps them), then a person keeps or discards the lot, or goes through them one by one.
+  const [combined, setCombined] = useState<Draft | null>(null);
   useEffect(() => {
-    api.get<Draft[]>(`/api/boards/${board.id}/drafts`).then(async (ds) => {
+    api.get<Draft[]>(`/api/boards/${board.id}/drafts`).then((ds) => {
       const d = ds.find((x) => x.mode === "combine" && x.status === "draft");
       if (!d) return;
+      const ops = (d.proposal?.changes ?? []) as Op[];
+      const ids = new Set(ops.map((o) => o.id));
       let g = getGraph();
-      for (const op of (d.proposal?.changes ?? []) as Op[]) g = applyOp(g, op);
-      setGraph(g);
-      await api.send("POST", `/api/drafts/${d.id}/accept`);
-      setTimeout(() => fitView({ padding: 0.15, duration: 300, maxZoom: 1 }), 60);
+      if (!g.nodes.some((n) => ids.has((n.data as any)?.opId))) {
+        for (const op of ops) g = applyOp(g, op);
+        setGraph(g);
+        setTimeout(() => fitView({ padding: 0.15, duration: 300, maxZoom: 1 }), 60);
+      }
+      setCombined(d);
     });
   }, [board.id]);
+  const decideCombined = async (keep: boolean) => {
+    if (!combined) return;
+    let g = getGraph();
+    for (const op of (combined.proposal?.changes ?? []) as Op[]) g = keep ? acceptOp(g, op.id) : rejectOp(g, op.id);
+    setGraph(g);
+    await api.send("POST", `/api/drafts/${combined.id}/${keep ? "accept" : "discard"}`);
+    setCombined(null);
+  };
 
   // Layers hide context without touching the saved map.
   const hiddenTypes = useMemo(() => new Set(Array.from(hidden).flatMap((l) => LAYERS[l].types as readonly string[])), [hidden]);
@@ -244,6 +258,14 @@ function Canvas({ board, me }: { board: BoardRow; me: Me }) {
           ))}
         </div>
       </header>
+
+      {combined && (
+        <div className="combine-bar" role="region" aria-label="Combined map">
+          <p><strong>Combined from {(combined.proposal as any)?.sources?.length ?? "several"} views.</strong> {combined.proposal?.summary} Check the dashed elements, keep or drop them one by one, or decide for all.</p>
+          <button className="primary" onClick={() => decideCombined(true)}>Keep all</button>
+          <button onClick={() => decideCombined(false)}>Discard all</button>
+        </div>
+      )}
 
       <aside className="palette" aria-label="Elements">
         {groups.map((g) => (

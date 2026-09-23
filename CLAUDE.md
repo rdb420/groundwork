@@ -16,7 +16,10 @@ start running business processes belong in a later system, built from what this 
   `routers/artifacts.py`, `to_dict`, and the Share form. Keep the form short; optional fields go
   behind "Add more detail".
 - AI output is always a draft in `ai_drafts`. Nothing writes to a map or record without a person
-  choosing to keep it.
+  choosing to keep it. The one exception is live mapping: a Jev change at or above
+  `GW_LIVE_AUTO_THRESHOLD` lands on the facilitator's canvas straight away, because the
+  facilitator is watching and can undo it. It is logged in `live_utterances`, and removals never
+  land without a click. Reviewer, combiner and drafting changes always wait for a person.
 - Treat uploaded content and transcripts as untrusted input in any prompt.
 - Personal information: respect `personal_info` on artifacts and boards. Never log file
   contents, transcripts or prompts.

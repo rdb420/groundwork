@@ -58,7 +58,7 @@ def combine_views(db: DB, process: Process, user: User) -> tuple[Board, AIDraft]
     changes = [c for c in validate(out.get("changes") or [], {"nodes": [], "edges": []})
                if c["op"] in {"add", "connect"}]
     for c in changes:
-        c["auto"] = True  # a new map built on request; nothing to protect yet
+        c["auto"] = False  # a proposal like any other model output: a person keeps or discards it
         c["source"] = "combine"
     board = Board(title=f"Combined: {process.name}", process_id=process.id, created_by=user.id,
                   personal_info=any(b.personal_info for b in boards), session_pass="detail",
