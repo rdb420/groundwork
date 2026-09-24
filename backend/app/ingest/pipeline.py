@@ -25,7 +25,7 @@ from ..models import Artifact, ArtifactProcess, Board, Chunk, Document, Recordin
 from ..storage import get_storage, prefix_of
 from ..transcription import transcribe
 from . import blocks as B
-from . import chunker, embed, qdrant
+from . import chunker, embed, extract, graph, qdrant
 from .convert import AUDIO_VIDEO, Converted, convert
 
 log = logging.getLogger("groundwork.pipeline")
@@ -250,7 +250,7 @@ def after_index(db: DB, doc: Document) -> str:
 
 def index_chunks(db: DB, doc_id: str) -> None:
     doc = db.get(Document, doc_id)
-    if not doc or not doc.is_current or doc.status != "ok":
+    if not doc or not doc.is_current or doc.status not in ("ok", "partial"):
         return
     s = get_settings()
     key = hashlib.sha256(f"{doc.markdown_sha256}:{CHUNKER_VERSION}:{s.chunk_tokens}:{qdrant.LAYOUT_VERSION}"
@@ -285,6 +285,31 @@ def index_chunks(db: DB, doc_id: str) -> None:
     log.info("indexed %s %s: %d chunks", doc.source_type, doc.source_id, len(pieces))
 
 
+def after_extract(db: DB, doc: Document) -> str:
+    if get_settings().neo4j_url:
+        jobs.enqueue(db, "project_graph", doc.id)
+        return "graphing"
+    return "partial" if doc.status == "partial" else "done"
+
+
+def extract_entities(db: DB, doc_id: str) -> None:
+    doc = db.get(Document, doc_id)
+    if not doc or not doc.is_current or doc.status not in ("ok", "partial") or doc.stage == "converted":
+        return
+    extract.run(db, doc)
+    _set_status(db, doc, after_extract(db, doc))
+
+
+def project_graph(db: DB, doc_id: str) -> None:
+    doc = db.get(Document, doc_id)
+    if not doc or not doc.is_current or doc.status not in ("ok", "partial") or doc.stage not in ("extracted", "graphed"):
+        return
+    counts = graph.project(db, doc)
+    doc.stage = "graphed"
+    _set_status(db, doc, "partial" if doc.status == "partial" else "done")
+    log.info("graphed %s %s: %s", doc.source_type, doc.source_id, counts)
+
+
 def failed(db: DB, kind: str, ref_id: str) -> None:
     """The worker calls this when a stage has used up its tries."""
     if kind in ("convert_artifact", "transcribe_artifact"):
@@ -302,4 +327,5 @@ def failed(db: DB, kind: str, ref_id: str) -> None:
 
 
 STAGES = {"convert_artifact": convert_artifact, "transcribe_artifact": transcribe_artifact,
-          "ingest_recording": ingest_recording, "index_chunks": index_chunks}
+          "ingest_recording": ingest_recording, "index_chunks": index_chunks, "extract_entities": extract_entities,
+          "project_graph": project_graph}

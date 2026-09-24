@@ -19,10 +19,10 @@ class DecisionError(RuntimeError):
     pass
 
 
-def system_one(state, questions: dict) -> tuple[dict, str, int]:
-    """Returns (answers, model, latency_ms)."""
+def system_one(state, questions: dict, *, target: tuple[str, dict[str, str]] | None = None) -> tuple[dict, str, int]:
+    """Returns (answers, model, latency_ms). target overrides the configured endpoint (url, headers)."""
     s = get_settings()
-    url, headers = endpoint()
+    url, headers = target or endpoint()
     body = {"model": s.decision_model, "state": state, "questions": questions}
     t0 = time.perf_counter()
     for attempt in range(3):

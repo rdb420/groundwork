@@ -278,3 +278,69 @@ class Chunk(Base):
     end_s: Mapped[float | None] = mapped_column(Float, nullable=True)
     kind: Mapped[str] = mapped_column(String(20), default="text")  # text | table | image | transcript
     tokens: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class EntityMention(Base):
+    """A span in a chunk typed with an ontology class. entity_key joins mentions of the same thing."""
+    __tablename__ = "entity_mentions"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=uid)
+    chunk_id: Mapped[str] = mapped_column(ForeignKey("chunks.id", ondelete="CASCADE"), index=True)
+    document_id: Mapped[str] = mapped_column(String(32), index=True)
+    source_id: Mapped[str] = mapped_column(String(32), index=True)
+    start: Mapped[int] = mapped_column(Integer)
+    end: Mapped[int] = mapped_column(Integer)
+    surface: Mapped[str] = mapped_column(String(300))
+    class_iri: Mapped[str] = mapped_column(String(120))
+    score: Mapped[float] = mapped_column(Float, default=0.0)
+    method: Mapped[str] = mapped_column(String(40), default="gliner2")  # gliner2 | gliner2+jev
+    entity_key: Mapped[str] = mapped_column(String(36), index=True)
+    status: Mapped[str] = mapped_column(String(20), default="draft")  # draft | confirmed | rejected
+
+
+class RelationAssertion(Base):
+    """A relationship between two mentions in one chunk, chosen from the ontology's options."""
+    __tablename__ = "relation_assertions"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=uid)
+    chunk_id: Mapped[str] = mapped_column(ForeignKey("chunks.id", ondelete="CASCADE"), index=True)
+    document_id: Mapped[str] = mapped_column(String(32), index=True)
+    source_id: Mapped[str] = mapped_column(String(32), index=True)
+    subject_mention_id: Mapped[str] = mapped_column(String(32))
+    object_mention_id: Mapped[str] = mapped_column(String(32))
+    property_iri: Mapped[str] = mapped_column(String(120), default="")  # a direct property, or
+    role_iri: Mapped[str] = mapped_column(String(120), default="")  # the subject's role in the object (Participation)
+    confidence: Mapped[float] = mapped_column(Float, default=0.0)
+    model: Mapped[str] = mapped_column(String(100), default="")
+    status: Mapped[str] = mapped_column(String(20), default="draft")  # draft | confirmed | rejected
+
+
+class ChunkTag(Base):
+    """A SKOS concept a chunk is about (lease type, risk category, ...), from GLiNER2's classifier."""
+    __tablename__ = "chunk_tags"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=uid)
+    chunk_id: Mapped[str] = mapped_column(ForeignKey("chunks.id", ondelete="CASCADE"), index=True)
+    document_id: Mapped[str] = mapped_column(String(32), index=True)
+    concept_iri: Mapped[str] = mapped_column(String(120))
+    confidence: Mapped[float] = mapped_column(Float, default=0.0)
+
+
+class OntologyCandidate(Base):
+    """Something the documents keep mentioning that the ontology has no place for: a proposal for a
+    person to accept, merge into an existing term, or reject. Accepted ones are exported as a change
+    to property_ontology's build script; the ontology itself is never edited from here."""
+    __tablename__ = "ontology_candidates"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=uid)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    kind: Mapped[str] = mapped_column(String(20))  # class | relation | concept
+    label: Mapped[str] = mapped_column(String(300))
+    norm_label: Mapped[str] = mapped_column(String(300), index=True)
+    domain_iri: Mapped[str] = mapped_column(String(120), default="")
+    range_iri: Mapped[str] = mapped_column(String(120), default="")
+    parent_iri: Mapped[str] = mapped_column(String(120), default="")
+    evidence: Mapped[list | None] = mapped_column(JSON, nullable=True)  # up to 20 chunk ids
+    occurrences: Mapped[int] = mapped_column(Integer, default=0)
+    status: Mapped[str] = mapped_column(String(20), default="open")  # open | accepted | rejected | merged | exported
+    merged_into_iri: Mapped[str] = mapped_column(String(120), default="")
+    note: Mapped[str] = mapped_column(Text, default="")
+    decided_by: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    ontology_version: Mapped[str] = mapped_column(String(20), default="")

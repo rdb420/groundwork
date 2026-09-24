@@ -29,6 +29,7 @@ RUN if [ "$WITH_WHISPER" = "true" ]; then \
       uv sync --frozen --no-dev --no-install-project; \
     fi
 COPY backend/app ./app
+COPY backend/ontology ./ontology
 COPY --from=web /build/dist /app/frontend/dist
 RUN useradd --system --uid 1001 groundwork && mkdir -p /data && chown groundwork /data
 USER groundwork

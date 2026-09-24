@@ -58,6 +58,19 @@ class Settings(BaseSettings):
     qdrant_ca_file: str = ""  # the CA for Qdrant's own TLS certificate
     qdrant_collection: str = "gw_chunks"  # an alias; the physical collection is <alias>_v<layout>
     extract_url: str = ""  # the extraction sidecar (GLiNER2); empty stops the pipeline after indexing
+    ontology_version: str = "0.1.0"  # vendored under backend/ontology/pbo-<version>/
+    extract_threshold: float = 0.5  # GLiNER2 confidence for entity spans and chunk tags
+    extract_relation_threshold: float = 0.5  # Jev confidence to keep a relationship
+    extract_max_pairs: int = 12  # mention pairs asked about per chunk, nearest first
+    # Extraction can use its own Jev-compatible server (e.g. a local Laya or OpenJev for files with
+    # personal information); empty uses the live-mapping decision model.
+    extract_decision_url: str = ""
+    extract_decision_api_key: str = ""
+    extract_decision_is_local: bool = False
+    neo4j_url: str = ""  # e.g. http://neo4j:7474 (the Query API); empty stops the pipeline after extraction
+    neo4j_user: str = "neo4j"
+    neo4j_password: str = ""
+    neo4j_database: str = "neo4j"
 
     # Malware scanning of uploads with ClamAV (clamd over TCP). Empty host switches scanning off.
     clamav_host: str = ""

@@ -296,3 +296,69 @@ class FakeParakeet:
                           f"event: complete\ndata: {json.dumps([table, None, None, None, None])}\n\n")
             return httpx.Response(200, content=stream.encode(), headers={"content-type": "text/event-stream"})
         return httpx.Response(404)
+
+
+class FakeExtractor:
+    """The extraction sidecar. /entities finds each label's example words in the text (case
+    insensitive) and returns character spans; /classify tags a chunk with a concept whose label
+    appears in it; /topics/fit groups texts by a shared word."""
+
+    def __init__(self, lexicon: dict[str, list[str]] | None = None):
+        self.lexicon = lexicon or {}  # label -> words that count as that label
+        self.calls: list[str] = []
+
+    def entities(self, text: str, labels: dict) -> list[dict]:
+        import re
+        out = []
+        for label in labels:
+            for word in self.lexicon.get(label, []):
+                for m in re.finditer(re.escape(word), text, re.I):
+                    out.append({"label": label, "text": text[m.start():m.end()], "start": m.start(), "end": m.end(),
+                                "confidence": 0.9})
+        return out
+
+    def __call__(self, request: httpx.Request) -> httpx.Response:
+        path = request.url.path
+        self.calls.append(path)
+        body = json.loads(request.read())
+        if path == "/entities":
+            return json_response({"results": [self.entities(t, body["labels"]) for t in body["texts"]]})
+        if path == "/classify":
+            results = []
+            for t in body["texts"]:
+                results.append({task: [{"label": lbl, "confidence": 0.8} for lbl in labels if lbl.lower() in t.lower()]
+                                for task, labels in body["tasks"].items()})
+            return json_response({"results": results})
+        if path == "/topics/fit":
+            groups: dict[str, list[int]] = {}
+            for i, t in enumerate(body["texts"]):
+                groups.setdefault((_words(t) or ["x"])[0], []).append(i)
+            return json_response({"topics": [{"id": n, "words": [w], "size": len(ix), "documents": ix}
+                                             for n, (w, ix) in enumerate(groups.items())], "assignments": [
+                next(n for n, ix in enumerate(groups.values()) if i in ix) for i in range(len(body["texts"]))]})
+        return httpx.Response(404)
+
+
+class FakeNeo4j:
+    """Records every statement sent to the Query API and checks the parameters are JSON."""
+
+    def __init__(self):
+        self.statements: list[tuple[str, dict]] = []
+        self.versions: set[str] = set()
+        self.auth: set[str] = set()
+
+    def __call__(self, request: httpx.Request) -> httpx.Response:
+        self.auth.add(request.headers.get("authorization", ""))
+        if not request.url.path.endswith("/query/v2"):
+            return httpx.Response(404)
+        body = json.loads(request.read())
+        stmt, params = body["statement"], body.get("parameters", {})
+        self.statements.append((stmt, params))
+        if stmt.startswith("MATCH (v:OntologyVersion"):
+            return json_response({"data": {"fields": ["n"], "values": [[1 if params["v"] in self.versions else 0]]}}, 202)
+        if stmt.startswith("MERGE (v:OntologyVersion"):
+            self.versions.add(params["v"])
+        return json_response({"data": {"fields": [], "values": []}}, 202)
+
+    def matching(self, text: str) -> list[tuple[str, dict]]:
+        return [(s, p) for s, p in self.statements if text in s]
