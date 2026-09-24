@@ -2,11 +2,9 @@
 what each is and which process it belongs to. Files wait on the host for processing."""
 import json
 import mimetypes
-import shutil
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
-from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field, ValidationError
 from sqlalchemy import select
 from sqlalchemy.orm import Session as DB
@@ -16,7 +14,7 @@ from .. import access, audit, scan
 from ..db import get_db
 from ..models import Artifact, ArtifactProcess, Board, Job, Process, User, uid
 from ..security import can_see_all, current_user, utcnow
-from ..storage import artifact_dir, safe_name, save_upload, write_sidecar
+from ..storage import artifact_prefix, get_storage, safe_name, save_upload, write_sidecar
 from ..util import get_or_404
 from .processes import find_or_propose
 
@@ -84,13 +82,10 @@ async def upload(request: Request, file: UploadFile = File(...), meta: str = For
                  frequency=m.frequency, source_system=m.source_system, maintained_by=m.maintained_by,
                  personal_info=m.personal_info, is_current=m.is_current, if_it_disappeared=m.if_it_disappeared,
                  board_id=m.board_id)
-    d = artifact_dir(a.id)
-    try:
-        path, size, sha = await save_upload(file, d)
-    except HTTPException:
-        shutil.rmtree(d, ignore_errors=True)
-        raise
-    a.stored_path, a.size_bytes, a.sha256 = str(path), size, sha
+    prefix = artifact_prefix(a.id)
+    key = prefix + "original" + Path(a.original_filename).suffix.lower()
+    size, sha = await save_upload(file, key)
+    a.storage_key, a.size_bytes, a.sha256 = key, size, sha
     # The server decides the type from the extension it allowed; the browser's claim is ignored.
     a.mime_type = mimetypes.guess_type(a.original_filename)[0] or "application/octet-stream"
 
@@ -110,7 +105,7 @@ async def upload(request: Request, file: UploadFile = File(...), meta: str = For
                  detail={"filename": a.original_filename, "size": size, "sha256": sha,
                          "duplicate_of": duplicate.id if duplicate else None})
     db.commit()
-    write_sidecar(d, {**m.model_dump(), "artifact_id": a.id, "uploaded_by": user.email,
+    write_sidecar(prefix, {**m.model_dump(), "artifact_id": a.id, "uploaded_by": user.email,
                       "uploaded_at": a.uploaded_at, "original_filename": a.original_filename,
                       "sha256": sha, "size_bytes": size, "process_ids": sorted(pids)})
     db.refresh(a)
@@ -161,12 +156,12 @@ def download(aid: str, request: Request, user: User = Depends(current_user), db:
     db.commit()
     # Only raster images display in the browser. Everything else, SVG included, downloads, and the
     # sandbox policy stops any script in a file from running in the portal's origin.
-    ext = Path(a.stored_path).suffix.lower()
+    ext = Path(a.storage_key).suffix.lower()
     mime = mimetypes.guess_type(f"x{ext}")[0] or "application/octet-stream"
-    return FileResponse(a.stored_path, media_type=mime, filename=a.original_filename,
-                        content_disposition_type="inline" if ext in INLINE_IMAGES else "attachment",
-                        headers={"Content-Security-Policy": "default-src 'none'; img-src 'self'; sandbox",
-                                 "X-Content-Type-Options": "nosniff", "Cache-Control": "private, no-store"})
+    return get_storage().response(a.storage_key, mime, a.original_filename,
+                                  "inline" if ext in INLINE_IMAGES else "attachment",
+                                  {"Content-Security-Policy": "default-src 'none'; img-src 'self'; sandbox",
+                                   "X-Content-Type-Options": "nosniff", "Cache-Control": "private, no-store"})
 
 
 @router.post("/{aid}/withdraw")

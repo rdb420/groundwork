@@ -3,7 +3,6 @@ import json
 import socketserver
 import threading
 from datetime import timedelta
-from pathlib import Path
 
 import pytest
 
@@ -131,7 +130,7 @@ def test_retention_purges_withdrawn_files_and_old_audio(client, monkeypatch):
     with SessionLocal() as db:
         db.get(Artifact, old["id"]).withdrawn_at = utcnow() - timedelta(days=31)
         db.get(Recording, rec["id"]).ended_at = utcnow() - timedelta(days=91)
-        old_path = Path(db.get(Artifact, old["id"]).stored_path)
+        old_path = s.data_dir / db.get(Artifact, old["id"]).storage_key
         db.commit()
     audio_dir = s.data_dir / "recordings" / rec["id"]
     assert old_path.exists() and audio_dir.exists()
@@ -145,7 +144,7 @@ def test_retention_purges_withdrawn_files_and_old_audio(client, monkeypatch):
     assert audited("artifact.purged", old["id"]) == 1 and audited("recording.audio_purged", rec["id"]) == 1
     with SessionLocal() as db:
         a = db.get(Artifact, old["id"])
-        assert a.status == "purged" and a.profile is None and a.stored_path == ""
+        assert a.status == "purged" and a.profile is None and a.storage_key == ""
         assert db.get(Artifact, fresh["id"]).status == "withdrawn"
     assert client.get(f"/api/artifacts/{old['id']}/file").status_code == 410
     assert client.get("/api/admin/retention").json()["files"] == []

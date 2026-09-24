@@ -34,6 +34,24 @@ class Settings(BaseSettings):
     retention_audio_days: int = 90  # session audio, counted from the end of the recording
     retention_auto: bool = False
 
+    # Where files live: local (under data_dir) or s3 (self-hosted Supabase Storage's S3 endpoint, or MinIO)
+    storage_backend: str = "local"
+    s3_endpoint: str = ""  # e.g. http://supabase-host:8000/storage/v1/s3
+    s3_region: str = "local"
+    s3_bucket: str = "groundwork"
+    s3_access_key: str = ""
+    s3_secret_key: str = ""
+    s3_ca_file: str = ""
+
+    # Ingestion pipeline: convert to Markdown, chunk, embed, index, extract, graph (docs/INGESTION.md)
+    pipeline_enabled: bool = False
+    mineru_url: str = ""  # mineru-api, e.g. http://inference:8000
+    mineru_backend: str = "pipeline"  # pipeline (CPU or GPU) | hybrid-engine | vlm-engine (GPU)
+    mineru_lang: str = "en"
+    mineru_page_batch: int = 50  # pages per MinerU task for long PDFs
+    mineru_timeout_s: int = 1800
+    gotenberg_url: str = ""  # converts doc, ppt, odt, rtf to PDF
+
     # Malware scanning of uploads with ClamAV (clamd over TCP). Empty host switches scanning off.
     clamav_host: str = ""
     clamav_port: int = 3310

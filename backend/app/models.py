@@ -6,7 +6,7 @@ link to. Boards are the mapping canvases. Every material action lands in audit_e
 import uuid
 from datetime import UTC, datetime
 
-from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import JSON, Boolean, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .db import Base
@@ -74,7 +74,8 @@ class Artifact(Base):
 
     # File facts
     original_filename: Mapped[str] = mapped_column(String(500))
-    stored_path: Mapped[str] = mapped_column(String(1000))
+    stored_path: Mapped[str] = mapped_column(String(1000), default="")  # legacy absolute path; see storage_key
+    storage_key: Mapped[str] = mapped_column(String(500), default="")  # e.g. artifacts/<id>/original.pdf
     mime_type: Mapped[str] = mapped_column(String(200), default="")
     size_bytes: Mapped[int] = mapped_column(Integer, default=0)
     sha256: Mapped[str] = mapped_column(String(64), index=True)
@@ -97,6 +98,8 @@ class Artifact(Base):
     scan: Mapped[str] = mapped_column(String(20), default="")  # "" not yet | clean | infected | off (no scanner)
     withdrawn_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     purged_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Ingestion pipeline: queued | converting | indexing | extracting | done | partial | skipped | failed
+    pipeline_status: Mapped[str] = mapped_column(String(20), default="")
     board_id: Mapped[str | None] = mapped_column(ForeignKey("boards.id"), nullable=True)  # set for canvas images
 
     processes: Mapped[list["Process"]] = relationship(secondary="artifact_processes")
@@ -154,8 +157,9 @@ class TranscriptSegment(Base):
     id: Mapped[str] = mapped_column(String(32), primary_key=True, default=uid)
     recording_id: Mapped[str] = mapped_column(ForeignKey("recordings.id", ondelete="CASCADE"), index=True)
     seq: Mapped[int] = mapped_column(Integer)
-    audio_path: Mapped[str] = mapped_column(String(1000))
+    audio_path: Mapped[str] = mapped_column(String(1000))  # storage key, e.g. recordings/<rid>/00001.webm
     text: Mapped[str] = mapped_column(Text, default="")
+    timings: Mapped[list | None] = mapped_column(JSON, nullable=True)  # [[start_s, end_s, text], ...] within the part
     status: Mapped[str] = mapped_column(String(20), default="queued")  # queued | done | failed | skipped
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     __table_args__ = (UniqueConstraint("recording_id", "seq"),)
@@ -232,3 +236,45 @@ class AuditEvent(Base):
     entity_id: Mapped[str] = mapped_column(String(32), default="")
     detail: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     ip: Mapped[str] = mapped_column(String(64), default="")
+
+
+class Document(Base):
+    """One conversion of a source (an uploaded file or a recording's transcript) into Markdown. The
+    pipeline's SQL records are the source of truth; Qdrant and Neo4j are rebuilt from them."""
+    __tablename__ = "documents"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=uid)
+    source_type: Mapped[str] = mapped_column(String(20))  # artifact | recording
+    source_id: Mapped[str] = mapped_column(String(32), index=True)
+    source_sha256: Mapped[str] = mapped_column(String(64), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    converter: Mapped[str] = mapped_column(String(60), default="")  # mineru:<backend> | native:<kind> | parakeet
+    pipeline_version: Mapped[str] = mapped_column(String(20), default="")
+    markdown_key: Mapped[str] = mapped_column(String(500), default="")
+    content_list_key: Mapped[str] = mapped_column(String(500), default="")
+    markdown_sha256: Mapped[str] = mapped_column(String(64), default="")
+    personal_info: Mapped[bool] = mapped_column(Boolean, default=True)  # resolved: yes or not sure counts as personal
+    stage: Mapped[str] = mapped_column(String(20), default="converted")  # converted | indexed | extracted | graphed
+    status: Mapped[str] = mapped_column(String(20), default="ok")  # ok | partial | failed
+    note: Mapped[str] = mapped_column(Text, default="")  # why it was skipped or partial; never file content
+    chunk_count: Mapped[int] = mapped_column(Integer, default=0)
+    index_key: Mapped[str] = mapped_column(String(64), default="")  # what the current index was built from
+    extract_key: Mapped[str] = mapped_column(String(64), default="")
+    is_current: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
+
+
+class Chunk(Base):
+    """A piece of a document small enough for every embedding model (at most GW_CHUNK_TOKENS)."""
+    __tablename__ = "chunks"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)  # uuid5 of source and position, as in Qdrant
+    document_id: Mapped[str] = mapped_column(ForeignKey("documents.id", ondelete="CASCADE"), index=True)
+    source_type: Mapped[str] = mapped_column(String(20))
+    source_id: Mapped[str] = mapped_column(String(32), index=True)
+    idx: Mapped[int] = mapped_column(Integer)
+    text: Mapped[str] = mapped_column(Text)  # the body, without the heading breadcrumb
+    heading_path: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    page: Mapped[int | None] = mapped_column(Integer, nullable=True)  # 1-based
+    page_end: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    start_s: Mapped[float | None] = mapped_column(Float, nullable=True)
+    end_s: Mapped[float | None] = mapped_column(Float, nullable=True)
+    kind: Mapped[str] = mapped_column(String(20), default="text")  # text | table | image | transcript
+    tokens: Mapped[int] = mapped_column(Integer, default=0)

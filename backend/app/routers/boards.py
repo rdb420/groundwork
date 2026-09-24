@@ -1,5 +1,7 @@
 """Process-mapping boards, session recordings and AI drafts."""
+import tempfile
 from datetime import timedelta
+from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
@@ -14,6 +16,7 @@ from ..config import get_settings
 from ..db import get_db
 from ..models import AIDraft, Board, Job, Process, Recording, TranscriptSegment, User
 from ..security import aware, can_see_all, current_user, utcnow
+from ..storage import get_storage, guess_type
 from ..util import get_or_404
 
 router = APIRouter(prefix="/api", tags=["boards"])
@@ -155,21 +158,18 @@ async def upload_chunk(rid: str, seq: int, request: Request, file: UploadFile = 
     ext = "." + (file.filename or "chunk.webm").rsplit(".", 1)[-1].lower()
     if ext not in AUDIO_EXT:
         ext = ".webm"
-    d = get_settings().data_dir / "recordings" / rid
-    d.mkdir(parents=True, exist_ok=True)
-    path = d / f"{seq:05d}{ext}"
-    tmp = path.with_suffix(path.suffix + ".part")
+    key = f"recordings/{rid}/{seq:05d}{ext}"
     size = 0
-    with tmp.open("wb") as f:
-        while chunk := await file.read(1024 * 1024):
-            size += len(chunk)
-            if size > CHUNK_LIMIT:
-                f.close()
-                tmp.unlink(missing_ok=True)
-                raise HTTPException(413, "That part of the recording is too large. Stop and start a new recording.")
-            f.write(chunk)
-    tmp.replace(path)
-    seg = TranscriptSegment(recording_id=rid, seq=seq, audio_path=str(path))
+    with tempfile.TemporaryDirectory(prefix="gw-rec-") as tmp:
+        path = Path(tmp) / f"part{ext}"
+        with path.open("wb") as f:
+            while chunk := await file.read(1024 * 1024):
+                size += len(chunk)
+                if size > CHUNK_LIMIT:
+                    raise HTTPException(413, "That part of the recording is too large. Stop and start a new recording.")
+                f.write(chunk)
+        get_storage().put_file(key, path, guess_type(key))
+    seg = TranscriptSegment(recording_id=rid, seq=seq, audio_path=key)
     db.add(seg)
     db.flush()
     if get_settings().transcription_provider == "none":

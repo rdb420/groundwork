@@ -7,9 +7,7 @@ can quote the file). The database row stays, marked purged, so the audit trail s
 was shared, by whom and when it was removed. Transcripts stay with their map; they are the
 evidence the map rests on. Copies inside older backups age out after GW_BACKUP_KEEP_DAYS.
 """
-import shutil
 from datetime import datetime, timedelta
-from pathlib import Path
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session as DB
@@ -18,6 +16,7 @@ from . import audit
 from .config import get_settings
 from .models import Artifact, Recording, TranscriptSegment
 from .security import aware, utcnow
+from .storage import get_storage, prefix_of
 
 
 def _cutoff(days: int) -> datetime | None:
@@ -41,19 +40,15 @@ def due(db: DB) -> dict:
 def purge_artifact(db: DB, a: Artifact, *, actor_id: str | None, reason: str) -> None:
     if a.status == "purged":
         return
-    if a.stored_path:
-        folder = Path(a.stored_path).parent
-        artifacts_root = (get_settings().data_dir / "artifacts").resolve()
-        if folder.resolve().is_relative_to(artifacts_root):  # never delete outside the store
-            shutil.rmtree(folder, ignore_errors=True)
-    a.status, a.purged_at, a.stored_path, a.profile = "purged", utcnow(), "", None
+    if a.storage_key:
+        get_storage().delete_prefix(prefix_of(a.storage_key))  # storage refuses keys outside the store
+    a.status, a.purged_at, a.stored_path, a.storage_key, a.profile = "purged", utcnow(), "", "", None
     audit.record(db, "artifact.purged", "artifact", a.id, actor_id=actor_id,
                  actor_type="user" if actor_id else "system", detail={"reason": reason})
 
 
 def purge_audio(db: DB, r: Recording, *, actor_id: str | None, reason: str) -> None:
-    folder = get_settings().data_dir / "recordings" / r.id
-    shutil.rmtree(folder, ignore_errors=True)
+    get_storage().delete_prefix(f"recordings/{r.id}/")
     for seg in db.scalars(select(TranscriptSegment).where(TranscriptSegment.recording_id == r.id)).all():
         seg.audio_path = ""
     r.audio_purged_at = utcnow()

@@ -12,7 +12,6 @@ import argparse
 import logging
 import time
 from datetime import timedelta
-from pathlib import Path
 
 from sqlalchemy import case, or_, select, update
 
@@ -23,6 +22,7 @@ from .models import Artifact, Job, TranscriptSegment
 from .processing.text_extract import profile_document
 from .processing.xlsx_profile import profile_workbook
 from .security import utcnow
+from .storage import get_storage, prefix_of
 from .transcription import transcribe
 
 log = logging.getLogger("groundwork.worker")
@@ -35,32 +35,45 @@ def profile_artifact(db, aid: str):
         return
     a.status = "processing"
     db.commit()
-    path = Path(a.stored_path)
-    if scan.enabled():
-        found = scan.scan_file(path)  # ScannerUnavailable fails the job, which retries later
-        if found:
-            a.status, a.scan, a.profile = "quarantined", "infected", {"type": "blocked", "summary": f"Blocked by the malware check ({found})."}
-            audit.record(db, "artifact.quarantined", "artifact", aid, actor_type="system", detail={"signature": found})
-            return
-        a.scan = "clean"
-    else:
-        a.scan = "off"
-    ext = path.suffix.lower()
-    if ext in {".xlsx", ".xlsm"}:
-        prof = profile_workbook(path)
-    elif ext in IMAGE:
-        prof = {"type": "image", "summary": "Image. Awaiting review."}
-    else:
-        prof = profile_document(path) or {"type": "file", "summary": f"{ext} file. Awaiting review."}
+    storage = get_storage()
+    text = None
+    with storage.local_copy(a.storage_key) as path:
+        if scan.enabled():
+            found = scan.scan_file(path)  # ScannerUnavailable fails the job, which retries later
+            if found:
+                a.status, a.scan, a.profile = "quarantined", "infected", {"type": "blocked", "summary": f"Blocked by the malware check ({found})."}
+                audit.record(db, "artifact.quarantined", "artifact", aid, actor_type="system", detail={"signature": found})
+                return
+            a.scan = "clean"
+        else:
+            a.scan = "off"
+        ext = path.suffix.lower()
+        if ext in {".xlsx", ".xlsm"}:
+            prof = profile_workbook(path)
+        elif ext in IMAGE:
+            prof = {"type": "image", "summary": "Image. Awaiting review."}
+        else:
+            read = profile_document(path)
+            prof, text = read if read else ({"type": "file", "summary": f"{ext} file. Awaiting review."}, None)
+    if text is not None:
+        storage.put_bytes(prefix_of(a.storage_key) + "extracted.txt", text.encode(), "text/plain; charset=utf-8")
     a.profile, a.status = prof, "processed"
     audit.record(db, "artifact.processed", "artifact", aid, actor_type="system", detail={"summary": prof.get("summary")})
+    if get_settings().pipeline_enabled and not a.board_id:
+        from .ingest import pipeline
+        pipeline.start(db, a)
 
 
 def transcribe_segment(db, sid: str):
     seg = db.get(TranscriptSegment, sid)
     if not seg or not seg.audio_path:
         return
-    seg.text, seg.status = transcribe(Path(seg.audio_path)), "done"
+    with get_storage().local_copy(seg.audio_path) as path:
+        result = transcribe(path)
+    seg.text, seg.timings, seg.status = result.text, result.rows, "done"
+    if get_settings().pipeline_enabled:
+        from .ingest import pipeline
+        pipeline.after_segment(db, seg)
 
 
 HANDLERS = {"profile_artifact": profile_artifact, "transcribe_segment": transcribe_segment}
