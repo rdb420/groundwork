@@ -30,11 +30,11 @@ def extract_text(path: Path) -> str | None:
     return None
 
 
-def profile_document(path: Path) -> dict | None:
+def profile_document(path: Path) -> tuple[dict, str] | None:
+    """(profile, full text) for documents we can read, else None. The caller stores the text."""
     text = extract_text(path)
     if text is None:
         return None
-    (path.parent / "extracted.txt").write_text(text)
     words = len(text.split())
     pages = None
     if path.suffix.lower() == ".pdf":
@@ -42,4 +42,4 @@ def profile_document(path: Path) -> dict | None:
     summary = f"Document of about {words} words" + (f" over {pages} pages" if pages else "") + "."
     if words < 20 and path.suffix.lower() == ".pdf":
         summary += " Little text found; it may be a scan that needs OCR."
-    return {"type": "document", "summary": summary, "words": words, "pages": pages, "preview": text[:PREVIEW]}
+    return {"type": "document", "summary": summary, "words": words, "pages": pages, "preview": text[:PREVIEW]}, text

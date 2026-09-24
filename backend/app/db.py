@@ -47,6 +47,7 @@ def init_db():
     from . import models  # noqa: F401  registers tables
     Base.metadata.create_all(engine())
     _add_missing_columns()
+    _backfill_storage_keys()
 
 
 def _add_missing_columns():
@@ -65,3 +66,26 @@ def _add_missing_columns():
                 if col.name not in existing:
                     ddl = col.type.compile(eng.dialect)
                     conn.execute(text(f'ALTER TABLE "{table.name}" ADD COLUMN "{col.name}" {ddl}'))
+
+
+def _backfill_storage_keys():
+    """Files stored before the storage layer kept absolute paths; turn them into keys under data_dir."""
+    from pathlib import Path
+
+    from sqlalchemy import text
+    root = get_settings().data_dir.resolve()
+
+    def key(path: str) -> str:
+        try:
+            return str(Path(path).resolve().relative_to(root))
+        except ValueError:
+            return ""
+
+    with engine().begin() as conn:
+        rows = conn.execute(text("SELECT id, stored_path FROM artifacts WHERE (storage_key IS NULL OR storage_key = '') "
+                                 "AND stored_path IS NOT NULL AND stored_path != ''")).all()
+        for aid, path in rows:
+            conn.execute(text("UPDATE artifacts SET storage_key = :k WHERE id = :i"), {"k": key(path), "i": aid})
+        rows = conn.execute(text("SELECT id, audio_path FROM transcript_segments WHERE audio_path LIKE '/%'")).all()
+        for sid, path in rows:
+            conn.execute(text("UPDATE transcript_segments SET audio_path = :k WHERE id = :i"), {"k": key(path), "i": sid})

@@ -6,7 +6,7 @@ link to. Boards are the mapping canvases. Every material action lands in audit_e
 import uuid
 from datetime import UTC, datetime
 
-from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import JSON, Boolean, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .db import Base
@@ -74,7 +74,8 @@ class Artifact(Base):
 
     # File facts
     original_filename: Mapped[str] = mapped_column(String(500))
-    stored_path: Mapped[str] = mapped_column(String(1000))
+    stored_path: Mapped[str] = mapped_column(String(1000), default="")  # legacy absolute path; see storage_key
+    storage_key: Mapped[str] = mapped_column(String(500), default="")  # e.g. artifacts/<id>/original.pdf
     mime_type: Mapped[str] = mapped_column(String(200), default="")
     size_bytes: Mapped[int] = mapped_column(Integer, default=0)
     sha256: Mapped[str] = mapped_column(String(64), index=True)
@@ -97,6 +98,8 @@ class Artifact(Base):
     scan: Mapped[str] = mapped_column(String(20), default="")  # "" not yet | clean | infected | off (no scanner)
     withdrawn_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     purged_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Ingestion pipeline: queued | converting | indexing | extracting | done | partial | skipped | failed
+    pipeline_status: Mapped[str] = mapped_column(String(20), default="")
     board_id: Mapped[str | None] = mapped_column(ForeignKey("boards.id"), nullable=True)  # set for canvas images
 
     processes: Mapped[list["Process"]] = relationship(secondary="artifact_processes")
@@ -154,8 +157,9 @@ class TranscriptSegment(Base):
     id: Mapped[str] = mapped_column(String(32), primary_key=True, default=uid)
     recording_id: Mapped[str] = mapped_column(ForeignKey("recordings.id", ondelete="CASCADE"), index=True)
     seq: Mapped[int] = mapped_column(Integer)
-    audio_path: Mapped[str] = mapped_column(String(1000))
+    audio_path: Mapped[str] = mapped_column(String(1000))  # storage key, e.g. recordings/<rid>/00001.webm
     text: Mapped[str] = mapped_column(Text, default="")
+    timings: Mapped[list | None] = mapped_column(JSON, nullable=True)  # [[start_s, end_s, text], ...] within the part
     status: Mapped[str] = mapped_column(String(20), default="queued")  # queued | done | failed | skipped
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     __table_args__ = (UniqueConstraint("recording_id", "seq"),)
@@ -232,3 +236,129 @@ class AuditEvent(Base):
     entity_id: Mapped[str] = mapped_column(String(32), default="")
     detail: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     ip: Mapped[str] = mapped_column(String(64), default="")
+
+
+class Document(Base):
+    """One conversion of a source (an uploaded file or a recording's transcript) into Markdown. The
+    pipeline's SQL records are the source of truth; Qdrant and Neo4j are rebuilt from them."""
+    __tablename__ = "documents"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=uid)
+    source_type: Mapped[str] = mapped_column(String(20))  # artifact | recording
+    source_id: Mapped[str] = mapped_column(String(32), index=True)
+    source_sha256: Mapped[str] = mapped_column(String(64), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    converter: Mapped[str] = mapped_column(String(60), default="")  # mineru:<backend> | native:<kind> | parakeet
+    pipeline_version: Mapped[str] = mapped_column(String(20), default="")
+    markdown_key: Mapped[str] = mapped_column(String(500), default="")
+    content_list_key: Mapped[str] = mapped_column(String(500), default="")
+    markdown_sha256: Mapped[str] = mapped_column(String(64), default="")
+    personal_info: Mapped[bool] = mapped_column(Boolean, default=True)  # resolved: yes or not sure counts as personal
+    stage: Mapped[str] = mapped_column(String(20), default="converted")  # converted | indexed | extracted | graphed
+    status: Mapped[str] = mapped_column(String(20), default="ok")  # ok | partial | failed
+    note: Mapped[str] = mapped_column(Text, default="")  # why it was skipped or partial; never file content
+    chunk_count: Mapped[int] = mapped_column(Integer, default=0)
+    index_key: Mapped[str] = mapped_column(String(64), default="")  # what the current index was built from
+    extract_key: Mapped[str] = mapped_column(String(64), default="")
+    is_current: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
+
+
+class Chunk(Base):
+    """A piece of a document small enough for every embedding model (at most GW_CHUNK_TOKENS)."""
+    __tablename__ = "chunks"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)  # uuid5 of source and position, as in Qdrant
+    document_id: Mapped[str] = mapped_column(ForeignKey("documents.id", ondelete="CASCADE"), index=True)
+    source_type: Mapped[str] = mapped_column(String(20))
+    source_id: Mapped[str] = mapped_column(String(32), index=True)
+    idx: Mapped[int] = mapped_column(Integer)
+    text: Mapped[str] = mapped_column(Text)  # the body, without the heading breadcrumb
+    heading_path: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    page: Mapped[int | None] = mapped_column(Integer, nullable=True)  # 1-based
+    page_end: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    start_s: Mapped[float | None] = mapped_column(Float, nullable=True)
+    end_s: Mapped[float | None] = mapped_column(Float, nullable=True)
+    kind: Mapped[str] = mapped_column(String(20), default="text")  # text | table | image | transcript
+    tokens: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class EntityMention(Base):
+    """A span in a chunk typed with an ontology class. entity_key joins mentions of the same thing."""
+    __tablename__ = "entity_mentions"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=uid)
+    chunk_id: Mapped[str] = mapped_column(ForeignKey("chunks.id", ondelete="CASCADE"), index=True)
+    document_id: Mapped[str] = mapped_column(String(32), index=True)
+    source_id: Mapped[str] = mapped_column(String(32), index=True)
+    start: Mapped[int] = mapped_column(Integer)
+    end: Mapped[int] = mapped_column(Integer)
+    surface: Mapped[str] = mapped_column(String(300))
+    class_iri: Mapped[str] = mapped_column(String(120))
+    score: Mapped[float] = mapped_column(Float, default=0.0)
+    method: Mapped[str] = mapped_column(String(40), default="gliner2")  # gliner2 | gliner2+jev
+    entity_key: Mapped[str] = mapped_column(String(36), index=True)
+    status: Mapped[str] = mapped_column(String(20), default="draft")  # draft | confirmed | rejected
+
+
+class RelationAssertion(Base):
+    """A relationship between two mentions in one chunk, chosen from the ontology's options."""
+    __tablename__ = "relation_assertions"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=uid)
+    chunk_id: Mapped[str] = mapped_column(ForeignKey("chunks.id", ondelete="CASCADE"), index=True)
+    document_id: Mapped[str] = mapped_column(String(32), index=True)
+    source_id: Mapped[str] = mapped_column(String(32), index=True)
+    subject_mention_id: Mapped[str] = mapped_column(String(32))
+    object_mention_id: Mapped[str] = mapped_column(String(32))
+    property_iri: Mapped[str] = mapped_column(String(120), default="")  # a direct property, or
+    role_iri: Mapped[str] = mapped_column(String(120), default="")  # the subject's role in the object (Participation)
+    confidence: Mapped[float] = mapped_column(Float, default=0.0)
+    model: Mapped[str] = mapped_column(String(100), default="")
+    status: Mapped[str] = mapped_column(String(20), default="draft")  # draft | confirmed | rejected
+
+
+class ChunkTag(Base):
+    """A SKOS concept a chunk is about (lease type, risk category, ...), from GLiNER2's classifier."""
+    __tablename__ = "chunk_tags"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=uid)
+    chunk_id: Mapped[str] = mapped_column(ForeignKey("chunks.id", ondelete="CASCADE"), index=True)
+    document_id: Mapped[str] = mapped_column(String(32), index=True)
+    concept_iri: Mapped[str] = mapped_column(String(120))
+    confidence: Mapped[float] = mapped_column(Float, default=0.0)
+
+
+class OntologyCandidate(Base):
+    """Something the documents keep mentioning that the ontology has no place for: a proposal for a
+    person to accept, merge into an existing term, or reject. Accepted ones are exported as a change
+    to property_ontology's build script; the ontology itself is never edited from here."""
+    __tablename__ = "ontology_candidates"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=uid)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    kind: Mapped[str] = mapped_column(String(20))  # class | relation | concept
+    label: Mapped[str] = mapped_column(String(300))
+    norm_label: Mapped[str] = mapped_column(String(300), index=True)
+    domain_iri: Mapped[str] = mapped_column(String(120), default="")
+    range_iri: Mapped[str] = mapped_column(String(120), default="")
+    parent_iri: Mapped[str] = mapped_column(String(120), default="")
+    evidence: Mapped[list | None] = mapped_column(JSON, nullable=True)  # up to 20 chunk ids
+    occurrences: Mapped[int] = mapped_column(Integer, default=0)
+    status: Mapped[str] = mapped_column(String(20), default="open")  # open | accepted | rejected | merged | exported
+    merged_into_iri: Mapped[str] = mapped_column(String(120), default="")
+    note: Mapped[str] = mapped_column(Text, default="")
+    decided_by: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    ontology_version: Mapped[str] = mapped_column(String(20), default="")
+
+
+class Topic(Base):
+    """A theme BERTopic found across the chunks, fitted on YSH's own text and seeded from the
+    ontology's SKOS concepts. Replaced as a whole each time topics are fitted."""
+    __tablename__ = "topics"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=uid)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    number: Mapped[int] = mapped_column(Integer)
+    words: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    size: Mapped[int] = mapped_column(Integer, default=0)
+    concept_iri: Mapped[str] = mapped_column(String(120), default="")  # the SKOS concept it matches, if any
+
+
+class ChunkTopic(Base):
+    __tablename__ = "chunk_topics"
+    chunk_id: Mapped[str] = mapped_column(ForeignKey("chunks.id", ondelete="CASCADE"), primary_key=True)
+    topic_id: Mapped[str] = mapped_column(ForeignKey("topics.id", ondelete="CASCADE"), index=True)

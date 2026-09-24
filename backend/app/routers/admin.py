@@ -9,7 +9,19 @@ from sqlalchemy.orm import Session as DB
 from .. import audit, retention
 from ..config import get_settings
 from ..db import get_db
-from ..models import AIDraft, Artifact, ArtifactProcess, AuditEvent, Board, Job, Process, Recording, Session, User
+from ..models import (
+    AIDraft,
+    Artifact,
+    ArtifactProcess,
+    AuditEvent,
+    Board,
+    Document,
+    Job,
+    Process,
+    Recording,
+    Session,
+    User,
+)
 from ..security import require, role_for, utcnow
 from ..util import deleted, get_or_404
 
@@ -196,5 +208,134 @@ def set_access(uid: str, body: AccessIn, request: Request, user: User = Depends(
     n = deleted(db, delete(Session).where(Session.user_id == target.id)) if body.blocked else 0
     audit.record(db, "user.access_removed" if body.blocked else "user.access_restored", "user", target.id,
                  actor_id=user.id, request=request, detail={"sessions_ended": n})
+    db.commit()
+    return {"ok": True}
+
+
+# ---- Ingestion pipeline -----------------------------------------------------------------
+
+STAGE_JOBS = {"convert": "convert_artifact", "index": "index_chunks", "extract": "extract_entities",
+              "graph": "project_graph"}
+
+
+class ReprocessIn(BaseModel):
+    stage: str = "convert"  # convert | index | extract | graph: this stage and everything after it
+
+
+@router.get("/pipeline")
+def pipeline_status(user: User = Depends(require("admin")), db: DB = Depends(get_db)):
+    """Where every file is in the pipeline, what failed and why. Never shows file content."""
+    s = get_settings()
+    by_status = dict(db.execute(select(Artifact.pipeline_status, func.count()).where(Artifact.board_id.is_(None))
+                                .group_by(Artifact.pipeline_status)).tuples().all())
+    docs = dict(db.execute(select(Document.stage, func.count()).where(Document.is_current.is_(True))
+                           .group_by(Document.stage)).tuples().all())
+    attention = db.scalars(select(Document).where(Document.is_current.is_(True),
+                                                  Document.status.in_(("failed", "partial", "skipped")))
+                           .order_by(Document.created_at.desc()).limit(100)).all()
+    failed_jobs = db.execute(select(Job.kind, func.count()).where(Job.status == "failed")
+                             .group_by(Job.kind)).tuples().all()
+    waiting = dict(db.execute(select(Job.kind, func.count()).where(Job.status.in_(("queued", "running")))
+                              .group_by(Job.kind)).tuples().all())
+    titles = {a.id: a.title for a in db.scalars(select(Artifact).where(
+        Artifact.id.in_([d.source_id for d in attention if d.source_type == "artifact"]))).all()}
+    return {
+        "enabled": s.pipeline_enabled,
+        "services": {"storage": s.storage_backend, "mineru": bool(s.mineru_url), "gotenberg": bool(s.gotenberg_url),
+                     "transcription": s.transcription_provider, "embeddings": bool(s.embed_url),
+                     "qdrant": bool(s.qdrant_url), "extraction": bool(s.extract_url), "graph": bool(s.neo4j_url),
+                     "ontology": s.ontology_version},
+        "files": {k or "not started": v for k, v in by_status.items()},
+        "documents": docs,
+        "waiting": waiting,
+        "failed_jobs": dict(failed_jobs),
+        "attention": [{"document_id": d.id, "source_type": d.source_type, "source_id": d.source_id,
+                       "title": titles.get(d.source_id, "Session recording" if d.source_type == "recording" else ""),
+                       "status": d.status, "stage": d.stage, "note": d.note, "converter": d.converter}
+                      for d in attention],
+    }
+
+
+def _reprocess(db: DB, doc: Document | None, artifact: Artifact | None, stage: str) -> bool:
+    """Forget the stage's key so it runs again, and queue it. Later stages follow on their own."""
+    from .. import jobs
+    if stage == "convert":
+        if artifact is None:
+            return False
+        if doc:
+            doc.source_sha256 = ""
+        artifact.pipeline_status = "queued"
+        jobs.enqueue(db, "convert_artifact", artifact.id)
+        return True
+    if doc is None or doc.status not in ("ok", "partial"):
+        return False
+    if stage == "index":
+        doc.index_key = ""
+    elif stage == "extract":
+        doc.extract_key = ""
+    jobs.enqueue(db, STAGE_JOBS[stage], doc.id)
+    return True
+
+
+@router.post("/artifacts/{aid}/reprocess")
+def reprocess_artifact(aid: str, body: ReprocessIn, request: Request, user: User = Depends(require("admin")),
+                       db: DB = Depends(get_db)):
+    from ..ingest import pipeline
+    if body.stage not in STAGE_JOBS:
+        raise HTTPException(422, "Choose convert, index, extract or graph.")
+    a = get_or_404(db, Artifact, aid, "File")
+    if a.status in ("withdrawn", "purged", "quarantined"):
+        raise HTTPException(409, "This file is no longer in use, so it can't be reprocessed.")
+    if not _reprocess(db, pipeline.current_document(db, "artifact", aid), a, body.stage):
+        raise HTTPException(409, "This file hasn't reached that stage yet. Reprocess it from the start.")
+    audit.record(db, "pipeline.reprocess", "artifact", aid, actor_id=user.id, request=request,
+                 detail={"stage": body.stage})
+    db.commit()
+    return {"ok": True}
+
+
+@router.post("/pipeline/reprocess")
+def reprocess_all(body: ReprocessIn, request: Request, user: User = Depends(require("admin")),
+                  db: DB = Depends(get_db)):
+    """Everything again from a stage, for example after pinning a new ontology version (extract) or
+    changing the chunk size (index)."""
+    if body.stage not in STAGE_JOBS:
+        raise HTTPException(422, "Choose convert, index, extract or graph.")
+    n = 0
+    for doc in db.scalars(select(Document).where(Document.is_current.is_(True))).all():
+        a = db.get(Artifact, doc.source_id) if doc.source_type == "artifact" else None
+        if a is not None and a.status in ("withdrawn", "purged", "quarantined"):
+            continue
+        n += _reprocess(db, doc, a, body.stage)
+    audit.record(db, "pipeline.reprocess_all", "system", actor_id=user.id, request=request,
+                 detail={"stage": body.stage, "queued": n})
+    db.commit()
+    return {"queued": n}
+
+
+@router.post("/pipeline/backfill")
+def backfill(request: Request, user: User = Depends(require("admin")), db: DB = Depends(get_db)):
+    """Queue every file shared before the pipeline was switched on."""
+    from .. import jobs
+    if not get_settings().pipeline_enabled:
+        raise HTTPException(409, "Switch the pipeline on first (GW_PIPELINE_ENABLED).")
+    rows = db.scalars(select(Artifact).where(Artifact.board_id.is_(None), Artifact.status == "processed",
+                                             (Artifact.pipeline_status.is_(None)) | (Artifact.pipeline_status == ""))).all()
+    for a in rows:
+        a.pipeline_status = "queued"
+        jobs.enqueue(db, "convert_artifact", a.id)
+    audit.record(db, "pipeline.backfill", "system", actor_id=user.id, request=request, detail={"queued": len(rows)})
+    db.commit()
+    return {"queued": len(rows)}
+
+
+@router.post("/pipeline/topics")
+def fit_topics(request: Request, user: User = Depends(require("admin")), db: DB = Depends(get_db)):
+    """Fit themes across everything indexed (BERTopic in the extraction sidecar). Runs in the background."""
+    from .. import jobs
+    if not get_settings().extract_url:
+        raise HTTPException(409, "The extraction service isn't set up (GW_EXTRACT_URL).")
+    jobs.enqueue(db, "topics_batch", "all")
+    audit.record(db, "pipeline.topics", "system", actor_id=user.id, request=request)
     db.commit()
     return {"ok": True}

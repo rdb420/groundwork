@@ -8,6 +8,7 @@ Portability notes, from each project's README at the time of writing:
   GW_DECISION_MAX_OPTIONS (default 20).
 """
 import time
+from dataclasses import dataclass, field
 from typing import Any
 
 import httpx
@@ -19,15 +20,50 @@ class DecisionError(RuntimeError):
     pass
 
 
-def system_one(state, questions: dict) -> tuple[dict, str, int]:
-    """Returns (answers, model, latency_ms)."""
+@dataclass
+class Target:
+    """Where a decision request goes and how to phrase it.
+
+    flavour "jev": TypeSafe Jev (hosted, or through OpenRouter) and OpenJev.
+    flavour "laya": Laya (convaiinnovations/laya, self-hosted). Same API, but its English checkpoint
+    leans to "no" on yes/no questions when their options are labelled true/false, so those go out
+    with neutral labels, and option text shares a 192-token budget, so callers keep options short.
+    """
+    url: str
+    headers: dict[str, str] = field(default_factory=dict)
+    model: str = ""
+    flavour: str = "jev"
+    local: bool = False
+
+
+def live_target() -> Target:
+    """The decision model live mapping uses."""
     s = get_settings()
     url, headers = endpoint()
-    body = {"model": s.decision_model, "state": state, "questions": questions}
+    return Target(url, headers, s.decision_model, s.decision_flavour, s.decision_local)
+
+
+def for_flavour(questions: dict, flavour: str) -> dict:
+    if flavour != "laya":
+        return questions
+    out = {}
+    for key, q in questions.items():
+        if q.get("type") == "noul":
+            q = {**q, "criteria": q.get("criteria") or {"true": "yes, it does", "false": "no, it doesn't"},
+                 "labels": {"true": "A", "false": "B"}}
+        out[key] = q
+    return out
+
+
+def system_one(state, questions: dict, *, target: Target | None = None) -> tuple[dict, str, int]:
+    """Returns (answers, model, latency_ms). target overrides the live-mapping decision model."""
+    target = target or live_target()
+    url, headers = target.url, target.headers
+    body = {"model": target.model, "state": state, "questions": for_flavour(questions, target.flavour)}
     t0 = time.perf_counter()
     for attempt in range(3):
         try:
-            r = httpx.post(url, json=body, headers=headers, timeout=15)
+            r = httpx.post(url, json=body, headers=headers, timeout=get_settings().decision_timeout_s)
         except httpx.HTTPError as e:
             raise DecisionError(f"Couldn't reach the decision model: {e}") from e
         if r.status_code == 429 and attempt < 2:
@@ -37,7 +73,7 @@ def system_one(state, questions: dict) -> tuple[dict, str, int]:
     if r.status_code >= 400:
         raise DecisionError(f"Decision model returned {r.status_code}: {r.text[:300]}")
     data = r.json()
-    return data.get("answers", {}), data.get("model", s.decision_model), int((time.perf_counter() - t0) * 1000)
+    return data.get("answers", {}), data.get("model", target.model), int((time.perf_counter() - t0) * 1000)
 
 
 def endpoint() -> tuple[str, dict[str, str]]:
@@ -66,9 +102,11 @@ def choice(q, options: dict) -> dict:
 
 
 def picked(answers: dict, key: str) -> tuple[str | None, float]:
-    """(choice, confidence) for a Choice answer; (None, 0) if missing."""
+    """(choice, confidence) for a Choice answer; (None, 0) if missing. Laya reports the chosen
+    option's calibrated probability as answer_confidence (its `confidence` is an uncalibrated
+    entropy measure for choices), which is what Jev's `confidence` means, so prefer it."""
     a = answers.get(key) or {}
-    return a.get("choice"), float(a.get("confidence", 0.0))
+    return a.get("choice"), float(a.get("answer_confidence", a.get("confidence", 0.0)))
 
 
 def prob(answers: dict, key: str) -> float:

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { api, type Artifact, type ProcessRow } from "../lib/api";
-import { KINDS, LAYERS, STATUS, label, size } from "../lib/labels";
+import { KINDS, LAYERS, PIPELINE, STATUS, label, size } from "../lib/labels";
 import { useSession } from "../lib/session";
 
 export default function Library() {
@@ -53,7 +53,8 @@ export default function Library() {
                   <td>{label(LAYERS, a.layer)}{a.personal_info === "yes" && <span className="pi">Personal info</span>}</td>
                   <td>{a.processes.map((p) => p.name).join(", ")}</td>
                   <td>{a.uploaded_by}</td>
-                  <td><span className={`status s-${a.status}`}>{STATUS[a.status] ?? a.status}</span></td>
+                  <td><span className={`status s-${a.status}`}>{STATUS[a.status] ?? a.status}</span>
+                    {a.pipeline_status && PIPELINE[a.pipeline_status] && <div className="quiet small">{PIPELINE[a.pipeline_status]}</div>}</td>
                 </tr>
               ))}
             </tbody>

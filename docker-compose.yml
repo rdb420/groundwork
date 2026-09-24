@@ -24,6 +24,61 @@ services:
     restart: unless-stopped
     depends_on: [ app ]
 
+  # ---- Ingestion pipeline (docs/INGESTION.md): docker compose --profile pipeline up -d ----
+  # Converting files to Markdown waits on MinerU, so it has its own worker.
+  converter:
+    profiles: [ "pipeline" ]
+    build: { context: ., dockerfile: deploy/Dockerfile, args: { WITH_WHISPER: "${WITH_WHISPER:-false}" } }
+    env_file: .env
+    command: ["python", "-m", "app.worker", "--kinds", "convert_artifact,transcribe_artifact"]
+    volumes: [ "./data:/data" ]
+    restart: unless-stopped
+    depends_on: [ app ]
+
+  # Chunks, embeds, indexes, extracts and builds the graph; also removes purged files everywhere.
+  indexer:
+    profiles: [ "pipeline" ]
+    build: { context: ., dockerfile: deploy/Dockerfile, args: { WITH_WHISPER: "${WITH_WHISPER:-false}" } }
+    env_file: .env
+    command: ["python", "-m", "app.worker", "--kinds", "ingest_recording,index_chunks,extract_entities,project_graph,purge_external,topics_batch"]
+    volumes: [ "./data:/data" ]
+    restart: unless-stopped
+    depends_on: [ app ]
+
+  # Opens doc, ppt, odt, rtf, xls and ods files (LibreOffice) and returns PDF. Internal only.
+  gotenberg:
+    profiles: [ "pipeline" ]
+    image: gotenberg/gotenberg:8
+    restart: unless-stopped
+
+  # Vectors. Qdrant 1.18.2 with the rba420-qdrant config (TLS on). Needs QDRANT__SERVICE__API_KEY
+  # and a certificate in deploy/qdrant/tls/ (see deploy/qdrant/README.md).
+  qdrant:
+    profiles: [ "pipeline" ]
+    image: qdrant/qdrant:v1.18.2
+    environment:
+      # Groundwork refuses to use Qdrant without this key; the container publishes no ports.
+      QDRANT__SERVICE__API_KEY: "${QDRANT_API_KEY:-}"
+      QDRANT__SERVICE__ENABLE_TLS: "true"
+      QDRANT__TLS__CERT: /qdrant/tls/cert.pem
+      QDRANT__TLS__KEY: /qdrant/tls/key.pem
+    volumes:
+      - qdrant_storage:/qdrant/storage
+      - ./deploy/qdrant/tls:/qdrant/tls:ro
+    restart: unless-stopped
+
+  # The knowledge graph. Browser on this host only (http://127.0.0.1:7474); set NEO4J_PASSWORD.
+  neo4j:
+    profiles: [ "pipeline" ]
+    image: neo4j:5
+    environment:
+      # Neo4j won't start with an empty password, so the pipeline profile needs NEO4J_PASSWORD set.
+      NEO4J_AUTH: "neo4j/${NEO4J_PASSWORD:-}"
+      NEO4J_server_memory_heap_max__size: 1G
+    ports: [ "127.0.0.1:7474:7474" ]
+    volumes: [ "neo4j_data:/data" ]
+    restart: unless-stopped
+
   # Transcription on its own, so a large workbook never delays a live session's transcript.
   transcriber:
     build: { context: ., dockerfile: deploy/Dockerfile, args: { WITH_WHISPER: "${WITH_WHISPER:-false}" } }
@@ -58,6 +113,8 @@ services:
     ports: [ "8025:8025" ]
 
 volumes:
+  neo4j_data:
+  qdrant_storage:
   clamav_db:
   caddy_data:
   caddy_config:

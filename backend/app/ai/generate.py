@@ -2,7 +2,6 @@
 and the evidence linked to its process. Output is always a draft for a person to judge."""
 import json
 import re
-from pathlib import Path
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session as DB
@@ -11,6 +10,7 @@ from sqlalchemy.orm import selectinload
 from ..canvas import MapDataError, validate_doc
 from ..config import get_settings
 from ..models import AIDraft, Artifact, ArtifactProcess, Board, Recording, TranscriptSegment, User
+from ..storage import get_storage, prefix_of
 from .context import describe_board
 from .providers import ProviderError, complete, is_local
 
@@ -62,7 +62,7 @@ Group them by who should answer. JSON shape:
 def _content(a: Artifact, budget: int) -> str:
     """What the file says, as far as the first read got: extracted text for documents, sheet names
     and header rows for workbooks. Trimmed to the budget."""
-    if budget <= 0 or not a.stored_path:
+    if budget <= 0 or not a.storage_key:
         return ""
     prof = a.profile or {}
     if prof.get("type") == "workbook" and prof.get("sheets"):
@@ -70,11 +70,11 @@ def _content(a: Artifact, budget: int) -> str:
                          f"{s.get('dimensions', '')}, {s.get('formulas', 0)} formulas. "
                          f"Columns: {', '.join(s.get('first_row') or []) or 'not read'}" for s in prof["sheets"])
     else:
-        extracted = Path(a.stored_path).parent / "extracted.txt"
-        if not extracted.exists():
+        storage, key = get_storage(), prefix_of(a.storage_key) + "extracted.txt"
+        if not storage.exists(key):
             return ""
-        with extracted.open(encoding="utf-8", errors="replace") as f:
-            text = f.read(budget + 1)
+        # Read a few bytes per character's worth, then trim by characters.
+        text = storage.read_bytes(key, (budget + 1) * 4).decode("utf-8", errors="replace")[: budget + 1]
     if len(text) <= budget:
         return text.strip()
     return text[:budget].strip() + "\n[rest of the file trimmed]"

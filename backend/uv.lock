@@ -342,6 +342,7 @@ dependencies = [
     { name = "pypdf" },
     { name = "python-multipart" },
     { name = "sqlalchemy" },
+    { name = "tokenizers" },
     { name = "uvicorn", extra = ["standard"] },
 ]
 
@@ -368,6 +369,7 @@ requires-dist = [
     { name = "pypdf", specifier = "==5.9.0" },
     { name = "python-multipart", specifier = "==0.0.32" },
     { name = "sqlalchemy", specifier = "==2.0.54" },
+    { name = "tokenizers", specifier = ">=0.23.2" },
     { name = "uvicorn", extras = ["standard"], specifier = "==0.53.0" },
 ]
 provides-extras = ["whisper"]

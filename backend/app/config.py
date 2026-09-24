@@ -34,6 +34,47 @@ class Settings(BaseSettings):
     retention_audio_days: int = 90  # session audio, counted from the end of the recording
     retention_auto: bool = False
 
+    # Where files live: local (under data_dir) or s3 (self-hosted Supabase Storage's S3 endpoint, or MinIO)
+    storage_backend: str = "local"
+    s3_endpoint: str = ""  # e.g. http://supabase-host:8000/storage/v1/s3
+    s3_region: str = "local"
+    s3_bucket: str = "groundwork"
+    s3_access_key: str = ""
+    s3_secret_key: str = ""
+    s3_ca_file: str = ""
+
+    # Ingestion pipeline: convert to Markdown, chunk, embed, index, extract, graph (docs/INGESTION.md)
+    pipeline_enabled: bool = False
+    mineru_url: str = ""  # mineru-api, e.g. http://inference:8000
+    mineru_backend: str = "pipeline"  # pipeline (CPU or GPU) | hybrid-engine | vlm-engine (GPU)
+    mineru_lang: str = "en"
+    mineru_page_batch: int = 50  # pages per MinerU task for long PDFs
+    mineru_timeout_s: int = 1800
+    gotenberg_url: str = ""  # converts doc, ppt, odt, rtf to PDF
+    embed_url: str = ""  # the embedding sidecar; empty stops the pipeline after conversion
+    chunk_tokens: int = 128  # the smallest window of the three embedding models
+    qdrant_url: str = ""  # e.g. https://inference:6333
+    qdrant_api_key: str = ""
+    qdrant_ca_file: str = ""  # the CA for Qdrant's own TLS certificate
+    qdrant_collection: str = "gw_chunks"  # an alias; the physical collection is <alias>_v<layout>
+    extract_url: str = ""  # the extraction sidecar (GLiNER2); empty stops the pipeline after indexing
+    ontology_version: str = "0.1.0"  # vendored under backend/ontology/pbo-<version>/
+    extract_threshold: float = 0.5  # GLiNER2 confidence for entity spans and chunk tags
+    extract_relation_threshold: float = 0.5  # Jev confidence to keep a relationship
+    extract_max_pairs: int = 12  # mention pairs asked about per chunk, nearest first
+    # Extraction can use its own Jev-compatible server (e.g. a local Laya or OpenJev for files with
+    # personal information); empty uses the live-mapping decision model.
+    extract_decision_url: str = ""
+    extract_decision_api_key: str = ""
+    extract_decision_is_local: bool = False
+    extract_decision_model: str = ""  # empty uses decision_model; Laya: english or typed-decisions
+    extract_decision_flavour: str = ""  # empty: laya if extraction has its own URL and says so, else jev
+    topics_min_chunks: int = 500  # BERTopic needs enough text to find stable themes
+    neo4j_url: str = ""  # e.g. http://neo4j:7474 (the Query API); empty stops the pipeline after extraction
+    neo4j_user: str = "neo4j"
+    neo4j_password: str = ""
+    neo4j_database: str = "neo4j"
+
     # Malware scanning of uploads with ClamAV (clamd over TCP). Empty host switches scanning off.
     clamav_host: str = ""
     clamav_port: int = 3310
@@ -76,14 +117,18 @@ class Settings(BaseSettings):
     decision_api_key: str = ""  # used by the jev provider
     openrouter_url: str = "https://openrouter.ai/api/v1/systemone"
     openrouter_api_key: str = ""
-    decision_model: str = "jev-latest"  # OpenRouter routes this to ~typesafe/jev-latest
+    decision_model: str = "jev-latest"  # OpenRouter routes this to ~typesafe/jev-latest; Laya: english
+    decision_flavour: str = "jev"  # jev | laya: how questions are phrased for the model behind decision_url
+    decision_timeout_s: float = 15  # a local model on CPU needs longer
     decision_is_local: bool = False  # true when decision_url is a server you run
     decision_max_options: int = 20  # keep Choice questions portable to Laya and OpenJev
     live_auto_threshold: float = 0.75  # at or above this confidence, changes apply without a click
     review_minutes: int = 5
 
     # Transcription
-    transcription_provider: str = "none"  # none | faster_whisper | openai_compatible
+    transcription_provider: str = "none"  # none | parakeet | faster_whisper | openai_compatible
+    parakeet_url: str = ""  # rdb420/parakeet-transcription-app, e.g. http://inference:7861
+    recording_chunk_seconds: int = 30  # length of each recorded part (SessionPanel CHUNK_MS)
     whisper_model: str = "small.en"
     transcription_url: str = ""  # openai_compatible endpoint, e.g. http://inference:8000/v1/audio/transcriptions
     transcription_api_key: str = ""

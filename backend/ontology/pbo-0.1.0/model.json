@@ -1,0 +1,4488 @@
+{
+ "axioms": [
+  {
+   "object": "prov:Agent",
+   "subject": "pbo:Party",
+   "type": "subClassOf"
+  },
+  {
+   "object": "pbo:Party",
+   "subject": "pbo:Person",
+   "type": "subClassOf"
+  },
+  {
+   "object": "prov:Person",
+   "subject": "pbo:Person",
+   "type": "subClassOf"
+  },
+  {
+   "object": "pbo:Party",
+   "subject": "pbo:Organisation",
+   "type": "subClassOf"
+  },
+  {
+   "object": "prov:Organization",
+   "subject": "pbo:Organisation",
+   "type": "subClassOf"
+  },
+  {
+   "object": "pbo:Organisation",
+   "subject": "pbo:GovernmentBody",
+   "type": "subClassOf"
+  },
+  {
+   "object": "pbo:GovernmentBody",
+   "subject": "pbo:LocalCouncil",
+   "type": "subClassOf"
+  },
+  {
+   "object": "pbo:GovernmentBody",
+   "subject": "pbo:Regulator",
+   "type": "subClassOf"
+  },
+  {
+   "object": "pbo:Organisation",
+   "subject": "pbo:Business",
+   "type": "subClassOf"
+  },
+  {
+   "object": "pbo:Business",
+   "subject": "pbo:PropertyManagementBusiness",
+   "type": "subClassOf"
+  },
+  {
+   "object": "pbo:PropertyAsset",
+   "subject": "pbo:LandParcel",
+   "type": "subClassOf"
+  },
+  {
+   "object": "pbo:PropertyAsset",
+   "subject": "pbo:Building",
+   "type": "subClassOf"
+  },
+  {
+   "object": "pbo:PropertyAsset",
+   "subject": "pbo:Dwelling",
+   "type": "subClassOf"
+  },
+  {
+   "object": "pbo:PropertyAsset",
+   "subject": "pbo:RentableUnit",
+   "type": "subClassOf"
+  },
+  {
+   "object": "pbo:PropertyAsset",
+   "subject": "pbo:CommercialPremises",
+   "type": "subClassOf"
+  },
+  {
+   "object": "pbo:PropertyIdentifier",
+   "subject": "pbo:Address",
+   "type": "subClassOf"
+  },
+  {
+   "object": "pbo:PropertyIdentifier",
+   "subject": "pbo:LotOnPlanIdentifier",
+   "type": "subClassOf"
+  },
+  {
+   "object": "pbo:PropertyIdentifier",
+   "subject": "pbo:TitleReference",
+   "type": "subClassOf"
+  },
+  {
+   "object": "pbo:PropertyIdentifier",
+   "subject": "pbo:CadastralParcelIdentifier",
+   "type": "subClassOf"
+  },
+  {
+   "object": "pbo:Agreement",
+   "subject": "pbo:ResidentialTenancyAgreement",
+   "type": "subClassOf"
+  },
+  {
+   "object": "pbo:Agreement",
+   "subject": "pbo:RoomingAccommodationAgreement",
+   "type": "subClassOf"
+  },
+  {
+   "object": "pbo:Agreement",
+   "subject": "pbo:HeadLease",
+   "type": "subClassOf"
+  },
+  {
+   "object": "pbo:Agreement",
+   "subject": "pbo:Sublease",
+   "type": "subClassOf"
+  },
+  {
+   "object": "pbo:Agreement",
+   "subject": "pbo:ManagementAgreement",
+   "type": "subClassOf"
+  },
+  {
+   "object": "pbo:Agreement",
+   "subject": "pbo:CorporateLease",
+   "type": "subClassOf"
+  },
+  {
+   "object": "pbo:Agreement",
+   "subject": "pbo:CommercialLease",
+   "type": "subClassOf"
+  },
+  {
+   "object": "pbo:ContractClause",
+   "subject": "pbo:CoTenancyClause",
+   "type": "subClassOf"
+  },
+  {
+   "object": "pbo:ContractClause",
+   "subject": "pbo:SublettingPermissionClause",
+   "type": "subClassOf"
+  },
+  {
+   "object": "pbo:LegalInstrument",
+   "subject": "pbo:Legislation",
+   "type": "subClassOf"
+  },
+  {
+   "object": "pbo:InformationArtefact",
+   "subject": "pbo:LegalInstrument",
+   "type": "subClassOf"
+  },
+  {
+   "object": "pbo:LegalInstrument",
+   "subject": "pbo:PrescribedForm",
+   "type": "subClassOf"
+  },
+  {
+   "object": "pbo:RegulatoryRule",
+   "subject": "pbo:TaxRule",
+   "type": "subClassOf"
+  },
+  {
+   "object": "pbo:Authorisation",
+   "subject": "pbo:PlanningApproval",
+   "type": "subClassOf"
+  },
+  {
+   "object": "pbo:Authorisation",
+   "subject": "pbo:BuildingApproval",
+   "type": "subClassOf"
+  },
+  {
+   "object": "pbo:Authorisation",
+   "subject": "pbo:FireSafetyCertification",
+   "type": "subClassOf"
+  },
+  {
+   "object": "pbo:Authorisation",
+   "subject": "pbo:ResidentialServiceRegistration",
+   "type": "subClassOf"
+  },
+  {
+   "object": "pbo:Authorisation",
+   "subject": "pbo:AccommodationServiceAccreditation",
+   "type": "subClassOf"
+  },
+  {
+   "object": "pbo:Authorisation",
+   "subject": "pbo:RoomingHouseOperatorLicence",
+   "type": "subClassOf"
+  },
+  {
+   "object": "pbo:Authorisation",
+   "subject": "pbo:RoomingHousePremisesRegistration",
+   "type": "subClassOf"
+  },
+  {
+   "object": "pbo:Authorisation",
+   "subject": "pbo:RealEstateAgentLicence",
+   "type": "subClassOf"
+  },
+  {
+   "object": "prov:Entity",
+   "subject": "pbo:InformationArtefact",
+   "type": "subClassOf"
+  },
+  {
+   "object": "pbo:InformationArtefact",
+   "subject": "pbo:BusinessPlan",
+   "type": "subClassOf"
+  },
+  {
+   "object": "pbo:InformationArtefact",
+   "subject": "pbo:ProjectPlan",
+   "type": "subClassOf"
+  },
+  {
+   "object": "pbo:InformationArtefact",
+   "subject": "pbo:FeasibilityStudy",
+   "type": "subClassOf"
+  },
+  {
+   "object": "pbo:InformationArtefact",
+   "subject": "pbo:InformationMemorandum",
+   "type": "subClassOf"
+  },
+  {
+   "object": "pbo:InformationArtefact",
+   "subject": "pbo:FinancialModel",
+   "type": "subClassOf"
+  },
+  {
+   "object": "pbo:InformationArtefact",
+   "subject": "pbo:RiskRegister",
+   "type": "subClassOf"
+  },
+  {
+   "object": "pbo:InformationArtefact",
+   "subject": "pbo:ImplementationSchedule",
+   "type": "subClassOf"
+  },
+  {
+   "object": "pbo:InformationArtefact",
+   "subject": "pbo:SourceDocument",
+   "type": "subClassOf"
+  },
+  {
+   "object": "pbo:InformationArtefact",
+   "subject": "pbo:DataSource",
+   "type": "subClassOf"
+  },
+  {
+   "object": "pbo:InformationArtefact",
+   "subject": "pbo:Workflow",
+   "type": "subClassOf"
+  },
+  {
+   "object": "prov:Activity",
+   "subject": "pbo:DevelopmentProject",
+   "type": "subClassOf"
+  },
+  {
+   "members": [
+    "pbo:Person",
+    "pbo:Organisation"
+   ],
+   "type": "disjointClasses"
+  },
+  {
+   "members": [
+    "pbo:HeadLease",
+    "pbo:Sublease",
+    "pbo:ManagementAgreement"
+   ],
+   "type": "disjointClasses"
+  },
+  {
+   "members": [
+    "pbo:Agreement",
+    "pbo:Authorisation",
+    "pbo:PropertyAsset",
+    "pbo:Party",
+    "pbo:Participation",
+    "pbo:MetricValue"
+   ],
+   "type": "disjointClasses"
+  }
+ ],
+ "namespace": "https://ontology.property.local/pbo#",
+ "patterns": [
+  {
+   "description": "Party -> Participation(inRole Role, participationContext X) instead of typing parties by role.",
+   "name": "participation_role"
+  },
+  {
+   "description": "Agreements and authorisations are nodes with parties, jurisdiction, validity and clauses.",
+   "name": "first_class_agreement"
+  },
+  {
+   "description": "Classification kinds (InvestmentStrategy, OperatingModel, ...) are OWL classes whose named individuals are also skos:Concept members of a scheme; OWL subclassing is not used for these values.",
+   "name": "kind_class_with_skos_individuals"
+  },
+  {
+   "description": "MetricValue(metric, numericValue, unit, basisNote, assertedIn) attached via assumes/yields/hasMetricValue.",
+   "name": "metric_value_node"
+  },
+  {
+   "description": "OccupancyThreshold(thresholdKind, comparator, value, unit, effect) attached to RegulatoryRegime.",
+   "name": "occupancy_threshold_node"
+  },
+  {
+   "description": "OutgoingAllocation(outgoingCategory, borneByRole) attached to LeaseType.",
+   "name": "outgoing_allocation_node"
+  },
+  {
+   "description": "effectiveFrom / effectiveUntil / cutoffDate xsd literals on rules, authorisations and agreements.",
+   "name": "temporal_validity_literals"
+  }
+ ],
+ "ref": "332a3e909b3bf08f656707da58e2f812d05c49d8",
+ "source_sha256": "a150d341e64cac94dd8133d193d6973ac3493e5356e43a70cd8ba80b8ea66980",
+ "terms": [
+  {
+   "definition": "A person, organisation or government body that can bear a role in relation to a property asset, agreement, authorisation or business activity.",
+   "iri": "pbo:Party",
+   "kind": "class",
+   "label": "Party",
+   "status": "accepted"
+  },
+  {
+   "definition": "An individual human party, for example an owner-occupier renting rooms, an individual investor or a resident.",
+   "iri": "pbo:Person",
+   "kind": "class",
+   "label": "Person",
+   "status": "accepted"
+  },
+  {
+   "definition": "A legal or business entity such as a company, trust, partnership, agency, franchisor, lender or insurer.",
+   "iri": "pbo:Organisation",
+   "kind": "class",
+   "label": "Organisation",
+   "status": "accepted"
+  },
+  {
+   "definition": "A public authority at federal, state or local level that legislates, regulates, registers, licenses, taxes or plans.",
+   "iri": "pbo:GovernmentBody",
+   "kind": "class",
+   "label": "Government body",
+   "status": "accepted"
+  },
+  {
+   "definition": "A local government authority administering a planning scheme, development approvals, premises registration and local compliance.",
+   "iri": "pbo:LocalCouncil",
+   "kind": "class",
+   "label": "Local council",
+   "status": "accepted"
+  },
+  {
+   "definition": "A government body that administers a regulatory regime, for example the Residential Tenancies Authority, the Australian Taxation Office or Consumer Affairs Victoria.",
+   "iri": "pbo:Regulator",
+   "kind": "class",
+   "label": "Regulator",
+   "status": "accepted"
+  },
+  {
+   "definition": "An organisation operating a commercial activity in property, such as a property-management agency, developer, operator or real-estate agency.",
+   "iri": "pbo:Business",
+   "kind": "class",
+   "label": "Business",
+   "status": "accepted"
+  },
+  {
+   "definition": "A business that manages properties on behalf of owners under management agreements, holding a rent roll and providing leasing, rent collection, inspection, maintenance and reporting services.",
+   "iri": "pbo:PropertyManagementBusiness",
+   "kind": "class",
+   "label": "Property management business",
+   "status": "accepted"
+  },
+  {
+   "definition": "A context-dependent capacity a party bears in relation to a property, agreement or activity (owner, investor, operator, landlord, tenant, resident, property manager, lender, insurer, developer, adviser). Roles are named individuals of this class, bound to parties through participations.",
+   "iri": "pbo:Role",
+   "kind": "class",
+   "label": "Role",
+   "status": "accepted"
+  },
+  {
+   "definition": "The occurrence of a party bearing a role in a specific context (an agreement, property asset, development project or business), optionally bounded in time.",
+   "iri": "pbo:Participation",
+   "kind": "class",
+   "label": "Participation",
+   "status": "accepted"
+  },
+  {
+   "definition": "A parcel of land, building, dwelling, rentable unit or commercial premises that can be owned, leased, developed or operated.",
+   "iri": "pbo:PropertyAsset",
+   "kind": "class",
+   "label": "Property asset",
+   "status": "accepted"
+  },
+  {
+   "definition": "A legally identified parcel of land, described by a lot-on-plan and represented spatially in a cadastre.",
+   "iri": "pbo:LandParcel",
+   "kind": "class",
+   "label": "Land parcel",
+   "status": "accepted"
+  },
+  {
+   "definition": "A structure on land, classified for building-code purposes and containing one or more dwellings or units.",
+   "iri": "pbo:Building",
+   "kind": "class",
+   "label": "Building",
+   "status": "accepted"
+  },
+  {
+   "definition": "A self-contained residential unit of accommodation, whether a detached house, apartment, duplex half, dual-key section or secondary dwelling.",
+   "iri": "pbo:Dwelling",
+   "kind": "class",
+   "label": "Dwelling",
+   "status": "accepted"
+  },
+  {
+   "definition": "A room, studio, bed or tenancy unit let separately within a larger property, for example a rooming-house room, a coliving bed or a multi-tenant commercial unit.",
+   "iri": "pbo:RentableUnit",
+   "kind": "class",
+   "label": "Rentable unit",
+   "status": "accepted"
+  },
+  {
+   "definition": "Property occupied for business purposes such as retail, office, industrial, healthcare or warehouse use.",
+   "iri": "pbo:CommercialPremises",
+   "kind": "class",
+   "label": "Commercial premises",
+   "status": "accepted"
+  },
+  {
+   "definition": "A collection of property assets held or managed together by an investor or business, including a property manager's rent roll.",
+   "iri": "pbo:Portfolio",
+   "kind": "class",
+   "label": "Portfolio",
+   "status": "accepted"
+  },
+  {
+   "definition": "An identifier that denotes a property asset within some identification scheme (address, lot-on-plan, title reference, cadastral parcel identifier, G-NAF address identifier).",
+   "iri": "pbo:PropertyIdentifier",
+   "kind": "class",
+   "label": "Property identifier",
+   "status": "accepted"
+  },
+  {
+   "definition": "A postal or geocoded street address identifying a property.",
+   "iri": "pbo:Address",
+   "kind": "class",
+   "label": "Address",
+   "status": "accepted"
+  },
+  {
+   "definition": "A Queensland-style legal land description consisting of a lot number and registered plan.",
+   "iri": "pbo:LotOnPlanIdentifier",
+   "kind": "class",
+   "label": "Lot-on-plan identifier",
+   "status": "accepted"
+  },
+  {
+   "definition": "The registered title identifier under which ownership and registered interests (mortgages, easements, covenants, leases, caveats) are recorded.",
+   "iri": "pbo:TitleReference",
+   "kind": "class",
+   "label": "Title reference",
+   "status": "accepted"
+  },
+  {
+   "definition": "The identifier of a parcel in the spatial cadastral fabric.",
+   "iri": "pbo:CadastralParcelIdentifier",
+   "kind": "class",
+   "label": "Cadastral parcel identifier",
+   "status": "accepted"
+  },
+  {
+   "definition": "A geographic-legal area (nation, state, local government area, metropolitan region) within which a regulatory regime, tax rule or market statistic applies.",
+   "iri": "pbo:Jurisdiction",
+   "kind": "class",
+   "label": "Jurisdiction",
+   "status": "accepted"
+  },
+  {
+   "definition": "A contract between two or more parties concerning the occupation, operation, management or use of a property asset, carrying term, rent, permitted use and allocation of obligations and risks.",
+   "iri": "pbo:Agreement",
+   "kind": "class",
+   "label": "Agreement",
+   "status": "accepted"
+  },
+  {
+   "definition": "A general tenancy agreement under which a tenant rents whole residential premises from a lessor.",
+   "iri": "pbo:ResidentialTenancyAgreement",
+   "kind": "class",
+   "label": "Residential tenancy agreement",
+   "status": "accepted"
+  },
+  {
+   "definition": "An agreement under which a resident rents a room and shares facilities with a provider; in Queensland the prescribed form under the Residential Tenancies and Rooming Accommodation Act 2008.",
+   "iri": "pbo:RoomingAccommodationAgreement",
+   "kind": "class",
+   "label": "Rooming accommodation agreement",
+   "status": "accepted"
+  },
+  {
+   "definition": "A lease from the property owner to an operator who then sublets to residents or occupants; the operator pays fixed rent regardless of occupancy.",
+   "iri": "pbo:HeadLease",
+   "kind": "class",
+   "label": "Head lease (master lease)",
+   "status": "accepted"
+  },
+  {
+   "definition": "A letting by a head tenant or operator to an end tenant, resident or occupant of all or part of premises held under a head lease.",
+   "iri": "pbo:Sublease",
+   "kind": "class",
+   "label": "Sublease",
+   "status": "accepted"
+  },
+  {
+   "definition": "An agreement under which an operator or property manager manages accommodation or property for an owner in return for a fee and/or revenue or profit share, without fixed head rent.",
+   "iri": "pbo:ManagementAgreement",
+   "kind": "class",
+   "label": "Management agreement",
+   "status": "accepted"
+  },
+  {
+   "definition": "A lease of residential property to a company for occupation by its staff, typically furnished and serviced to a higher standard at a premium rent.",
+   "iri": "pbo:CorporateLease",
+   "kind": "class",
+   "label": "Corporate lease",
+   "status": "accepted"
+  },
+  {
+   "definition": "A lease of commercial premises between a lessor and a business lessee, characterised by lease type (gross, net, triple net), term, rent reviews, permitted use and outgoings allocation.",
+   "iri": "pbo:CommercialLease",
+   "kind": "class",
+   "label": "Commercial lease",
+   "status": "accepted"
+  },
+  {
+   "definition": "A provision within an agreement that allocates a specific right, obligation or contingency, such as subletting permission, break rights, rent escalation, make-good or co-tenancy relief.",
+   "iri": "pbo:ContractClause",
+   "kind": "class",
+   "label": "Contract clause",
+   "status": "accepted"
+  },
+  {
+   "definition": "A commercial-lease clause allowing a tenant to reduce rent or exercise other rights if an anchor tenant leaves or occupancy falls below an agreed level.",
+   "iri": "pbo:CoTenancyClause",
+   "kind": "class",
+   "label": "Co-tenancy clause",
+   "status": "accepted"
+  },
+  {
+   "definition": "An express provision granting the tenant or operator authority to sublet or license the premises to others.",
+   "iri": "pbo:SublettingPermissionClause",
+   "kind": "class",
+   "label": "Subletting permission clause",
+   "status": "accepted"
+  },
+  {
+   "definition": "The assignment of a category of property outgoing (taxes, insurance, maintenance, common-area costs, capital expenditure, utilities) to the party in a given role under a lease type.",
+   "iri": "pbo:OutgoingAllocation",
+   "kind": "class",
+   "label": "Outgoing allocation",
+   "status": "accepted"
+  },
+  {
+   "definition": "A coherent body of rules administered by a regulator under legislation in a jurisdiction that applies to an operating model or accommodation type, may set occupancy thresholds and may require authorisations before operation.",
+   "iri": "pbo:RegulatoryRegime",
+   "kind": "class",
+   "label": "Regulatory regime",
+   "status": "accepted"
+  },
+  {
+   "definition": "A named statute, regulation, planning provision, code or ruling that establishes a regulatory regime or rule.",
+   "iri": "pbo:Legislation",
+   "kind": "class",
+   "label": "Legislation",
+   "status": "accepted"
+  },
+  {
+   "definition": "An information artefact with legal effect, such as legislation, a prescribed form or a planning-scheme provision.",
+   "iri": "pbo:LegalInstrument",
+   "kind": "class",
+   "label": "Legal instrument",
+   "status": "accepted"
+  },
+  {
+   "definition": "A form mandated by a regulator for a specified agreement or notice, such as Queensland's Form R18 rooming accommodation agreement.",
+   "iri": "pbo:PrescribedForm",
+   "kind": "class",
+   "label": "Prescribed form",
+   "status": "accepted"
+  },
+  {
+   "definition": "A specific requirement, restriction or entitlement within a regime that has effective dates, such as a rent-increase frequency limit, a notice period, a levy or a tax deductibility rule.",
+   "iri": "pbo:RegulatoryRule",
+   "kind": "class",
+   "label": "Regulatory rule",
+   "status": "accepted"
+  },
+  {
+   "definition": "A regulatory rule about income tax, capital gains tax, GST, land tax or duty that applies to a class of property or taxpayer from an effective date, possibly with a grandfathering cut-off.",
+   "iri": "pbo:TaxRule",
+   "kind": "class",
+   "label": "Tax rule",
+   "status": "accepted"
+  },
+  {
+   "definition": "A numeric limit on residents, rooms, bedrooms, lettings or floor area that triggers, exempts or bounds the application of a regulatory regime.",
+   "iri": "pbo:OccupancyThreshold",
+   "kind": "class",
+   "label": "Occupancy threshold",
+   "status": "accepted"
+  },
+  {
+   "definition": "A planning approval, building approval, fire-safety certification, registration, accreditation or licence issued by a government body to a party for a property or operation under a regulatory regime, with a status and validity.",
+   "iri": "pbo:Authorisation",
+   "kind": "class",
+   "label": "Authorisation",
+   "status": "accepted"
+  },
+  {
+   "definition": "A development or use approval under a local planning scheme permitting a stated use (for example rooming accommodation) on a site, or an exemption from needing one.",
+   "iri": "pbo:PlanningApproval",
+   "kind": "class",
+   "label": "Planning approval",
+   "status": "accepted"
+  },
+  {
+   "definition": "A building permit, classification change, occupancy approval or compliance notice confirming the building is approved for its intended class and use.",
+   "iri": "pbo:BuildingApproval",
+   "kind": "class",
+   "label": "Building approval",
+   "status": "accepted"
+  },
+  {
+   "definition": "Documentation that the premises satisfy applicable fire-safety requirements (alarms, exits, emergency lighting, fire-safety management).",
+   "iri": "pbo:FireSafetyCertification",
+   "kind": "class",
+   "label": "Fire-safety certification",
+   "status": "accepted"
+  },
+  {
+   "definition": "Queensland registration required before operating a residential service accommodating four or more residents who separately pay for accommodation.",
+   "iri": "pbo:ResidentialServiceRegistration",
+   "kind": "class",
+   "label": "Residential service registration",
+   "status": "accepted"
+  },
+  {
+   "definition": "Queensland accreditation of a registered residential service (Level 1 accommodation; Levels 2-3 where food or personal care are provided), sought within three months of registration.",
+   "iri": "pbo:AccommodationServiceAccreditation",
+   "kind": "class",
+   "label": "Accommodation service accreditation",
+   "status": "accepted"
+  },
+  {
+   "definition": "The Victorian licence a person or entity must hold before operating a rooming house under the Rooming House Operators Act 2016; one licence can cover multiple premises.",
+   "iri": "pbo:RoomingHouseOperatorLicence",
+   "kind": "class",
+   "label": "Rooming house operator licence",
+   "status": "accepted"
+  },
+  {
+   "definition": "Victorian registration of each rooming-house premises with the local council under the public-health framework, separate from the operator licence.",
+   "iri": "pbo:RoomingHousePremisesRegistration",
+   "kind": "class",
+   "label": "Rooming house premises registration",
+   "status": "accepted"
+  },
+  {
+   "definition": "A state licence or registration held by a property agent, salesperson or corporation, recorded in a public register such as the Queensland Office of Fair Trading register.",
+   "iri": "pbo:RealEstateAgentLicence",
+   "kind": "class",
+   "label": "Real estate agent licence",
+   "status": "accepted"
+  },
+  {
+   "definition": "A named approach to acquiring, holding, improving, operating or disposing of property to achieve return objectives (for example buy and hold, fix and flip, rooming house, dual income, small-scale development).",
+   "iri": "pbo:InvestmentStrategy",
+   "kind": "class",
+   "label": "Investment strategy",
+   "status": "accepted"
+  },
+  {
+   "definition": "A named arrangement of who controls the asset, who earns the operating revenue and who bears vacancy and fixed-cost risk (ownership, master lease / rent-to-rent, management or revenue share, hybrid/franchise, corporate leasing, single-lease rental).",
+   "iri": "pbo:OperatingModel",
+   "kind": "class",
+   "label": "Operating model",
+   "status": "accepted"
+  },
+  {
+   "definition": "A named physical and occupancy configuration of accommodation (whole-house rental, rooming house / HMO, coliving, boarding house, share house, dual-income configurations, student accommodation, short-stay, single- or multi-tenant commercial).",
+   "iri": "pbo:AccommodationType",
+   "kind": "class",
+   "label": "Accommodation type",
+   "status": "accepted"
+  },
+  {
+   "definition": "A legal vehicle through which property is held (individual, joint tenants, tenants in common, discretionary trust, unit trust, company, self-managed super fund).",
+   "iri": "pbo:OwnershipStructure",
+   "kind": "class",
+   "label": "Ownership structure",
+   "status": "accepted"
+  },
+  {
+   "definition": "A stated tax, liability, distribution, financing, estate or administrative property of an ownership structure as described by a source.",
+   "iri": "pbo:StructureCharacteristic",
+   "kind": "class",
+   "label": "Structure characteristic",
+   "status": "accepted"
+  },
+  {
+   "definition": "A named commercial or residential lease structure distinguished by duration and outgoings allocation (short-term, long-term, shopping-centre/retail, gross, net, triple net).",
+   "iri": "pbo:LeaseType",
+   "kind": "class",
+   "label": "Lease type",
+   "status": "accepted"
+  },
+  {
+   "definition": "Whether a property is occupied by a single tenant or by multiple tenants under separate leases.",
+   "iri": "pbo:TenantConfiguration",
+   "kind": "class",
+   "label": "Tenant configuration",
+   "status": "accepted"
+  },
+  {
+   "definition": "A demand group that an accommodation product targets (students, young professionals, essential workers, corporate staff, singles and couples, families, new arrivals, temporary workers).",
+   "iri": "pbo:TenantSegment",
+   "kind": "class",
+   "label": "Tenant segment",
+   "status": "accepted"
+  },
+  {
+   "definition": "An organisational structure for a real-estate agency (franchise, cooperative, joint venture, boutique, independent) with characteristic control and capability-sourcing patterns.",
+   "iri": "pbo:AgencyBusinessModel",
+   "kind": "class",
+   "label": "Agency business model",
+   "status": "accepted"
+  },
+  {
+   "definition": "A National Construction Code building class (for example Class 1a, Class 1b, Class 3) that determines fire, egress and occupancy requirements.",
+   "iri": "pbo:BuildingClassification",
+   "kind": "class",
+   "label": "Building classification",
+   "status": "accepted"
+  },
+  {
+   "definition": "A tax-law categorisation of a property activity or supply (rental investment, rental-property business, profit-making undertaking, input-taxed residential rent, commercial residential premises).",
+   "iri": "pbo:TaxClassification",
+   "kind": "class",
+   "label": "Tax classification",
+   "status": "accepted"
+  },
+  {
+   "definition": "The kind of authorisation a regime requires (planning approval, building approval, fire-safety certification, registration, accreditation, operator licence, premises registration, agent licence).",
+   "iri": "pbo:AuthorisationType",
+   "kind": "class",
+   "label": "Authorisation type",
+   "status": "accepted"
+  },
+  {
+   "definition": "What an occupancy threshold counts: residents, unrelated tenants, rooms rented, bedrooms, separate lettings, persons, floor area, dwellings.",
+   "iri": "pbo:ThresholdKind",
+   "kind": "class",
+   "label": "Threshold kind",
+   "status": "accepted"
+  },
+  {
+   "definition": "A named financial, operating or market measure (gross yield, net yield, NOI, cash-on-cash return, IRR, occupancy, economic vacancy, RevPAR, CAC, EBITDA, EBITDAR, DSCR, LVR, break-even occupancy, median rent, vacancy rate).",
+   "iri": "pbo:Metric",
+   "kind": "class",
+   "label": "Metric",
+   "status": "accepted"
+  },
+  {
+   "definition": "A grouping of risks by nature (planning-use, building/fire, licensing, tenancy-law, vacancy/turnover, management intensity, insurance, interest-rate/refinancing, valuation/exit, construction-cost, tax-classification, policy, counterparty, market-cycle, data/privacy, key-person).",
+   "iri": "pbo:RiskCategory",
+   "kind": "class",
+   "label": "Risk category",
+   "status": "accepted"
+  },
+  {
+   "definition": "A category of property operating cost that a lease may allocate: taxes/rates, insurance, maintenance, common-area maintenance, capital expenditure, utilities.",
+   "iri": "pbo:OutgoingCategory",
+   "kind": "class",
+   "label": "Outgoing category",
+   "status": "accepted"
+  },
+  {
+   "definition": "The access model of a data source: open authoritative, public lookup or government paid, commercial API/extract, first-party, derived internally.",
+   "iri": "pbo:DataAccessTier",
+   "kind": "class",
+   "label": "Data access tier",
+   "status": "accepted"
+  },
+  {
+   "definition": "A kind of information about a property that a data source can supply (address, parcel boundary, zoning, overlay, flood exposure, school catchment, transport access, demographics, development application, transaction, listing, rent, ownership, title, valuation).",
+   "iri": "pbo:PropertyAttribute",
+   "kind": "class",
+   "label": "Property attribute",
+   "status": "accepted"
+  },
+  {
+   "definition": "A named component that a business-planning artefact is recommended to contain (executive summary, market analysis, financial projections, risk and contingency, exit strategy, and so on).",
+   "iri": "pbo:DocumentSection",
+   "kind": "class",
+   "label": "Document section",
+   "status": "accepted"
+  },
+  {
+   "definition": "The way a property-management service is charged: percentage of rent collected, flat fee, hybrid, letting fee, renewal fee, ancillary fees.",
+   "iri": "pbo:FeeModel",
+   "kind": "class",
+   "label": "Fee model",
+   "status": "accepted"
+  },
+  {
+   "definition": "How an organisation obtains a capability: owned internally, centralised, localised, outsourced, shared through a network, accessed through partnership (inbound/outbound open innovation).",
+   "iri": "pbo:CapabilitySourcing",
+   "kind": "class",
+   "label": "Capability sourcing",
+   "status": "accepted"
+  },
+  {
+   "definition": "A category of property to which a tax rule applies: new residential build, established residential, commercial residential premises, build-to-rent project, affordable housing.",
+   "iri": "pbo:PropertyClass",
+   "kind": "class",
+   "label": "Property class for tax purposes",
+   "status": "accepted"
+  },
+  {
+   "definition": "A stage in a development or conversion project (acquisition screening, conditional due diligence, concept and approvals, construction, completion, operating approvals, lease-up, ongoing operation).",
+   "iri": "pbo:ProjectPhase",
+   "kind": "class",
+   "label": "Project phase",
+   "status": "accepted"
+  },
+  {
+   "definition": "An uncertain event or condition that, if it occurs, adversely affects a strategy, operating model, agreement, property or project, categorised and optionally mitigated.",
+   "iri": "pbo:Risk",
+   "kind": "class",
+   "label": "Risk",
+   "status": "accepted"
+  },
+  {
+   "definition": "A control, action or diligence step recorded as reducing the likelihood or impact of a risk.",
+   "iri": "pbo:Mitigation",
+   "kind": "class",
+   "label": "Mitigation",
+   "status": "accepted"
+  },
+  {
+   "definition": "A go/no-go condition that must be satisfied before a project proceeds, such as the planning, building/fire, finance and operating gates for a rooming house.",
+   "iri": "pbo:DecisionGate",
+   "kind": "class",
+   "label": "Decision gate",
+   "status": "accepted"
+  },
+  {
+   "definition": "A document, dataset, model, plan, register or other information object produced or used in property business activity.",
+   "iri": "pbo:InformationArtefact",
+   "kind": "class",
+   "label": "Information artefact",
+   "status": "accepted"
+  },
+  {
+   "definition": "An internal strategy document describing a business's objectives, structure, market, strategy, operations, finances, risks and exit.",
+   "iri": "pbo:BusinessPlan",
+   "kind": "class",
+   "label": "Business plan",
+   "status": "accepted"
+  },
+  {
+   "definition": "A document describing a specific development project's site, scope, staging, milestones, team and delivery.",
+   "iri": "pbo:ProjectPlan",
+   "kind": "class",
+   "label": "Project plan",
+   "status": "accepted"
+  },
+  {
+   "definition": "A financial and technical assessment of whether a site and project are viable, covering income and cost streams, structure, risks and projected position.",
+   "iri": "pbo:FeasibilityStudy",
+   "kind": "class",
+   "label": "Feasibility study",
+   "status": "accepted"
+  },
+  {
+   "definition": "An external document (typically 25-30 pages) presenting a development to investors or lenders with overview, location, plan, team, market, financial plan, offer and risk management.",
+   "iri": "pbo:InformationMemorandum",
+   "kind": "class",
+   "label": "Information memorandum",
+   "status": "accepted"
+  },
+  {
+   "definition": "A projection artefact containing income statement, cash flow, balance sheet, sources and uses, break-even, ROI/IRR and sensitivity analysis.",
+   "iri": "pbo:FinancialModel",
+   "kind": "class",
+   "label": "Financial model",
+   "status": "accepted"
+  },
+  {
+   "definition": "A structured list of risks with owner, likelihood, impact, mitigation, trigger and response.",
+   "iri": "pbo:RiskRegister",
+   "kind": "class",
+   "label": "Risk register",
+   "status": "accepted"
+  },
+  {
+   "definition": "A dated milestone schedule with role matrix, approval gates, governance cadence and reporting.",
+   "iri": "pbo:ImplementationSchedule",
+   "kind": "class",
+   "label": "Implementation schedule",
+   "status": "accepted"
+  },
+  {
+   "definition": "A document in the property-pages corpus (scraped article, government page, forum thread, academic paper, synthesis or report) from which claims are drawn.",
+   "iri": "pbo:SourceDocument",
+   "kind": "class",
+   "label": "Source document",
+   "status": "accepted"
+  },
+  {
+   "definition": "A published dataset, register, API or service that supplies property attributes, identifiers or market statistics for a jurisdiction under an access tier and licence.",
+   "iri": "pbo:DataSource",
+   "kind": "class",
+   "label": "Data source",
+   "status": "accepted"
+  },
+  {
+   "definition": "A documented operational process of a property business with trigger, responsible role, steps, decision points, records, service standard and escalation path.",
+   "iri": "pbo:Workflow",
+   "kind": "class",
+   "label": "Workflow",
+   "status": "accepted"
+  },
+  {
+   "definition": "A defined service a property-management business provides to landlords or tenants, such as tenant screening, lease preparation, rent collection, inspections, maintenance coordination or reporting.",
+   "iri": "pbo:Service",
+   "kind": "class",
+   "label": "Service",
+   "status": "accepted"
+  },
+  {
+   "definition": "A named set of underwriting assumptions applied to a property or project (project cost, leverage, interest, rooms, tariff, vacancy, operating-expense ratio, growth) that yields result metrics.",
+   "iri": "pbo:FinancialScenario",
+   "kind": "class",
+   "label": "Financial scenario",
+   "status": "accepted"
+  },
+  {
+   "definition": "A value of a metric (numeric value, unit, basis note) as assumed in a scenario, computed as a result, or claimed by a source for a property, market or model.",
+   "iri": "pbo:MetricValue",
+   "kind": "class",
+   "label": "Metric value",
+   "status": "accepted"
+  },
+  {
+   "definition": "An activity that acquires, converts, subdivides, builds or repositions property through phases from screening to operation, producing approvals, buildings and artefacts.",
+   "iri": "pbo:DevelopmentProject",
+   "kind": "class",
+   "label": "Development project",
+   "status": "accepted"
+  },
+  {
+   "definition": "The regulatory consequence when an occupancy threshold is satisfied: the regime applies in full, applies in part, does not apply, a permit is exempt, or an authorisation becomes required.",
+   "iri": "pbo:ThresholdEffect",
+   "kind": "class",
+   "label": "Threshold effect",
+   "status": "accepted"
+  },
+  {
+   "characteristics": {
+    "inverse": "participationContext"
+   },
+   "definition": "Links an agreement, property asset, development project or business to a participation in which a party bears a role in that context.",
+   "iri": "pbo:hasParticipation",
+   "kind": "object_property",
+   "label": "has participation",
+   "range": "pbo:Participation",
+   "status": "accepted"
+  },
+  {
+   "definition": "The agreement, property asset, project or business in which the participation occurs.",
+   "domain": "pbo:Participation",
+   "iri": "pbo:participationContext",
+   "kind": "object_property",
+   "label": "participation context",
+   "status": "accepted"
+  },
+  {
+   "characteristics": {
+    "functional": true
+   },
+   "definition": "The party bearing the role in a participation.",
+   "domain": "pbo:Participation",
+   "iri": "pbo:participant",
+   "kind": "object_property",
+   "label": "participant",
+   "range": "pbo:Party",
+   "status": "accepted"
+  },
+  {
+   "characteristics": {
+    "functional": true
+   },
+   "definition": "The role borne by the participant in the participation.",
+   "domain": "pbo:Participation",
+   "iri": "pbo:inRole",
+   "kind": "object_property",
+   "label": "in role",
+   "range": "pbo:Role",
+   "status": "accepted"
+  },
+  {
+   "definition": "Convenience shortcut stating the party that owns the property asset; equivalent in intent to a participation in the Owner role.",
+   "domain": "pbo:PropertyAsset",
+   "iri": "pbo:ownedBy",
+   "kind": "object_property",
+   "label": "owned by",
+   "range": "pbo:Party",
+   "status": "accepted"
+  },
+  {
+   "definition": "Convenience shortcut stating the party that manages a property asset or portfolio on the owner's behalf.",
+   "iri": "pbo:managedBy",
+   "kind": "object_property",
+   "label": "managed by",
+   "range": "pbo:Party",
+   "status": "accepted"
+  },
+  {
+   "definition": "Convenience shortcut stating the party that operates accommodation at the property (the operator, provider or head tenant).",
+   "domain": "pbo:PropertyAsset",
+   "iri": "pbo:operatedBy",
+   "kind": "object_property",
+   "label": "operated by",
+   "range": "pbo:Party",
+   "status": "accepted"
+  },
+  {
+   "definition": "The property asset (or rentable unit) that an agreement, authorisation, scenario, risk or project concerns.",
+   "iri": "pbo:concernsAsset",
+   "kind": "object_property",
+   "label": "concerns asset",
+   "range": "pbo:PropertyAsset",
+   "status": "accepted"
+  },
+  {
+   "definition": "A clause contained in the agreement.",
+   "domain": "pbo:Agreement",
+   "iri": "pbo:hasClause",
+   "kind": "object_property",
+   "label": "has clause",
+   "range": "pbo:ContractClause",
+   "status": "accepted"
+  },
+  {
+   "definition": "The lease-type classification of an agreement.",
+   "domain": "pbo:Agreement",
+   "iri": "pbo:leaseType",
+   "kind": "object_property",
+   "label": "classified by lease type",
+   "range": "pbo:LeaseType",
+   "status": "accepted"
+  },
+  {
+   "definition": "Links a sublease to the head lease from which the operator's right to sublet derives.",
+   "domain": "pbo:Sublease",
+   "iri": "pbo:agreementUnderHeadLease",
+   "kind": "object_property",
+   "label": "sublease under head lease",
+   "range": "pbo:HeadLease",
+   "status": "accepted"
+  },
+  {
+   "definition": "The accommodation type or use the agreement permits.",
+   "domain": "pbo:Agreement",
+   "iri": "pbo:permittedUse",
+   "kind": "object_property",
+   "label": "permitted use",
+   "range": "pbo:AccommodationType",
+   "status": "accepted"
+  },
+  {
+   "definition": "Links a lease type or agreement to an outgoing allocation.",
+   "iri": "pbo:allocatesOutgoing",
+   "kind": "object_property",
+   "label": "allocates outgoing",
+   "range": "pbo:OutgoingAllocation",
+   "status": "accepted"
+  },
+  {
+   "definition": "The category of outgoing being allocated.",
+   "domain": "pbo:OutgoingAllocation",
+   "iri": "pbo:outgoingCategory",
+   "kind": "object_property",
+   "label": "allocates outgoing category",
+   "range": "pbo:OutgoingCategory",
+   "status": "accepted"
+  },
+  {
+   "definition": "The role (landlord/lessor or tenant/lessee) that bears the allocated outgoing.",
+   "domain": "pbo:OutgoingAllocation",
+   "iri": "pbo:borneByRole",
+   "kind": "object_property",
+   "label": "borne by role",
+   "range": "pbo:Role",
+   "status": "accepted"
+  },
+  {
+   "definition": "The jurisdiction in which a property asset is located.",
+   "domain": "pbo:PropertyAsset",
+   "iri": "pbo:locatedIn",
+   "kind": "object_property",
+   "label": "located in",
+   "range": "pbo:Jurisdiction",
+   "status": "accepted"
+  },
+  {
+   "characteristics": {
+    "transitive": true
+   },
+   "definition": "Containment of one jurisdiction within a larger one (a local government area within a state within a nation).",
+   "domain": "pbo:Jurisdiction",
+   "iri": "pbo:withinJurisdiction",
+   "kind": "object_property",
+   "label": "within jurisdiction",
+   "range": "pbo:Jurisdiction",
+   "status": "accepted"
+  },
+  {
+   "definition": "A property identifier denoting the asset.",
+   "domain": "pbo:PropertyAsset",
+   "iri": "pbo:hasIdentifier",
+   "kind": "object_property",
+   "label": "has identifier",
+   "range": "pbo:PropertyIdentifier",
+   "status": "accepted"
+  },
+  {
+   "characteristics": {
+    "transitive": true
+   },
+   "definition": "Mereological part relation between property assets (a room within a dwelling, a dwelling within a building, a building on a parcel).",
+   "domain": "pbo:PropertyAsset",
+   "iri": "pbo:partOf",
+   "kind": "object_property",
+   "label": "part of",
+   "range": "pbo:PropertyAsset",
+   "status": "accepted"
+  },
+  {
+   "definition": "The portfolio that holds or manages the asset.",
+   "domain": "pbo:PropertyAsset",
+   "iri": "pbo:inPortfolio",
+   "kind": "object_property",
+   "label": "in portfolio",
+   "range": "pbo:Portfolio",
+   "status": "accepted"
+  },
+  {
+   "definition": "The ownership structure through which an asset or portfolio is held.",
+   "iri": "pbo:heldUnder",
+   "kind": "object_property",
+   "label": "held under ownership structure",
+   "range": "pbo:OwnershipStructure",
+   "status": "accepted"
+  },
+  {
+   "definition": "A characteristic a source attributes to an ownership structure.",
+   "domain": "pbo:OwnershipStructure",
+   "iri": "pbo:hasCharacteristic",
+   "kind": "object_property",
+   "label": "has characteristic",
+   "range": "pbo:StructureCharacteristic",
+   "status": "accepted"
+  },
+  {
+   "definition": "The accommodation-type classification of a property asset or rentable unit.",
+   "domain": "pbo:PropertyAsset",
+   "iri": "pbo:hasAccommodationType",
+   "kind": "object_property",
+   "label": "has accommodation type",
+   "range": "pbo:AccommodationType",
+   "status": "accepted"
+  },
+  {
+   "definition": "The building-code class of a building or dwelling.",
+   "domain": "pbo:PropertyAsset",
+   "iri": "pbo:hasBuildingClassification",
+   "kind": "object_property",
+   "label": "has building classification",
+   "range": "pbo:BuildingClassification",
+   "status": "accepted"
+  },
+  {
+   "definition": "The operating model under which a property is, or is proposed to be, operated.",
+   "domain": "pbo:PropertyAsset",
+   "iri": "pbo:intendedOperatingModel",
+   "kind": "object_property",
+   "label": "intended operating model",
+   "range": "pbo:OperatingModel",
+   "status": "accepted"
+  },
+  {
+   "definition": "Whether the property is single- or multi-tenant.",
+   "domain": "pbo:PropertyAsset",
+   "iri": "pbo:tenantConfiguration",
+   "kind": "object_property",
+   "label": "uses tenant configuration",
+   "range": "pbo:TenantConfiguration",
+   "status": "accepted"
+  },
+  {
+   "definition": "An authorisation held for, or required by, a property asset or party.",
+   "iri": "pbo:hasAuthorisation",
+   "kind": "object_property",
+   "label": "has authorisation",
+   "range": "pbo:Authorisation",
+   "status": "accepted"
+  },
+  {
+   "definition": "The kind of authorisation.",
+   "domain": "pbo:Authorisation",
+   "iri": "pbo:authorisationType",
+   "kind": "object_property",
+   "label": "has authorisation type",
+   "range": "pbo:AuthorisationType",
+   "status": "accepted"
+  },
+  {
+   "definition": "The government body that issues or grants the authorisation.",
+   "domain": "pbo:Authorisation",
+   "iri": "pbo:issuedBy",
+   "kind": "object_property",
+   "label": "issued by",
+   "range": "pbo:GovernmentBody",
+   "status": "accepted"
+  },
+  {
+   "definition": "The party to whom the authorisation is granted (the operator, provider, licensee or applicant).",
+   "domain": "pbo:Authorisation",
+   "iri": "pbo:authorisedParty",
+   "kind": "object_property",
+   "label": "authorised party",
+   "range": "pbo:Party",
+   "status": "accepted"
+  },
+  {
+   "definition": "The regulatory regime under which the authorisation is issued or the rule sits.",
+   "iri": "pbo:underRegime",
+   "kind": "object_property",
+   "label": "under regime",
+   "range": "pbo:RegulatoryRegime",
+   "status": "accepted"
+  },
+  {
+   "definition": "The jurisdiction in which a regulatory regime or rule applies.",
+   "iri": "pbo:appliesIn",
+   "kind": "object_property",
+   "label": "applies in",
+   "range": "pbo:Jurisdiction",
+   "status": "accepted"
+  },
+  {
+   "definition": "The legislation that establishes the regime or rule.",
+   "iri": "pbo:governedBy",
+   "kind": "object_property",
+   "label": "governed by",
+   "range": "pbo:Legislation",
+   "status": "accepted"
+  },
+  {
+   "definition": "The regulator or government body that administers the regime.",
+   "domain": "pbo:RegulatoryRegime",
+   "iri": "pbo:administeredBy",
+   "kind": "object_property",
+   "label": "administered by",
+   "range": "pbo:GovernmentBody",
+   "status": "accepted"
+  },
+  {
+   "definition": "An operating model to which the regime applies.",
+   "domain": "pbo:RegulatoryRegime",
+   "iri": "pbo:appliesToOperatingModel",
+   "kind": "object_property",
+   "label": "applies to operating model",
+   "range": "pbo:OperatingModel",
+   "status": "accepted"
+  },
+  {
+   "definition": "An accommodation type to which the regime applies.",
+   "domain": "pbo:RegulatoryRegime",
+   "iri": "pbo:appliesToAccommodationType",
+   "kind": "object_property",
+   "label": "applies to accommodation type",
+   "range": "pbo:AccommodationType",
+   "status": "accepted"
+  },
+  {
+   "definition": "A kind of authorisation that must be obtained before operating under the regime.",
+   "domain": "pbo:RegulatoryRegime",
+   "iri": "pbo:requiresAuthorisationType",
+   "kind": "object_property",
+   "label": "requires authorisation type",
+   "range": "pbo:AuthorisationType",
+   "status": "accepted"
+  },
+  {
+   "definition": "An occupancy or size threshold that triggers, exempts or bounds the regime.",
+   "domain": "pbo:RegulatoryRegime",
+   "iri": "pbo:hasThreshold",
+   "kind": "object_property",
+   "label": "has threshold",
+   "range": "pbo:OccupancyThreshold",
+   "status": "accepted"
+  },
+  {
+   "characteristics": {
+    "functional": true
+   },
+   "definition": "What the threshold counts.",
+   "domain": "pbo:OccupancyThreshold",
+   "iri": "pbo:thresholdKind",
+   "kind": "object_property",
+   "label": "has threshold kind",
+   "range": "pbo:ThresholdKind",
+   "status": "accepted"
+  },
+  {
+   "definition": "A specific rule within the regime.",
+   "domain": "pbo:RegulatoryRegime",
+   "iri": "pbo:hasRule",
+   "kind": "object_property",
+   "label": "has rule",
+   "range": "pbo:RegulatoryRule",
+   "status": "accepted"
+  },
+  {
+   "definition": "The class of property (new build, established, commercial residential, build-to-rent) to which a tax rule applies.",
+   "domain": "pbo:TaxRule",
+   "iri": "pbo:appliesToPropertyClass",
+   "kind": "object_property",
+   "label": "applies to property class",
+   "range": "pbo:PropertyClass",
+   "status": "accepted"
+  },
+  {
+   "definition": "The tax classification attributed to an activity, party, property or supply.",
+   "iri": "pbo:hasTaxClassification",
+   "kind": "object_property",
+   "label": "has tax classification",
+   "range": "pbo:TaxClassification",
+   "status": "accepted"
+  },
+  {
+   "definition": "A prescribed form required by the regime for an agreement or notice.",
+   "domain": "pbo:RegulatoryRegime",
+   "iri": "pbo:prescribesForm",
+   "kind": "object_property",
+   "label": "prescribes form",
+   "range": "pbo:PrescribedForm",
+   "status": "accepted"
+  },
+  {
+   "definition": "An operating model on which the investment strategy relies.",
+   "domain": "pbo:InvestmentStrategy",
+   "iri": "pbo:strategyUsesOperatingModel",
+   "kind": "object_property",
+   "label": "strategy uses operating model",
+   "range": "pbo:OperatingModel",
+   "status": "accepted"
+  },
+  {
+   "definition": "An accommodation type on which the investment strategy relies.",
+   "domain": "pbo:InvestmentStrategy",
+   "iri": "pbo:strategyUsesAccommodationType",
+   "kind": "object_property",
+   "label": "strategy uses accommodation type",
+   "range": "pbo:AccommodationType",
+   "status": "accepted"
+  },
+  {
+   "definition": "A tenant segment that a strategy, accommodation type or property targets.",
+   "iri": "pbo:targetsTenantSegment",
+   "kind": "object_property",
+   "label": "targets tenant segment",
+   "range": "pbo:TenantSegment",
+   "status": "accepted"
+  },
+  {
+   "definition": "The investment strategy applied to a portfolio, asset or project.",
+   "iri": "pbo:hasStrategy",
+   "kind": "object_property",
+   "label": "has strategy",
+   "range": "pbo:InvestmentStrategy",
+   "status": "accepted"
+  },
+  {
+   "definition": "A risk that applies to the subject (strategy, operating model, agreement, property, project or business).",
+   "iri": "pbo:hasRisk",
+   "kind": "object_property",
+   "label": "has risk",
+   "range": "pbo:Risk",
+   "status": "accepted"
+  },
+  {
+   "definition": "The category of the risk.",
+   "domain": "pbo:Risk",
+   "iri": "pbo:riskCategory",
+   "kind": "object_property",
+   "label": "classified in risk category",
+   "range": "pbo:RiskCategory",
+   "status": "accepted"
+  },
+  {
+   "definition": "A mitigation recorded for the risk.",
+   "domain": "pbo:Risk",
+   "iri": "pbo:mitigatedBy",
+   "kind": "object_property",
+   "label": "mitigated by",
+   "range": "pbo:Mitigation",
+   "status": "accepted"
+  },
+  {
+   "definition": "A decision gate that must be passed for the subject (strategy or project).",
+   "iri": "pbo:hasDecisionGate",
+   "kind": "object_property",
+   "label": "has decision gate",
+   "range": "pbo:DecisionGate",
+   "status": "accepted"
+  },
+  {
+   "definition": "An authorisation type whose confirmation satisfies the decision gate.",
+   "domain": "pbo:DecisionGate",
+   "iri": "pbo:gateRequiresAuthorisationType",
+   "kind": "object_property",
+   "label": "gate requires authorisation type",
+   "range": "pbo:AuthorisationType",
+   "status": "accepted"
+  },
+  {
+   "definition": "A metric value describing the subject (property, portfolio, market claim, scenario).",
+   "iri": "pbo:hasMetricValue",
+   "kind": "object_property",
+   "label": "has metric value",
+   "range": "pbo:MetricValue",
+   "status": "accepted"
+  },
+  {
+   "definition": "A metric value used as an input assumption of the scenario.",
+   "domain": "pbo:FinancialScenario",
+   "iri": "pbo:assumes",
+   "kind": "object_property",
+   "label": "assumes",
+   "range": "pbo:MetricValue",
+   "status": "accepted"
+  },
+  {
+   "definition": "A metric value produced as a result of the scenario.",
+   "domain": "pbo:FinancialScenario",
+   "iri": "pbo:yields",
+   "kind": "object_property",
+   "label": "yields",
+   "range": "pbo:MetricValue",
+   "status": "accepted"
+  },
+  {
+   "characteristics": {
+    "functional": true
+   },
+   "definition": "The metric that the value measures.",
+   "domain": "pbo:MetricValue",
+   "iri": "pbo:metric",
+   "kind": "object_property",
+   "label": "measures metric",
+   "range": "pbo:Metric",
+   "status": "accepted"
+  },
+  {
+   "definition": "The corpus source document that asserts the value, definition or claim.",
+   "iri": "pbo:assertedIn",
+   "kind": "object_property",
+   "label": "asserted in",
+   "range": "pbo:SourceDocument",
+   "status": "accepted"
+  },
+  {
+   "definition": "The jurisdiction a metric value, claim or data source refers to.",
+   "iri": "pbo:describesJurisdiction",
+   "kind": "object_property",
+   "label": "describes jurisdiction",
+   "range": "pbo:Jurisdiction",
+   "status": "accepted"
+  },
+  {
+   "definition": "The operating model or accommodation type that the scenario underwrites.",
+   "domain": "pbo:FinancialScenario",
+   "iri": "pbo:scenarioForModel",
+   "kind": "object_property",
+   "label": "scenario for operating model",
+   "range": "pbo:OperatingModel",
+   "status": "accepted"
+  },
+  {
+   "definition": "A document section that a source or template recommends the artefact contain.",
+   "domain": "pbo:InformationArtefact",
+   "iri": "pbo:recommendsSection",
+   "kind": "object_property",
+   "label": "recommends section",
+   "range": "pbo:DocumentSection",
+   "status": "accepted"
+  },
+  {
+   "definition": "A service provided by the business.",
+   "domain": "pbo:Business",
+   "iri": "pbo:providesService",
+   "kind": "object_property",
+   "label": "provides service",
+   "range": "pbo:Service",
+   "status": "accepted"
+  },
+  {
+   "definition": "The fee model under which a service is charged.",
+   "domain": "pbo:Service",
+   "iri": "pbo:hasFeeModel",
+   "kind": "object_property",
+   "label": "has fee model",
+   "range": "pbo:FeeModel",
+   "status": "accepted"
+  },
+  {
+   "definition": "A workflow that delivers the service.",
+   "domain": "pbo:Service",
+   "iri": "pbo:supportedByWorkflow",
+   "kind": "object_property",
+   "label": "supported by workflow",
+   "range": "pbo:Workflow",
+   "status": "accepted"
+  },
+  {
+   "definition": "A metric used as a key performance indicator for the business, service or workflow.",
+   "iri": "pbo:measuredBy",
+   "kind": "object_property",
+   "label": "measured by",
+   "range": "pbo:Metric",
+   "status": "accepted"
+  },
+  {
+   "definition": "The agency business model under which the business is organised.",
+   "domain": "pbo:Business",
+   "iri": "pbo:businessModel",
+   "kind": "object_property",
+   "label": "business model",
+   "range": "pbo:AgencyBusinessModel",
+   "status": "accepted"
+  },
+  {
+   "definition": "The capability-sourcing pattern characteristic of the business model or business.",
+   "iri": "pbo:sourcesCapabilityVia",
+   "kind": "object_property",
+   "label": "sources capability via",
+   "range": "pbo:CapabilitySourcing",
+   "status": "accepted"
+  },
+  {
+   "definition": "The organisation that publishes the data source or document.",
+   "domain": "pbo:InformationArtefact",
+   "iri": "pbo:publishedBy",
+   "kind": "object_property",
+   "label": "published by",
+   "range": "pbo:Organisation",
+   "status": "accepted"
+  },
+  {
+   "definition": "A property attribute the data source can supply.",
+   "domain": "pbo:DataSource",
+   "iri": "pbo:suppliesAttribute",
+   "kind": "object_property",
+   "label": "supplies attribute",
+   "range": "pbo:PropertyAttribute",
+   "status": "accepted"
+  },
+  {
+   "definition": "The access tier of the data source.",
+   "domain": "pbo:DataSource",
+   "iri": "pbo:accessTier",
+   "kind": "object_property",
+   "label": "access tier",
+   "range": "pbo:DataAccessTier",
+   "status": "accepted"
+  },
+  {
+   "definition": "The jurisdiction the data source covers.",
+   "domain": "pbo:DataSource",
+   "iri": "pbo:coversJurisdiction",
+   "kind": "object_property",
+   "label": "covers jurisdiction",
+   "range": "pbo:Jurisdiction",
+   "status": "accepted"
+  },
+  {
+   "definition": "A phase of the development project.",
+   "domain": "pbo:DevelopmentProject",
+   "iri": "pbo:hasPhase",
+   "kind": "object_property",
+   "label": "has phase",
+   "range": "pbo:ProjectPhase",
+   "status": "accepted"
+  },
+  {
+   "characteristics": {
+    "transitive": true
+   },
+   "definition": "Ordering between project phases.",
+   "domain": "pbo:ProjectPhase",
+   "iri": "pbo:precedes",
+   "kind": "object_property",
+   "label": "precedes",
+   "range": "pbo:ProjectPhase",
+   "status": "accepted"
+  },
+  {
+   "definition": "An information artefact produced by the project or business activity.",
+   "domain": "pbo:DevelopmentProject",
+   "iri": "pbo:producesArtefact",
+   "kind": "object_property",
+   "label": "produces artefact",
+   "range": "pbo:InformationArtefact",
+   "status": "accepted"
+  },
+  {
+   "definition": "The investment strategy that the development project implements.",
+   "domain": "pbo:DevelopmentProject",
+   "iri": "pbo:usesStrategy",
+   "kind": "object_property",
+   "label": "project uses strategy",
+   "range": "pbo:InvestmentStrategy",
+   "status": "accepted"
+  },
+  {
+   "definition": "The regime application effect when the threshold is met (regime applies in full, applies in part, does not apply, permit exempt, licence required).",
+   "domain": "pbo:OccupancyThreshold",
+   "iri": "pbo:occupancyThresholdEffect",
+   "kind": "object_property",
+   "label": "has threshold effect",
+   "range": "pbo:ThresholdEffect",
+   "status": "accepted"
+  },
+  {
+   "definition": "Rent payable per week under an agreement or for a rentable unit, in AUD unless stated.",
+   "iri": "pbo:weeklyRent",
+   "kind": "data_property",
+   "label": "weekly rent",
+   "range": "xsd:decimal",
+   "status": "accepted"
+  },
+  {
+   "definition": "Scheduled rent per year.",
+   "iri": "pbo:annualRent",
+   "kind": "data_property",
+   "label": "annual rent",
+   "range": "xsd:decimal",
+   "status": "accepted"
+  },
+  {
+   "definition": "Duration of an agreement in months.",
+   "domain": "pbo:Agreement",
+   "iri": "pbo:termMonths",
+   "kind": "data_property",
+   "label": "term (months)",
+   "range": "xsd:integer",
+   "status": "accepted"
+  },
+  {
+   "definition": "Annual rent escalation rate in percent under an agreement.",
+   "domain": "pbo:Agreement",
+   "iri": "pbo:escalationRatePercent",
+   "kind": "data_property",
+   "label": "escalation rate (%)",
+   "range": "xsd:decimal",
+   "status": "accepted"
+  },
+  {
+   "definition": "Whether the rent obligation is fixed irrespective of occupancy (true for head/master leases).",
+   "domain": "pbo:Agreement",
+   "iri": "pbo:fixedRent",
+   "kind": "data_property",
+   "label": "fixed rent regardless of occupancy",
+   "range": "xsd:boolean",
+   "status": "accepted"
+  },
+  {
+   "definition": "Date from which an agreement, authorisation, rule or regime is in force.",
+   "iri": "pbo:effectiveFrom",
+   "kind": "data_property",
+   "label": "effective from",
+   "range": "xsd:date",
+   "status": "accepted"
+  },
+  {
+   "definition": "Date until which an agreement, authorisation, rule or regime is in force.",
+   "iri": "pbo:effectiveUntil",
+   "kind": "data_property",
+   "label": "effective until",
+   "range": "xsd:date",
+   "status": "accepted"
+  },
+  {
+   "definition": "A grandfathering or eligibility cut-off date-time attached to a rule (for example 7:30 pm AEST 12 May 2026).",
+   "domain": "pbo:RegulatoryRule",
+   "iri": "pbo:cutoffDate",
+   "kind": "data_property",
+   "label": "cut-off date",
+   "range": "xsd:dateTime",
+   "status": "accepted"
+  },
+  {
+   "definition": "Comparison operator for the threshold value: 'gte', 'lte', 'gt', 'lt', 'eq', 'range'.",
+   "domain": "pbo:OccupancyThreshold",
+   "iri": "pbo:thresholdComparator",
+   "kind": "data_property",
+   "label": "threshold comparator",
+   "range": "xsd:string",
+   "status": "accepted"
+  },
+  {
+   "definition": "Numeric threshold value (lower bound for ranges).",
+   "domain": "pbo:OccupancyThreshold",
+   "iri": "pbo:thresholdValue",
+   "kind": "data_property",
+   "label": "threshold value",
+   "range": "xsd:decimal",
+   "status": "accepted"
+  },
+  {
+   "definition": "Upper bound when the comparator is 'range'.",
+   "domain": "pbo:OccupancyThreshold",
+   "iri": "pbo:thresholdUpperValue",
+   "kind": "data_property",
+   "label": "threshold upper value",
+   "range": "xsd:decimal",
+   "status": "accepted"
+  },
+  {
+   "definition": "Unit of the threshold value (persons, rooms, bedrooms, lettings, m2).",
+   "domain": "pbo:OccupancyThreshold",
+   "iri": "pbo:thresholdUnit",
+   "kind": "data_property",
+   "label": "threshold unit",
+   "range": "xsd:string",
+   "status": "accepted"
+  },
+  {
+   "definition": "The numeric value of a metric value.",
+   "domain": "pbo:MetricValue",
+   "iri": "pbo:numericValue",
+   "kind": "data_property",
+   "label": "numeric value",
+   "range": "xsd:decimal",
+   "status": "accepted"
+  },
+  {
+   "definition": "Upper bound of a metric value reported as a range.",
+   "domain": "pbo:MetricValue",
+   "iri": "pbo:upperValue",
+   "kind": "data_property",
+   "label": "upper value",
+   "range": "xsd:decimal",
+   "status": "accepted"
+  },
+  {
+   "definition": "Unit of a metric value (percent, AUD, AUD_per_week, months, ratio, EUR).",
+   "domain": "pbo:MetricValue",
+   "iri": "pbo:unit",
+   "kind": "data_property",
+   "label": "unit",
+   "range": "xsd:string",
+   "status": "accepted"
+  },
+  {
+   "definition": "Free-text statement of the basis, assumptions or qualification attached to a value or claim.",
+   "iri": "pbo:basisNote",
+   "kind": "data_property",
+   "label": "basis note",
+   "range": "xsd:string",
+   "status": "accepted"
+  },
+  {
+   "definition": "Date on which a claim or figure was published or is current.",
+   "iri": "pbo:claimDate",
+   "kind": "data_property",
+   "label": "claim date",
+   "range": "xsd:date",
+   "status": "accepted"
+  },
+  {
+   "definition": "Number of separately lettable rooms or studios in a property.",
+   "domain": "pbo:PropertyAsset",
+   "iri": "pbo:roomCount",
+   "kind": "data_property",
+   "label": "room count",
+   "range": "xsd:integer",
+   "status": "accepted"
+  },
+  {
+   "definition": "Number of bedrooms.",
+   "domain": "pbo:PropertyAsset",
+   "iri": "pbo:bedroomCount",
+   "kind": "data_property",
+   "label": "bedroom count",
+   "range": "xsd:integer",
+   "status": "accepted"
+  },
+  {
+   "definition": "Total floor area in square metres.",
+   "domain": "pbo:PropertyAsset",
+   "iri": "pbo:floorAreaSqm",
+   "kind": "data_property",
+   "label": "floor area (m2)",
+   "range": "xsd:decimal",
+   "status": "accepted"
+  },
+  {
+   "definition": "Land area in square metres.",
+   "domain": "pbo:LandParcel",
+   "iri": "pbo:lotSizeSqm",
+   "kind": "data_property",
+   "label": "lot size (m2)",
+   "range": "xsd:decimal",
+   "status": "accepted"
+  },
+  {
+   "definition": "The literal value of a property identifier.",
+   "domain": "pbo:PropertyIdentifier",
+   "iri": "pbo:identifierValue",
+   "kind": "data_property",
+   "label": "identifier value",
+   "range": "xsd:string",
+   "status": "accepted"
+  },
+  {
+   "definition": "Short code for a jurisdiction (AU, QLD, VIC, NSW, WA, SA, BCC, LOGAN).",
+   "domain": "pbo:Jurisdiction",
+   "iri": "pbo:jurisdictionCode",
+   "kind": "data_property",
+   "label": "jurisdiction code",
+   "range": "xsd:string",
+   "status": "accepted"
+  },
+  {
+   "definition": "Status of an authorisation: 'held', 'pending', 'expired', 'refused', 'not_required', 'unknown'.",
+   "domain": "pbo:Authorisation",
+   "iri": "pbo:authorisationStatus",
+   "kind": "data_property",
+   "label": "authorisation status",
+   "range": "xsd:string",
+   "status": "accepted"
+  },
+  {
+   "definition": "Date the authorisation was issued.",
+   "domain": "pbo:Authorisation",
+   "iri": "pbo:dateIssued",
+   "kind": "data_property",
+   "label": "date issued",
+   "range": "xsd:date",
+   "status": "accepted"
+  },
+  {
+   "definition": "How often a data source is updated (daily, weekly, quarterly, annual, release-driven, near-real-time).",
+   "domain": "pbo:DataSource",
+   "iri": "pbo:refreshCadence",
+   "kind": "data_property",
+   "label": "refresh cadence",
+   "range": "xsd:string",
+   "status": "accepted"
+  },
+  {
+   "definition": "Licence or terms under which a data source or document is available.",
+   "domain": "pbo:InformationArtefact",
+   "iri": "pbo:licenceNote",
+   "kind": "data_property",
+   "label": "licence note",
+   "range": "xsd:string",
+   "status": "accepted"
+  },
+  {
+   "definition": "Original location of a source document or data source.",
+   "domain": "pbo:InformationArtefact",
+   "iri": "pbo:sourceUrl",
+   "kind": "data_property",
+   "label": "source URL",
+   "range": "xsd:anyURI",
+   "status": "accepted"
+  },
+  {
+   "definition": "Date the artefact was published or compiled.",
+   "domain": "pbo:InformationArtefact",
+   "iri": "pbo:publicationDate",
+   "kind": "data_property",
+   "label": "publication date",
+   "range": "xsd:date",
+   "status": "accepted"
+  },
+  {
+   "definition": "Authority level of a source document: normative, authoritative, primary, secondary, expert, reference, illustrative.",
+   "domain": "pbo:SourceDocument",
+   "iri": "pbo:authorityLevel",
+   "kind": "data_property",
+   "label": "authority level",
+   "range": "xsd:string",
+   "status": "accepted"
+  },
+  {
+   "definition": "Human-readable name of a financial scenario (conservative, moderate, aggressive).",
+   "domain": "pbo:FinancialScenario",
+   "iri": "pbo:scenarioName",
+   "kind": "data_property",
+   "label": "scenario name",
+   "range": "xsd:string",
+   "status": "accepted"
+  },
+  {
+   "definition": "Text of a structure characteristic as stated by the source.",
+   "domain": "pbo:StructureCharacteristic",
+   "iri": "pbo:characteristicNote",
+   "kind": "data_property",
+   "label": "characteristic note",
+   "range": "xsd:string",
+   "status": "accepted"
+  },
+  {
+   "definition": "Text describing the mitigation, control or diligence step.",
+   "domain": "pbo:Mitigation",
+   "iri": "pbo:mitigationNote",
+   "kind": "data_property",
+   "label": "mitigation note",
+   "range": "xsd:string",
+   "status": "accepted"
+  },
+  {
+   "definition": "Text of the condition a decision gate requires.",
+   "domain": "pbo:DecisionGate",
+   "iri": "pbo:gateCondition",
+   "kind": "data_property",
+   "label": "gate condition",
+   "range": "xsd:string",
+   "status": "accepted"
+  },
+  {
+   "definition": "Ordinal position of a project phase.",
+   "domain": "pbo:ProjectPhase",
+   "iri": "pbo:phaseOrder",
+   "kind": "data_property",
+   "label": "phase order",
+   "range": "xsd:integer",
+   "status": "accepted"
+  },
+  {
+   "definition": "Management fee expressed as a percentage of rent collected.",
+   "domain": "pbo:Service",
+   "iri": "pbo:feePercentOfRent",
+   "kind": "data_property",
+   "label": "fee (% of rent)",
+   "range": "xsd:decimal",
+   "status": "accepted"
+  },
+  {
+   "definition": "Number of properties under management or held.",
+   "domain": "pbo:Portfolio",
+   "iri": "pbo:portfolioSizeProperties",
+   "kind": "data_property",
+   "label": "portfolio size (properties)",
+   "range": "xsd:integer",
+   "status": "accepted"
+  },
+  {
+   "definition": "Roles a party can bear.",
+   "iri": "pbo:RoleScheme",
+   "kind": "individual",
+   "label": "Role scheme",
+   "rdf_type": "skos:ConceptScheme",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Role",
+   "definition": "Party holding legal ownership of the asset.",
+   "in_scheme": "pbo:RoleScheme",
+   "iri": "pbo:Role_Owner",
+   "kind": "skos_concept",
+   "label": "Owner",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Role",
+   "definition": "Party deploying capital into property for return.",
+   "in_scheme": "pbo:RoleScheme",
+   "iri": "pbo:Role_Investor",
+   "kind": "skos_concept",
+   "label": "Investor",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Role",
+   "definition": "Party running the accommodation business at the property (master tenant, rooming-house operator, coliving operator).",
+   "in_scheme": "pbo:RoleScheme",
+   "iri": "pbo:Role_Operator",
+   "kind": "skos_concept",
+   "label": "Operator",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Role",
+   "definition": "Queensland term for the party providing rooming accommodation to residents.",
+   "in_scheme": "pbo:RoleScheme",
+   "iri": "pbo:Role_Provider",
+   "kind": "skos_concept",
+   "label": "Provider (rooming accommodation)",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Role",
+   "definition": "Party granting the right to occupy under an agreement.",
+   "in_scheme": "pbo:RoleScheme",
+   "iri": "pbo:Role_Landlord",
+   "kind": "skos_concept",
+   "label": "Landlord / lessor",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Role",
+   "definition": "Party taking the right to occupy under a tenancy or lease.",
+   "in_scheme": "pbo:RoleScheme",
+   "iri": "pbo:Role_Tenant",
+   "kind": "skos_concept",
+   "label": "Tenant / lessee",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Role",
+   "definition": "Occupant of a room under rooming accommodation or coliving arrangements.",
+   "in_scheme": "pbo:RoleScheme",
+   "iri": "pbo:Role_Resident",
+   "kind": "skos_concept",
+   "label": "Resident",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Role",
+   "definition": "Owner who lives at the property while renting rooms.",
+   "in_scheme": "pbo:RoleScheme",
+   "iri": "pbo:Role_OwnerOccupier",
+   "kind": "skos_concept",
+   "label": "Owner-occupier",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Role",
+   "definition": "Licensed party managing property for an owner.",
+   "in_scheme": "pbo:RoleScheme",
+   "iri": "pbo:Role_PropertyManager",
+   "kind": "skos_concept",
+   "label": "Property manager",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Role",
+   "definition": "Party providing debt finance secured on the property.",
+   "in_scheme": "pbo:RoleScheme",
+   "iri": "pbo:Role_Lender",
+   "kind": "skos_concept",
+   "label": "Lender",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Role",
+   "definition": "Party insuring the property or business.",
+   "in_scheme": "pbo:RoleScheme",
+   "iri": "pbo:Role_Insurer",
+   "kind": "skos_concept",
+   "label": "Insurer",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Role",
+   "definition": "Party undertaking a development project.",
+   "in_scheme": "pbo:RoleScheme",
+   "iri": "pbo:Role_Developer",
+   "kind": "skos_concept",
+   "label": "Developer",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Role",
+   "definition": "Planner, lawyer, accountant, building surveyor, valuer or other professional adviser.",
+   "in_scheme": "pbo:RoleScheme",
+   "iri": "pbo:Role_Adviser",
+   "kind": "skos_concept",
+   "label": "Adviser",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Role",
+   "definition": "Company leasing residential property for staff.",
+   "in_scheme": "pbo:RoleScheme",
+   "iri": "pbo:Role_CorporateTenant",
+   "kind": "skos_concept",
+   "label": "Corporate tenant",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Role",
+   "definition": "Major tenant whose presence draws traffic and underpins co-tenancy clauses.",
+   "in_scheme": "pbo:RoleScheme",
+   "iri": "pbo:Role_AnchorTenant",
+   "kind": "skos_concept",
+   "label": "Anchor tenant",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Role",
+   "definition": "Local government in its regulatory role.",
+   "in_scheme": "pbo:RoleScheme",
+   "iri": "pbo:Role_Council",
+   "kind": "skos_concept",
+   "label": "Council",
+   "status": "accepted"
+  },
+  {
+   "definition": "Named investment strategies described in the corpus.",
+   "iri": "pbo:InvestmentStrategyScheme",
+   "kind": "individual",
+   "label": "Investment strategy scheme",
+   "rdf_type": "skos:ConceptScheme",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:InvestmentStrategy",
+   "definition": "Long-term ownership for capital growth and rental income.",
+   "in_scheme": "pbo:InvestmentStrategyScheme",
+   "iri": "pbo:Strategy_BuyAndHold",
+   "kind": "skos_concept",
+   "label": "Buy and hold",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:InvestmentStrategy",
+   "definition": "Acquire undervalued property, renovate quickly, sell for gain.",
+   "in_scheme": "pbo:InvestmentStrategyScheme",
+   "iri": "pbo:Strategy_FixAndFlip",
+   "kind": "skos_concept",
+   "label": "Fix and flip",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:InvestmentStrategy",
+   "definition": "Modernise older assets for long-term tenants.",
+   "in_scheme": "pbo:InvestmentStrategyScheme",
+   "iri": "pbo:Strategy_RenovateAndRent",
+   "kind": "skos_concept",
+   "label": "Renovate and rent",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:InvestmentStrategy",
+   "definition": "Target tourist or transient markets; subject to short-stay regulation.",
+   "in_scheme": "pbo:InvestmentStrategyScheme",
+   "iri": "pbo:Strategy_ShortTermRental",
+   "kind": "skos_concept",
+   "label": "Short-term rental / holiday let",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:InvestmentStrategy",
+   "definition": "Acquire high-yield, low-vacancy property to maximise income.",
+   "in_scheme": "pbo:InvestmentStrategyScheme",
+   "iri": "pbo:Strategy_CashFlow",
+   "kind": "skos_concept",
+   "label": "Cash-flow strategy",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:InvestmentStrategy",
+   "definition": "One land parcel configured to produce two rental streams.",
+   "in_scheme": "pbo:InvestmentStrategyScheme",
+   "iri": "pbo:Strategy_DualIncome",
+   "kind": "skos_concept",
+   "label": "Dual-income property",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:InvestmentStrategy",
+   "definition": "Let rooms separately to unrelated residents for higher gross yield with higher management and compliance load.",
+   "in_scheme": "pbo:InvestmentStrategyScheme",
+   "iri": "pbo:Strategy_RoomingHouse",
+   "kind": "skos_concept",
+   "label": "Rooming house / room-by-room",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:InvestmentStrategy",
+   "definition": "Lease from an owner and sublet to residents, capturing the spread.",
+   "in_scheme": "pbo:InvestmentStrategyScheme",
+   "iri": "pbo:Strategy_RentToRent",
+   "kind": "skos_concept",
+   "label": "Rent-to-rent / master lease operation",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:InvestmentStrategy",
+   "definition": "Operate shared-living accommodation with services and community.",
+   "in_scheme": "pbo:InvestmentStrategyScheme",
+   "iri": "pbo:Strategy_Coliving",
+   "kind": "skos_concept",
+   "label": "Coliving operation",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:InvestmentStrategy",
+   "definition": "Let furnished residential property to companies for staff at a premium.",
+   "in_scheme": "pbo:InvestmentStrategyScheme",
+   "iri": "pbo:Strategy_CorporateLeasing",
+   "kind": "skos_concept",
+   "label": "Corporate leasing",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:InvestmentStrategy",
+   "definition": "Own commercial premises let to business tenants.",
+   "in_scheme": "pbo:InvestmentStrategyScheme",
+   "iri": "pbo:Strategy_CommercialProperty",
+   "kind": "skos_concept",
+   "label": "Commercial property investment",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:InvestmentStrategy",
+   "definition": "Acquire newly built residential property to rent, favoured by post-2027 negative-gearing rules.",
+   "in_scheme": "pbo:InvestmentStrategyScheme",
+   "iri": "pbo:Strategy_NewBuildBuyToLet",
+   "kind": "skos_concept",
+   "label": "New-build buy-to-let",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:InvestmentStrategy",
+   "definition": "Build, subdivide or convert to manufacture equity and new dwellings (build-and-hold, build-sell-some-hold-some, acquire-convert-hold).",
+   "in_scheme": "pbo:InvestmentStrategyScheme",
+   "iri": "pbo:Strategy_SmallScaleDevelopment",
+   "kind": "skos_concept",
+   "label": "Small-scale development",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:InvestmentStrategy",
+   "definition": "REITs or managed funds with minimal direct involvement.",
+   "in_scheme": "pbo:InvestmentStrategyScheme",
+   "iri": "pbo:Strategy_ManagedInvestment",
+   "kind": "skos_concept",
+   "label": "Managed / passive investment",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:InvestmentStrategy",
+   "definition": "Large-scale purpose-built rental with at least 50 self-contained dwellings qualifying for land-tax incentives.",
+   "in_scheme": "pbo:InvestmentStrategyScheme",
+   "iri": "pbo:Strategy_BuildToRent",
+   "kind": "skos_concept",
+   "label": "Build-to-rent (institutional)",
+   "status": "accepted"
+  },
+  {
+   "definition": "Who controls the asset, earns revenue and bears risk.",
+   "iri": "pbo:OperatingModelScheme",
+   "kind": "individual",
+   "label": "Operating model scheme",
+   "rdf_type": "skos:ConceptScheme",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:OperatingModel",
+   "definition": "Owner lets the whole property under one tenancy, usually via a property manager.",
+   "in_scheme": "pbo:OperatingModelScheme",
+   "iri": "pbo:OperatingModel_SingleLeaseRental",
+   "kind": "skos_concept",
+   "label": "Single-lease rental",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:OperatingModel",
+   "definition": "Owner operates rooming or coliving accommodation directly, retaining NOI and appreciation.",
+   "in_scheme": "pbo:OperatingModelScheme",
+   "iri": "pbo:OperatingModel_OwnerOperated",
+   "kind": "skos_concept",
+   "label": "Owner-operated accommodation",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:OperatingModel",
+   "definition": "Operator holds a head lease at fixed rent and sublets to residents; bears vacancy and operating risk.",
+   "in_scheme": "pbo:OperatingModelScheme",
+   "iri": "pbo:OperatingModel_MasterLease",
+   "kind": "skos_concept",
+   "label": "Master lease / rent-to-rent",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:OperatingModel",
+   "definition": "Operator manages for the owner for a fee or share of revenue or profit; no fixed head rent.",
+   "in_scheme": "pbo:OperatingModelScheme",
+   "iri": "pbo:OperatingModel_ManagementRevenueShare",
+   "kind": "skos_concept",
+   "label": "Management / revenue share",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:OperatingModel",
+   "definition": "Brand and systems separated from local capital; operator margin plus or minus royalties.",
+   "in_scheme": "pbo:OperatingModelScheme",
+   "iri": "pbo:OperatingModel_HybridFranchise",
+   "kind": "skos_concept",
+   "label": "Hybrid / franchise",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:OperatingModel",
+   "definition": "Landlord lets furnished residential property to a company; treated as a demand channel rather than an ownership structure.",
+   "in_scheme": "pbo:OperatingModelScheme",
+   "iri": "pbo:OperatingModel_CorporateLeasing",
+   "kind": "skos_concept",
+   "label": "Corporate leasing",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:OperatingModel",
+   "definition": "Owner lives in and rents one or more rooms; tenancy-law application depends on room count and bonds.",
+   "in_scheme": "pbo:OperatingModelScheme",
+   "iri": "pbo:OperatingModel_OwnerOccupierRooms",
+   "kind": "skos_concept",
+   "label": "Owner-occupier renting rooms",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:OperatingModel",
+   "definition": "Transient accommodation under 28 days (Victoria), subject to levy, planning and owners-corporation rules.",
+   "in_scheme": "pbo:OperatingModelScheme",
+   "iri": "pbo:OperatingModel_ShortStay",
+   "kind": "skos_concept",
+   "label": "Short-stay accommodation",
+   "status": "accepted"
+  },
+  {
+   "definition": "Physical and occupancy configurations of accommodation.",
+   "iri": "pbo:AccommodationTypeScheme",
+   "kind": "individual",
+   "label": "Accommodation type scheme",
+   "rdf_type": "skos:ConceptScheme",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:AccommodationType",
+   "definition": "Entire house or apartment let under one agreement.",
+   "in_scheme": "pbo:AccommodationTypeScheme",
+   "iri": "pbo:AccommodationType_WholeDwellingRental",
+   "kind": "skos_concept",
+   "label": "Whole-dwelling rental",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:AccommodationType",
+   "definition": "Rooms let separately with shared facilities; definitions vary by state and source (four or more unrelated residents; up to five lets in Brisbane; five-studio or six-bedroom purpose-built layouts).",
+   "in_scheme": "pbo:AccommodationTypeScheme",
+   "iri": "pbo:AccommodationType_RoomingHouse",
+   "kind": "skos_concept",
+   "label": "Rooming house / rooming accommodation",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:AccommodationType",
+   "definition": "UK-derived term for room-by-room letting to unrelated tenants sharing communal facilities; used interchangeably with rooming house in Australian marketing.",
+   "in_scheme": "pbo:AccommodationTypeScheme",
+   "iri": "pbo:AccommodationType_HMO",
+   "kind": "skos_concept",
+   "label": "House in multiple occupation (HMO)",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:AccommodationType",
+   "definition": "Historic term for room-by-room accommodation; may be classified as commercial residential premises for GST.",
+   "in_scheme": "pbo:AccommodationTypeScheme",
+   "iri": "pbo:AccommodationType_BoardingHouse",
+   "kind": "skos_concept",
+   "label": "Boarding house",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:AccommodationType",
+   "definition": "Unrelated co-tenants on one or several leases without an operator; not a rooming house per Consumer Affairs Victoria.",
+   "in_scheme": "pbo:AccommodationTypeScheme",
+   "iri": "pbo:AccommodationType_ShareHouse",
+   "kind": "skos_concept",
+   "label": "Share house / co-tenancy",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:AccommodationType",
+   "definition": "Private rooms or beds with shared spaces, community services and operating technology.",
+   "in_scheme": "pbo:AccommodationTypeScheme",
+   "iri": "pbo:AccommodationType_Coliving",
+   "kind": "skos_concept",
+   "label": "Coliving",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:AccommodationType",
+   "definition": "Rooming accommodation designed as self-contained studios with ensuite and kitchenette plus common areas.",
+   "in_scheme": "pbo:AccommodationTypeScheme",
+   "iri": "pbo:AccommodationType_PurposeBuiltStudios",
+   "kind": "skos_concept",
+   "label": "Purpose-built self-contained studios",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:AccommodationType",
+   "definition": "Accommodation for students; may be exempt from residential-service registration in Queensland.",
+   "in_scheme": "pbo:AccommodationTypeScheme",
+   "iri": "pbo:AccommodationType_StudentAccommodation",
+   "kind": "skos_concept",
+   "label": "Student accommodation",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:AccommodationType",
+   "definition": "Two dwellings side-by-side or front/rear on one lot, single title or subdivided.",
+   "in_scheme": "pbo:AccommodationTypeScheme",
+   "iri": "pbo:AccommodationType_Duplex",
+   "kind": "skos_concept",
+   "label": "Duplex",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:AccommodationType",
+   "definition": "One building with two self-contained sections on one title.",
+   "in_scheme": "pbo:AccommodationTypeScheme",
+   "iri": "pbo:AccommodationType_DualKey",
+   "kind": "skos_concept",
+   "label": "Dual key",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:AccommodationType",
+   "definition": "Two dwellings on one lot.",
+   "in_scheme": "pbo:AccommodationTypeScheme",
+   "iri": "pbo:AccommodationType_DualOccupancy",
+   "kind": "skos_concept",
+   "label": "Dual occupancy",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:AccommodationType",
+   "definition": "Smaller secondary dwelling (60-80 m2 typical; under 70 m2 ancillary in WA/SA) on the same lot as a primary home.",
+   "in_scheme": "pbo:AccommodationTypeScheme",
+   "iri": "pbo:AccommodationType_SecondaryDwelling",
+   "kind": "skos_concept",
+   "label": "Secondary dwelling / granny flat",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:AccommodationType",
+   "definition": "Transient accommodation for tourists or workers.",
+   "in_scheme": "pbo:AccommodationTypeScheme",
+   "iri": "pbo:AccommodationType_ShortStay",
+   "kind": "skos_concept",
+   "label": "Short-stay accommodation",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:AccommodationType",
+   "definition": "Hotel-like furnished residential property for corporate staff.",
+   "in_scheme": "pbo:AccommodationTypeScheme",
+   "iri": "pbo:AccommodationType_CorporateFurnished",
+   "kind": "skos_concept",
+   "label": "Corporate furnished housing",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:AccommodationType",
+   "definition": "Commercial property occupied by one lessee, often on a long net lease.",
+   "in_scheme": "pbo:AccommodationTypeScheme",
+   "iri": "pbo:AccommodationType_SingleTenantCommercial",
+   "kind": "skos_concept",
+   "label": "Single-tenant commercial property",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:AccommodationType",
+   "definition": "Property with several lessees in separate units (office centre, shopping mall, industrial estate, healthcare centre).",
+   "in_scheme": "pbo:AccommodationTypeScheme",
+   "iri": "pbo:AccommodationType_MultiTenantCommercial",
+   "kind": "skos_concept",
+   "label": "Multi-tenant commercial property",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:AccommodationType",
+   "definition": "Shared office environment for sole operators and small businesses.",
+   "in_scheme": "pbo:AccommodationTypeScheme",
+   "iri": "pbo:AccommodationType_Coworking",
+   "kind": "skos_concept",
+   "label": "Co-working space",
+   "status": "accepted"
+  },
+  {
+   "definition": "Legal vehicles for holding property.",
+   "iri": "pbo:OwnershipStructureScheme",
+   "kind": "individual",
+   "label": "Ownership structure scheme",
+   "rdf_type": "skos:ConceptScheme",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:OwnershipStructure",
+   "definition": "Property held personally; simplest, suits negative gearing with low personal risk.",
+   "in_scheme": "pbo:OwnershipStructureScheme",
+   "iri": "pbo:Structure_Individual",
+   "kind": "skos_concept",
+   "label": "Individual / personal name",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:OwnershipStructure",
+   "definition": "Equal shares; ownership passes to the surviving joint tenant.",
+   "in_scheme": "pbo:OwnershipStructureScheme",
+   "iri": "pbo:Structure_JointTenants",
+   "kind": "skos_concept",
+   "label": "Joint tenants",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:OwnershipStructure",
+   "definition": "Specified shares that pass to each owner's estate.",
+   "in_scheme": "pbo:OwnershipStructureScheme",
+   "iri": "pbo:Structure_TenantsInCommon",
+   "kind": "skos_concept",
+   "label": "Tenants in common",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:OwnershipStructure",
+   "definition": "Trustee distributes income at discretion; some asset protection; higher land-tax rates in some states.",
+   "in_scheme": "pbo:OwnershipStructureScheme",
+   "iri": "pbo:Structure_DiscretionaryTrust",
+   "kind": "skos_concept",
+   "label": "Discretionary (family) trust",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:OwnershipStructure",
+   "definition": "Fixed interests suited to unrelated investors; asset protection.",
+   "in_scheme": "pbo:OwnershipStructureScheme",
+   "iri": "pbo:Structure_UnitTrust",
+   "kind": "skos_concept",
+   "label": "Unit trust",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:OwnershipStructure",
+   "definition": "Corporate ownership; loses the 50% CGT discount.",
+   "in_scheme": "pbo:OwnershipStructureScheme",
+   "iri": "pbo:Structure_Company",
+   "kind": "skos_concept",
+   "label": "Company",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:OwnershipStructure",
+   "definition": "Retirement-focused holding vehicle with liquidity constraints.",
+   "in_scheme": "pbo:OwnershipStructureScheme",
+   "iri": "pbo:Structure_SMSF",
+   "kind": "skos_concept",
+   "label": "Self-managed superannuation fund",
+   "status": "accepted"
+  },
+  {
+   "definition": "Lease structures by duration and outgoings allocation.",
+   "iri": "pbo:LeaseTypeScheme",
+   "kind": "individual",
+   "label": "Lease type scheme",
+   "rdf_type": "skos:ConceptScheme",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:LeaseType",
+   "definition": "Flexible short occupation with reduced security of tenure.",
+   "in_scheme": "pbo:LeaseTypeScheme",
+   "iri": "pbo:LeaseType_ShortTerm",
+   "kind": "skos_concept",
+   "label": "Short-term renting",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:LeaseType",
+   "definition": "Longer commitment giving stability; early termination carries consequences.",
+   "in_scheme": "pbo:LeaseTypeScheme",
+   "iri": "pbo:LeaseType_LongTerm",
+   "kind": "skos_concept",
+   "label": "Long-term lease",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:LeaseType",
+   "definition": "Lease in a centre of five or more shops with centre-specific restrictions and retail-lease legislation.",
+   "in_scheme": "pbo:LeaseTypeScheme",
+   "iri": "pbo:LeaseType_ShoppingCentre",
+   "kind": "skos_concept",
+   "label": "Shopping-centre / retail shop lease",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:LeaseType",
+   "definition": "Landlord bears most outgoings; tenant pays rent only.",
+   "in_scheme": "pbo:LeaseTypeScheme",
+   "iri": "pbo:LeaseType_Gross",
+   "kind": "skos_concept",
+   "label": "Gross lease",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:LeaseType",
+   "definition": "Tenant pays rent plus some outgoings.",
+   "in_scheme": "pbo:LeaseTypeScheme",
+   "iri": "pbo:LeaseType_Net",
+   "kind": "skos_concept",
+   "label": "Net lease",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:LeaseType",
+   "definition": "Tenant pays taxes, insurance and maintenance in addition to rent.",
+   "in_scheme": "pbo:LeaseTypeScheme",
+   "iri": "pbo:LeaseType_TripleNet",
+   "kind": "skos_concept",
+   "label": "Triple-net lease",
+   "status": "accepted"
+  },
+  {
+   "definition": "Single versus multiple tenants.",
+   "iri": "pbo:TenantConfigurationScheme",
+   "kind": "individual",
+   "label": "Tenant configuration scheme",
+   "rdf_type": "skos:ConceptScheme",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:TenantConfiguration",
+   "definition": "One lessee occupies the entire property.",
+   "in_scheme": "pbo:TenantConfigurationScheme",
+   "iri": "pbo:TenantConfiguration_Single",
+   "kind": "skos_concept",
+   "label": "Single-tenant",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:TenantConfiguration",
+   "definition": "Several lessees occupy separate units.",
+   "in_scheme": "pbo:TenantConfigurationScheme",
+   "iri": "pbo:TenantConfiguration_Multi",
+   "kind": "skos_concept",
+   "label": "Multi-tenant",
+   "status": "accepted"
+  },
+  {
+   "definition": "Demand groups targeted by accommodation products.",
+   "iri": "pbo:TenantSegmentScheme",
+   "kind": "individual",
+   "label": "Tenant segment scheme",
+   "rdf_type": "skos:ConceptScheme",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:TenantSegment",
+   "definition": "Students: a tenant segment value named in the corpus.",
+   "in_scheme": "pbo:TenantSegmentScheme",
+   "iri": "pbo:Segment_Students",
+   "kind": "skos_concept",
+   "label": "Students",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:TenantSegment",
+   "definition": "Young professionals: a tenant segment value named in the corpus.",
+   "in_scheme": "pbo:TenantSegmentScheme",
+   "iri": "pbo:Segment_YoungProfessionals",
+   "kind": "skos_concept",
+   "label": "Young professionals",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:TenantSegment",
+   "definition": "Healthcare and essential workers: a tenant segment value named in the corpus.",
+   "in_scheme": "pbo:TenantSegmentScheme",
+   "iri": "pbo:Segment_EssentialWorkers",
+   "kind": "skos_concept",
+   "label": "Healthcare and essential workers",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:TenantSegment",
+   "definition": "Temporary or seasonal workers: a tenant segment value named in the corpus.",
+   "in_scheme": "pbo:TenantSegmentScheme",
+   "iri": "pbo:Segment_TemporaryWorkers",
+   "kind": "skos_concept",
+   "label": "Temporary or seasonal workers",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:TenantSegment",
+   "definition": "Corporate staff / travelling employees: a tenant segment value named in the corpus.",
+   "in_scheme": "pbo:TenantSegmentScheme",
+   "iri": "pbo:Segment_CorporateStaff",
+   "kind": "skos_concept",
+   "label": "Corporate staff / travelling employees",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:TenantSegment",
+   "definition": "Underserved for studio and one-bed accommodation.",
+   "in_scheme": "pbo:TenantSegmentScheme",
+   "iri": "pbo:Segment_SinglesAndCouples",
+   "kind": "skos_concept",
+   "label": "Singles and couples",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:TenantSegment",
+   "definition": "New arrivals / migrants: a tenant segment value named in the corpus.",
+   "in_scheme": "pbo:TenantSegmentScheme",
+   "iri": "pbo:Segment_NewArrivals",
+   "kind": "skos_concept",
+   "label": "New arrivals / migrants",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:TenantSegment",
+   "definition": "Not a target for HMO products.",
+   "in_scheme": "pbo:TenantSegmentScheme",
+   "iri": "pbo:Segment_Families",
+   "kind": "skos_concept",
+   "label": "Families",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:TenantSegment",
+   "definition": "Tourists / transient visitors: a tenant segment value named in the corpus.",
+   "in_scheme": "pbo:TenantSegmentScheme",
+   "iri": "pbo:Segment_Tourists",
+   "kind": "skos_concept",
+   "label": "Tourists / transient visitors",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:TenantSegment",
+   "definition": "Retail, office, industrial, healthcare and warehouse tenants.",
+   "in_scheme": "pbo:TenantSegmentScheme",
+   "iri": "pbo:Segment_BusinessOccupiers",
+   "kind": "skos_concept",
+   "label": "Business occupiers",
+   "status": "accepted"
+  },
+  {
+   "definition": "Organisational models for real-estate agencies.",
+   "iri": "pbo:AgencyBusinessModelScheme",
+   "kind": "individual",
+   "label": "Agency business model scheme",
+   "rdf_type": "skos:ConceptScheme",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:AgencyBusinessModel",
+   "definition": "Franchisees operate under a franchisor's brand and system for fees; resources controlled internally.",
+   "in_scheme": "pbo:AgencyBusinessModelScheme",
+   "iri": "pbo:AgencyModel_Franchise",
+   "kind": "skos_concept",
+   "label": "Franchise agency",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:AgencyBusinessModel",
+   "definition": "Independently owned agencies under a licence arrangement sharing services.",
+   "in_scheme": "pbo:AgencyBusinessModelScheme",
+   "iri": "pbo:AgencyModel_Cooperative",
+   "kind": "skos_concept",
+   "label": "Cooperative agency",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:AgencyBusinessModel",
+   "definition": "Main owner/operator holds a majority interest in each operating unit.",
+   "in_scheme": "pbo:AgencyBusinessModelScheme",
+   "iri": "pbo:AgencyModel_JointVenture",
+   "kind": "skos_concept",
+   "label": "Joint-venture agency",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:AgencyBusinessModel",
+   "definition": "Large independent organisation under a single owner/operator with multiple managed units.",
+   "in_scheme": "pbo:AgencyBusinessModelScheme",
+   "iri": "pbo:AgencyModel_Boutique",
+   "kind": "skos_concept",
+   "label": "Boutique agency",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:AgencyBusinessModel",
+   "definition": "Fully independent agency supported by specialist networks; sources capabilities externally.",
+   "in_scheme": "pbo:AgencyBusinessModelScheme",
+   "iri": "pbo:AgencyModel_Independent",
+   "kind": "skos_concept",
+   "label": "Independent agency",
+   "status": "accepted"
+  },
+  {
+   "definition": "National Construction Code building classes referenced in the corpus.",
+   "iri": "pbo:BuildingClassificationScheme",
+   "kind": "individual",
+   "label": "Building classification scheme",
+   "rdf_type": "skos:ConceptScheme",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:BuildingClassification",
+   "definition": "Single dwelling (detached house, townhouse).",
+   "in_scheme": "pbo:BuildingClassificationScheme",
+   "iri": "pbo:BuildingClass_1a",
+   "kind": "skos_concept",
+   "label": "Class 1a",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:BuildingClassification",
+   "definition": "Boarding house, guest house or hostel with limited residents and floor area.",
+   "in_scheme": "pbo:BuildingClassificationScheme",
+   "iri": "pbo:BuildingClass_1b",
+   "kind": "skos_concept",
+   "label": "Class 1b",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:BuildingClassification",
+   "definition": "Residential building for unrelated persons (larger shared accommodation, hostels).",
+   "in_scheme": "pbo:BuildingClassificationScheme",
+   "iri": "pbo:BuildingClass_3",
+   "kind": "skos_concept",
+   "label": "Class 3",
+   "status": "accepted"
+  },
+  {
+   "definition": "Tax-law categorisations of property activity.",
+   "iri": "pbo:TaxClassificationScheme",
+   "kind": "individual",
+   "label": "Tax classification scheme",
+   "rdf_type": "skos:ConceptScheme",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:TaxClassification",
+   "definition": "Passive letting; most owners even with multiple properties.",
+   "in_scheme": "pbo:TaxClassificationScheme",
+   "iri": "pbo:Tax_RentalInvestment",
+   "kind": "skos_concept",
+   "label": "Rental property investment",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:TaxClassification",
+   "definition": "Significant scale, hours, personal involvement and business-like conduct (TR 97/11 indicators).",
+   "in_scheme": "pbo:TaxClassificationScheme",
+   "iri": "pbo:Tax_RentalBusiness",
+   "kind": "skos_concept",
+   "label": "Carrying on a rental-property business",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:TaxClassification",
+   "definition": "Property acquired, developed or subdivided for profitable resale; profit is ordinary income.",
+   "in_scheme": "pbo:TaxClassificationScheme",
+   "iri": "pbo:Tax_ProfitMakingUndertaking",
+   "kind": "skos_concept",
+   "label": "Profit-making undertaking / development business",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:TaxClassification",
+   "definition": "Ordinary residential rent: no GST charged, no GST credits.",
+   "in_scheme": "pbo:TaxClassificationScheme",
+   "iri": "pbo:Tax_InputTaxedResidentialRent",
+   "kind": "skos_concept",
+   "label": "Input-taxed residential rent",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:TaxClassification",
+   "definition": "Hotels, motels, hostels, boarding houses whose lease can be subject to GST.",
+   "in_scheme": "pbo:TaxClassificationScheme",
+   "iri": "pbo:Tax_CommercialResidentialPremises",
+   "kind": "skos_concept",
+   "label": "Commercial residential premises",
+   "status": "accepted"
+  },
+  {
+   "definition": "Kinds of authorisation regimes require.",
+   "iri": "pbo:AuthorisationTypeScheme",
+   "kind": "individual",
+   "label": "Authorisation type scheme",
+   "rdf_type": "skos:ConceptScheme",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:AuthorisationType",
+   "definition": "Planning approval: a authorisation type value named in the corpus.",
+   "in_scheme": "pbo:AuthorisationTypeScheme",
+   "iri": "pbo:AuthType_PlanningApproval",
+   "kind": "skos_concept",
+   "label": "Planning approval",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:AuthorisationType",
+   "definition": "Building approval / classification: a authorisation type value named in the corpus.",
+   "in_scheme": "pbo:AuthorisationTypeScheme",
+   "iri": "pbo:AuthType_BuildingApproval",
+   "kind": "skos_concept",
+   "label": "Building approval / classification",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:AuthorisationType",
+   "definition": "Fire-safety certification: a authorisation type value named in the corpus.",
+   "in_scheme": "pbo:AuthorisationTypeScheme",
+   "iri": "pbo:AuthType_FireSafety",
+   "kind": "skos_concept",
+   "label": "Fire-safety certification",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:AuthorisationType",
+   "definition": "Residential service registration (QLD): a authorisation type value named in the corpus.",
+   "in_scheme": "pbo:AuthorisationTypeScheme",
+   "iri": "pbo:AuthType_ResidentialServiceRegistration",
+   "kind": "skos_concept",
+   "label": "Residential service registration (QLD)",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:AuthorisationType",
+   "definition": "Accommodation service accreditation (QLD): a authorisation type value named in the corpus.",
+   "in_scheme": "pbo:AuthorisationTypeScheme",
+   "iri": "pbo:AuthType_Accreditation",
+   "kind": "skos_concept",
+   "label": "Accommodation service accreditation (QLD)",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:AuthorisationType",
+   "definition": "Rooming house operator licence (VIC): a authorisation type value named in the corpus.",
+   "in_scheme": "pbo:AuthorisationTypeScheme",
+   "iri": "pbo:AuthType_OperatorLicence",
+   "kind": "skos_concept",
+   "label": "Rooming house operator licence (VIC)",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:AuthorisationType",
+   "definition": "Premises registration with council (VIC): a authorisation type value named in the corpus.",
+   "in_scheme": "pbo:AuthorisationTypeScheme",
+   "iri": "pbo:AuthType_PremisesRegistration",
+   "kind": "skos_concept",
+   "label": "Premises registration with council (VIC)",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:AuthorisationType",
+   "definition": "Real estate agent licence: a authorisation type value named in the corpus.",
+   "in_scheme": "pbo:AuthorisationTypeScheme",
+   "iri": "pbo:AuthType_AgentLicence",
+   "kind": "skos_concept",
+   "label": "Real estate agent licence",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:AuthorisationType",
+   "definition": "Not a government authorisation; recorded because sources treat it as a gate.",
+   "in_scheme": "pbo:AuthorisationTypeScheme",
+   "iri": "pbo:AuthType_LenderApproval",
+   "kind": "skos_concept",
+   "label": "Lender acceptance of proposed use",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:AuthorisationType",
+   "definition": "Not a government authorisation; recorded because sources treat it as a gate.",
+   "in_scheme": "pbo:AuthorisationTypeScheme",
+   "iri": "pbo:AuthType_InsurerConfirmation",
+   "kind": "skos_concept",
+   "label": "Insurer confirmation of use",
+   "status": "accepted"
+  },
+  {
+   "definition": "What occupancy thresholds count.",
+   "iri": "pbo:ThresholdKindScheme",
+   "kind": "individual",
+   "label": "Threshold kind scheme",
+   "rdf_type": "skos:ConceptScheme",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:ThresholdKind",
+   "definition": "Residents: a threshold kind value named in the corpus.",
+   "in_scheme": "pbo:ThresholdKindScheme",
+   "iri": "pbo:ThresholdKind_Residents",
+   "kind": "skos_concept",
+   "label": "Residents",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:ThresholdKind",
+   "definition": "Unrelated tenants: a threshold kind value named in the corpus.",
+   "in_scheme": "pbo:ThresholdKindScheme",
+   "iri": "pbo:ThresholdKind_UnrelatedTenants",
+   "kind": "skos_concept",
+   "label": "Unrelated tenants",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:ThresholdKind",
+   "definition": "Rooms rented: a threshold kind value named in the corpus.",
+   "in_scheme": "pbo:ThresholdKindScheme",
+   "iri": "pbo:ThresholdKind_RoomsRented",
+   "kind": "skos_concept",
+   "label": "Rooms rented",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:ThresholdKind",
+   "definition": "Bedrooms: a threshold kind value named in the corpus.",
+   "in_scheme": "pbo:ThresholdKindScheme",
+   "iri": "pbo:ThresholdKind_Bedrooms",
+   "kind": "skos_concept",
+   "label": "Bedrooms",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:ThresholdKind",
+   "definition": "Persons: a threshold kind value named in the corpus.",
+   "in_scheme": "pbo:ThresholdKindScheme",
+   "iri": "pbo:ThresholdKind_Persons",
+   "kind": "skos_concept",
+   "label": "Persons",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:ThresholdKind",
+   "definition": "Separate lettings: a threshold kind value named in the corpus.",
+   "in_scheme": "pbo:ThresholdKindScheme",
+   "iri": "pbo:ThresholdKind_SeparateLettings",
+   "kind": "skos_concept",
+   "label": "Separate lettings",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:ThresholdKind",
+   "definition": "Floor area: a threshold kind value named in the corpus.",
+   "in_scheme": "pbo:ThresholdKindScheme",
+   "iri": "pbo:ThresholdKind_FloorArea",
+   "kind": "skos_concept",
+   "label": "Floor area",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:ThresholdKind",
+   "definition": "Dwellings: a threshold kind value named in the corpus.",
+   "in_scheme": "pbo:ThresholdKindScheme",
+   "iri": "pbo:ThresholdKind_Dwellings",
+   "kind": "skos_concept",
+   "label": "Dwellings",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:ThresholdKind",
+   "definition": "Length of stay (days): a threshold kind value named in the corpus.",
+   "in_scheme": "pbo:ThresholdKindScheme",
+   "iri": "pbo:ThresholdKind_StayLength",
+   "kind": "skos_concept",
+   "label": "Length of stay (days)",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:ThresholdKind",
+   "definition": "Shops in a centre: a threshold kind value named in the corpus.",
+   "in_scheme": "pbo:ThresholdKindScheme",
+   "iri": "pbo:ThresholdKind_Shops",
+   "kind": "skos_concept",
+   "label": "Shops in a centre",
+   "status": "accepted"
+  },
+  {
+   "definition": "Consequences of meeting a threshold.",
+   "iri": "pbo:ThresholdEffectScheme",
+   "kind": "individual",
+   "label": "Threshold effect scheme",
+   "rdf_type": "skos:ConceptScheme",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:ThresholdEffect",
+   "definition": "Regime applies in full: a threshold effect value named in the corpus.",
+   "in_scheme": "pbo:ThresholdEffectScheme",
+   "iri": "pbo:Effect_RegimeAppliesInFull",
+   "kind": "skos_concept",
+   "label": "Regime applies in full",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:ThresholdEffect",
+   "definition": "Regime applies in part: a threshold effect value named in the corpus.",
+   "in_scheme": "pbo:ThresholdEffectScheme",
+   "iri": "pbo:Effect_RegimeAppliesInPart",
+   "kind": "skos_concept",
+   "label": "Regime applies in part",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:ThresholdEffect",
+   "definition": "Regime does not apply: a threshold effect value named in the corpus.",
+   "in_scheme": "pbo:ThresholdEffectScheme",
+   "iri": "pbo:Effect_RegimeDoesNotApply",
+   "kind": "skos_concept",
+   "label": "Regime does not apply",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:ThresholdEffect",
+   "definition": "Planning permit exempt: a threshold effect value named in the corpus.",
+   "in_scheme": "pbo:ThresholdEffectScheme",
+   "iri": "pbo:Effect_PermitExempt",
+   "kind": "skos_concept",
+   "label": "Planning permit exempt",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:ThresholdEffect",
+   "definition": "Authorisation required: a threshold effect value named in the corpus.",
+   "in_scheme": "pbo:ThresholdEffectScheme",
+   "iri": "pbo:Effect_AuthorisationRequired",
+   "kind": "skos_concept",
+   "label": "Authorisation required",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:ThresholdEffect",
+   "definition": "Incentive eligibility: a threshold effect value named in the corpus.",
+   "in_scheme": "pbo:ThresholdEffectScheme",
+   "iri": "pbo:Effect_IncentiveEligible",
+   "kind": "skos_concept",
+   "label": "Incentive eligibility",
+   "status": "accepted"
+  },
+  {
+   "definition": "Financial, operating and market metrics.",
+   "iri": "pbo:MetricScheme",
+   "kind": "individual",
+   "label": "Metric scheme",
+   "rdf_type": "skos:ConceptScheme",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Metric",
+   "definition": "Annual rent divided by price or value, before costs.",
+   "in_scheme": "pbo:MetricScheme",
+   "iri": "pbo:Metric_GrossYield",
+   "kind": "skos_concept",
+   "label": "Gross rental yield",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Metric",
+   "definition": "Yield after operating costs.",
+   "in_scheme": "pbo:MetricScheme",
+   "iri": "pbo:Metric_NetYield",
+   "kind": "skos_concept",
+   "label": "Net yield",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Metric",
+   "definition": "Revenue less operating expenses before debt and capex.",
+   "in_scheme": "pbo:MetricScheme",
+   "iri": "pbo:Metric_NOI",
+   "kind": "skos_concept",
+   "label": "Net operating income",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Metric",
+   "definition": "NOI margin: a metric value named in the corpus.",
+   "in_scheme": "pbo:MetricScheme",
+   "iri": "pbo:Metric_NOIMargin",
+   "kind": "skos_concept",
+   "label": "NOI margin",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Metric",
+   "definition": "Year-one pre-tax cash flow over initial equity.",
+   "in_scheme": "pbo:MetricScheme",
+   "iri": "pbo:Metric_CashOnCash",
+   "kind": "skos_concept",
+   "label": "Cash-on-cash return",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Metric",
+   "definition": "Internal rate of return: a metric value named in the corpus.",
+   "in_scheme": "pbo:MetricScheme",
+   "iri": "pbo:Metric_IRR",
+   "kind": "skos_concept",
+   "label": "Internal rate of return",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Metric",
+   "definition": "Occupancy: a metric value named in the corpus.",
+   "in_scheme": "pbo:MetricScheme",
+   "iri": "pbo:Metric_Occupancy",
+   "kind": "skos_concept",
+   "label": "Occupancy",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Metric",
+   "definition": "Economic vacancy / bad-debt allowance: a metric value named in the corpus.",
+   "in_scheme": "pbo:MetricScheme",
+   "iri": "pbo:Metric_EconomicVacancy",
+   "kind": "skos_concept",
+   "label": "Economic vacancy / bad-debt allowance",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Metric",
+   "definition": "Market vacancy rate: a metric value named in the corpus.",
+   "in_scheme": "pbo:MetricScheme",
+   "iri": "pbo:Metric_VacancyRate",
+   "kind": "skos_concept",
+   "label": "Market vacancy rate",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Metric",
+   "definition": "Break-even occupancy: a metric value named in the corpus.",
+   "in_scheme": "pbo:MetricScheme",
+   "iri": "pbo:Metric_BreakEvenOccupancy",
+   "kind": "skos_concept",
+   "label": "Break-even occupancy",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Metric",
+   "definition": "Break-even period (months): a metric value named in the corpus.",
+   "in_scheme": "pbo:MetricScheme",
+   "iri": "pbo:Metric_BreakEvenMonths",
+   "kind": "skos_concept",
+   "label": "Break-even period (months)",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Metric",
+   "definition": "Revenue per available room/bed: a metric value named in the corpus.",
+   "in_scheme": "pbo:MetricScheme",
+   "iri": "pbo:Metric_RevPAR",
+   "kind": "skos_concept",
+   "label": "Revenue per available room/bed",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Metric",
+   "definition": "Customer acquisition cost: a metric value named in the corpus.",
+   "in_scheme": "pbo:MetricScheme",
+   "iri": "pbo:Metric_CAC",
+   "kind": "skos_concept",
+   "label": "Customer acquisition cost",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Metric",
+   "definition": "EBITDA margin: a metric value named in the corpus.",
+   "in_scheme": "pbo:MetricScheme",
+   "iri": "pbo:Metric_EBITDA",
+   "kind": "skos_concept",
+   "label": "EBITDA margin",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Metric",
+   "definition": "Earnings before rent; useful for asset-light operators.",
+   "in_scheme": "pbo:MetricScheme",
+   "iri": "pbo:Metric_EBITDAR",
+   "kind": "skos_concept",
+   "label": "EBITDAR margin",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Metric",
+   "definition": "Operating margin: a metric value named in the corpus.",
+   "in_scheme": "pbo:MetricScheme",
+   "iri": "pbo:Metric_OperatingMargin",
+   "kind": "skos_concept",
+   "label": "Operating margin",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Metric",
+   "definition": "Capitalisation rate: a metric value named in the corpus.",
+   "in_scheme": "pbo:MetricScheme",
+   "iri": "pbo:Metric_CapRate",
+   "kind": "skos_concept",
+   "label": "Capitalisation rate",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Metric",
+   "definition": "Debt service coverage ratio: a metric value named in the corpus.",
+   "in_scheme": "pbo:MetricScheme",
+   "iri": "pbo:Metric_DSCR",
+   "kind": "skos_concept",
+   "label": "Debt service coverage ratio",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Metric",
+   "definition": "Loan-to-value ratio: a metric value named in the corpus.",
+   "in_scheme": "pbo:MetricScheme",
+   "iri": "pbo:Metric_LVR",
+   "kind": "skos_concept",
+   "label": "Loan-to-value ratio",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Metric",
+   "definition": "Interest rate: a metric value named in the corpus.",
+   "in_scheme": "pbo:MetricScheme",
+   "iri": "pbo:Metric_InterestRate",
+   "kind": "skos_concept",
+   "label": "Interest rate",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Metric",
+   "definition": "Operating expense ratio: a metric value named in the corpus.",
+   "in_scheme": "pbo:MetricScheme",
+   "iri": "pbo:Metric_OperatingExpenseRatio",
+   "kind": "skos_concept",
+   "label": "Operating expense ratio",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Metric",
+   "definition": "Weekly room tariff: a metric value named in the corpus.",
+   "in_scheme": "pbo:MetricScheme",
+   "iri": "pbo:Metric_WeeklyRoomTariff",
+   "kind": "skos_concept",
+   "label": "Weekly room tariff",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Metric",
+   "definition": "All-in project cost: a metric value named in the corpus.",
+   "in_scheme": "pbo:MetricScheme",
+   "iri": "pbo:Metric_ProjectCost",
+   "kind": "skos_concept",
+   "label": "All-in project cost",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Metric",
+   "definition": "Capital required per property: a metric value named in the corpus.",
+   "in_scheme": "pbo:MetricScheme",
+   "iri": "pbo:Metric_CapitalRequired",
+   "kind": "skos_concept",
+   "label": "Capital required per property",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Metric",
+   "definition": "Median weekly rent: a metric value named in the corpus.",
+   "in_scheme": "pbo:MetricScheme",
+   "iri": "pbo:Metric_MedianRent",
+   "kind": "skos_concept",
+   "label": "Median weekly rent",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Metric",
+   "definition": "Median dwelling price: a metric value named in the corpus.",
+   "in_scheme": "pbo:MetricScheme",
+   "iri": "pbo:Metric_MedianPrice",
+   "kind": "skos_concept",
+   "label": "Median dwelling price",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Metric",
+   "definition": "Rent growth rate: a metric value named in the corpus.",
+   "in_scheme": "pbo:MetricScheme",
+   "iri": "pbo:Metric_RentGrowth",
+   "kind": "skos_concept",
+   "label": "Rent growth rate",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Metric",
+   "definition": "Asset value growth rate: a metric value named in the corpus.",
+   "in_scheme": "pbo:MetricScheme",
+   "iri": "pbo:Metric_ValueGrowth",
+   "kind": "skos_concept",
+   "label": "Asset value growth rate",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Metric",
+   "definition": "Year-one pre-tax cash flow: a metric value named in the corpus.",
+   "in_scheme": "pbo:MetricScheme",
+   "iri": "pbo:Metric_YearOneCashFlow",
+   "kind": "skos_concept",
+   "label": "Year-one pre-tax cash flow",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Metric",
+   "definition": "Properties under management: a metric value named in the corpus.",
+   "in_scheme": "pbo:MetricScheme",
+   "iri": "pbo:Metric_PropertiesUnderManagement",
+   "kind": "skos_concept",
+   "label": "Properties under management",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Metric",
+   "definition": "Arrears: a metric value named in the corpus.",
+   "in_scheme": "pbo:MetricScheme",
+   "iri": "pbo:Metric_Arrears",
+   "kind": "skos_concept",
+   "label": "Arrears",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Metric",
+   "definition": "Days to lease / leasing velocity: a metric value named in the corpus.",
+   "in_scheme": "pbo:MetricScheme",
+   "iri": "pbo:Metric_DaysToLease",
+   "kind": "skos_concept",
+   "label": "Days to lease / leasing velocity",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Metric",
+   "definition": "Landlord retention: a metric value named in the corpus.",
+   "in_scheme": "pbo:MetricScheme",
+   "iri": "pbo:Metric_LandlordRetention",
+   "kind": "skos_concept",
+   "label": "Landlord retention",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Metric",
+   "definition": "Revenue per property: a metric value named in the corpus.",
+   "in_scheme": "pbo:MetricScheme",
+   "iri": "pbo:Metric_RevenuePerProperty",
+   "kind": "skos_concept",
+   "label": "Revenue per property",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Metric",
+   "definition": "Management fee income: a metric value named in the corpus.",
+   "in_scheme": "pbo:MetricScheme",
+   "iri": "pbo:Metric_ManagementFeeIncome",
+   "kind": "skos_concept",
+   "label": "Management fee income",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:Metric",
+   "definition": "Depreciation deduction: a metric value named in the corpus.",
+   "in_scheme": "pbo:MetricScheme",
+   "iri": "pbo:Metric_Depreciation",
+   "kind": "skos_concept",
+   "label": "Depreciation deduction",
+   "status": "accepted"
+  },
+  {
+   "definition": "Categories of risk.",
+   "iri": "pbo:RiskCategoryScheme",
+   "kind": "individual",
+   "label": "Risk category scheme",
+   "rdf_type": "skos:ConceptScheme",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:RiskCategory",
+   "definition": "Planning-use risk: a risk category value named in the corpus.",
+   "in_scheme": "pbo:RiskCategoryScheme",
+   "iri": "pbo:RiskCat_PlanningUse",
+   "kind": "skos_concept",
+   "label": "Planning-use risk",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:RiskCategory",
+   "definition": "Building-classification and fire-safety risk: a risk category value named in the corpus.",
+   "in_scheme": "pbo:RiskCategoryScheme",
+   "iri": "pbo:RiskCat_BuildingFire",
+   "kind": "skos_concept",
+   "label": "Building-classification and fire-safety risk",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:RiskCategory",
+   "definition": "Licensing / registration risk: a risk category value named in the corpus.",
+   "in_scheme": "pbo:RiskCategoryScheme",
+   "iri": "pbo:RiskCat_Licensing",
+   "kind": "skos_concept",
+   "label": "Licensing / registration risk",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:RiskCategory",
+   "definition": "Tenancy-law risk: a risk category value named in the corpus.",
+   "in_scheme": "pbo:RiskCategoryScheme",
+   "iri": "pbo:RiskCat_TenancyLaw",
+   "kind": "skos_concept",
+   "label": "Tenancy-law risk",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:RiskCategory",
+   "definition": "Vacancy / tenant churn risk: a risk category value named in the corpus.",
+   "in_scheme": "pbo:RiskCategoryScheme",
+   "iri": "pbo:RiskCat_Vacancy",
+   "kind": "skos_concept",
+   "label": "Vacancy / tenant churn risk",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:RiskCategory",
+   "definition": "Management intensity risk: a risk category value named in the corpus.",
+   "in_scheme": "pbo:RiskCategoryScheme",
+   "iri": "pbo:RiskCat_ManagementIntensity",
+   "kind": "skos_concept",
+   "label": "Management intensity risk",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:RiskCategory",
+   "definition": "Insurance risk: a risk category value named in the corpus.",
+   "in_scheme": "pbo:RiskCategoryScheme",
+   "iri": "pbo:RiskCat_Insurance",
+   "kind": "skos_concept",
+   "label": "Insurance risk",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:RiskCategory",
+   "definition": "Interest-rate / refinancing risk: a risk category value named in the corpus.",
+   "in_scheme": "pbo:RiskCategoryScheme",
+   "iri": "pbo:RiskCat_InterestRate",
+   "kind": "skos_concept",
+   "label": "Interest-rate / refinancing risk",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:RiskCategory",
+   "definition": "Valuation / exit / resale risk: a risk category value named in the corpus.",
+   "in_scheme": "pbo:RiskCategoryScheme",
+   "iri": "pbo:RiskCat_Valuation",
+   "kind": "skos_concept",
+   "label": "Valuation / exit / resale risk",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:RiskCategory",
+   "definition": "Construction-cost risk: a risk category value named in the corpus.",
+   "in_scheme": "pbo:RiskCategoryScheme",
+   "iri": "pbo:RiskCat_ConstructionCost",
+   "kind": "skos_concept",
+   "label": "Construction-cost risk",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:RiskCategory",
+   "definition": "Tax-classification risk: a risk category value named in the corpus.",
+   "in_scheme": "pbo:RiskCategoryScheme",
+   "iri": "pbo:RiskCat_TaxClassification",
+   "kind": "skos_concept",
+   "label": "Tax-classification risk",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:RiskCategory",
+   "definition": "Policy / regulatory-change risk: a risk category value named in the corpus.",
+   "in_scheme": "pbo:RiskCategoryScheme",
+   "iri": "pbo:RiskCat_Policy",
+   "kind": "skos_concept",
+   "label": "Policy / regulatory-change risk",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:RiskCategory",
+   "definition": "Counterparty risk: a risk category value named in the corpus.",
+   "in_scheme": "pbo:RiskCategoryScheme",
+   "iri": "pbo:RiskCat_Counterparty",
+   "kind": "skos_concept",
+   "label": "Counterparty risk",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:RiskCategory",
+   "definition": "Market-cycle risk: a risk category value named in the corpus.",
+   "in_scheme": "pbo:RiskCategoryScheme",
+   "iri": "pbo:RiskCat_MarketCycle",
+   "kind": "skos_concept",
+   "label": "Market-cycle risk",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:RiskCategory",
+   "definition": "Concentration risk (tenant, asset, lender): a risk category value named in the corpus.",
+   "in_scheme": "pbo:RiskCategoryScheme",
+   "iri": "pbo:RiskCat_Concentration",
+   "kind": "skos_concept",
+   "label": "Concentration risk (tenant, asset, lender)",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:RiskCategory",
+   "definition": "Data, privacy and cyber risk: a risk category value named in the corpus.",
+   "in_scheme": "pbo:RiskCategoryScheme",
+   "iri": "pbo:RiskCat_DataPrivacy",
+   "kind": "skos_concept",
+   "label": "Data, privacy and cyber risk",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:RiskCategory",
+   "definition": "Key-person and staffing risk: a risk category value named in the corpus.",
+   "in_scheme": "pbo:RiskCategoryScheme",
+   "iri": "pbo:RiskCat_KeyPerson",
+   "kind": "skos_concept",
+   "label": "Key-person and staffing risk",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:RiskCategory",
+   "definition": "Trust-account risk: a risk category value named in the corpus.",
+   "in_scheme": "pbo:RiskCategoryScheme",
+   "iri": "pbo:RiskCat_TrustAccount",
+   "kind": "skos_concept",
+   "label": "Trust-account risk",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:RiskCategory",
+   "definition": "Utility-cost risk: a risk category value named in the corpus.",
+   "in_scheme": "pbo:RiskCategoryScheme",
+   "iri": "pbo:RiskCat_UtilityCost",
+   "kind": "skos_concept",
+   "label": "Utility-cost risk",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:RiskCategory",
+   "definition": "Lease escalation risk: a risk category value named in the corpus.",
+   "in_scheme": "pbo:RiskCategoryScheme",
+   "iri": "pbo:RiskCat_LeaseEscalation",
+   "kind": "skos_concept",
+   "label": "Lease escalation risk",
+   "status": "accepted"
+  },
+  {
+   "definition": "Categories of outgoings allocated by leases.",
+   "iri": "pbo:OutgoingCategoryScheme",
+   "kind": "individual",
+   "label": "Outgoing category scheme",
+   "rdf_type": "skos:ConceptScheme",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:OutgoingCategory",
+   "definition": "Taxes and rates: a outgoing category value named in the corpus.",
+   "in_scheme": "pbo:OutgoingCategoryScheme",
+   "iri": "pbo:Outgoing_Taxes",
+   "kind": "skos_concept",
+   "label": "Taxes and rates",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:OutgoingCategory",
+   "definition": "Insurance: a outgoing category value named in the corpus.",
+   "in_scheme": "pbo:OutgoingCategoryScheme",
+   "iri": "pbo:Outgoing_Insurance",
+   "kind": "skos_concept",
+   "label": "Insurance",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:OutgoingCategory",
+   "definition": "Property maintenance: a outgoing category value named in the corpus.",
+   "in_scheme": "pbo:OutgoingCategoryScheme",
+   "iri": "pbo:Outgoing_Maintenance",
+   "kind": "skos_concept",
+   "label": "Property maintenance",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:OutgoingCategory",
+   "definition": "Common-area maintenance: a outgoing category value named in the corpus.",
+   "in_scheme": "pbo:OutgoingCategoryScheme",
+   "iri": "pbo:Outgoing_CommonArea",
+   "kind": "skos_concept",
+   "label": "Common-area maintenance",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:OutgoingCategory",
+   "definition": "Capital expenditure: a outgoing category value named in the corpus.",
+   "in_scheme": "pbo:OutgoingCategoryScheme",
+   "iri": "pbo:Outgoing_Capex",
+   "kind": "skos_concept",
+   "label": "Capital expenditure",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:OutgoingCategory",
+   "definition": "Utilities: a outgoing category value named in the corpus.",
+   "in_scheme": "pbo:OutgoingCategoryScheme",
+   "iri": "pbo:Outgoing_Utilities",
+   "kind": "skos_concept",
+   "label": "Utilities",
+   "status": "accepted"
+  },
+  {
+   "definition": "Access models for data sources.",
+   "iri": "pbo:DataAccessTierScheme",
+   "kind": "individual",
+   "label": "Data access tier scheme",
+   "rdf_type": "skos:ConceptScheme",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:DataAccessTier",
+   "definition": "Default open government source.",
+   "in_scheme": "pbo:DataAccessTierScheme",
+   "iri": "pbo:Tier_OpenAuthoritative",
+   "kind": "skos_concept",
+   "label": "Open authoritative",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:DataAccessTier",
+   "definition": "Legal identity, ownership, official transaction verification.",
+   "in_scheme": "pbo:DataAccessTierScheme",
+   "iri": "pbo:Tier_PublicPaid",
+   "kind": "skos_concept",
+   "label": "Public lookup / government paid",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:DataAccessTier",
+   "definition": "Listings, rich attributes, transactions at scale, AVMs.",
+   "in_scheme": "pbo:DataAccessTierScheme",
+   "iri": "pbo:Tier_Commercial",
+   "kind": "skos_concept",
+   "label": "Commercial API / extract",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:DataAccessTier",
+   "definition": "CRM, leasing system, campaigns, website analytics.",
+   "in_scheme": "pbo:DataAccessTierScheme",
+   "iri": "pbo:Tier_FirstParty",
+   "kind": "skos_concept",
+   "label": "First-party",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:DataAccessTier",
+   "definition": "Scores, yields, forecasts.",
+   "in_scheme": "pbo:DataAccessTierScheme",
+   "iri": "pbo:Tier_Derived",
+   "kind": "skos_concept",
+   "label": "Derived internally",
+   "status": "accepted"
+  },
+  {
+   "definition": "Kinds of property information data sources supply.",
+   "iri": "pbo:PropertyAttributeScheme",
+   "kind": "individual",
+   "label": "Property attribute scheme",
+   "rdf_type": "skos:ConceptScheme",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:PropertyAttribute",
+   "definition": "Address / geocode: a property attribute value named in the corpus.",
+   "in_scheme": "pbo:PropertyAttributeScheme",
+   "iri": "pbo:Attr_Address",
+   "kind": "skos_concept",
+   "label": "Address / geocode",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:PropertyAttribute",
+   "definition": "Parcel boundary / lot-on-plan: a property attribute value named in the corpus.",
+   "in_scheme": "pbo:PropertyAttributeScheme",
+   "iri": "pbo:Attr_ParcelBoundary",
+   "kind": "skos_concept",
+   "label": "Parcel boundary / lot-on-plan",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:PropertyAttribute",
+   "definition": "Zoning and overlays: a property attribute value named in the corpus.",
+   "in_scheme": "pbo:PropertyAttributeScheme",
+   "iri": "pbo:Attr_Zoning",
+   "kind": "skos_concept",
+   "label": "Zoning and overlays",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:PropertyAttribute",
+   "definition": "Development applications: a property attribute value named in the corpus.",
+   "in_scheme": "pbo:PropertyAttributeScheme",
+   "iri": "pbo:Attr_DevelopmentApplication",
+   "kind": "skos_concept",
+   "label": "Development applications",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:PropertyAttribute",
+   "definition": "Flood and natural-hazard exposure: a property attribute value named in the corpus.",
+   "in_scheme": "pbo:PropertyAttributeScheme",
+   "iri": "pbo:Attr_FloodHazard",
+   "kind": "skos_concept",
+   "label": "Flood and natural-hazard exposure",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:PropertyAttribute",
+   "definition": "School catchment: a property attribute value named in the corpus.",
+   "in_scheme": "pbo:PropertyAttributeScheme",
+   "iri": "pbo:Attr_SchoolCatchment",
+   "kind": "skos_concept",
+   "label": "School catchment",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:PropertyAttribute",
+   "definition": "Public-transport accessibility: a property attribute value named in the corpus.",
+   "in_scheme": "pbo:PropertyAttributeScheme",
+   "iri": "pbo:Attr_TransportAccess",
+   "kind": "skos_concept",
+   "label": "Public-transport accessibility",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:PropertyAttribute",
+   "definition": "Demographics and population projections: a property attribute value named in the corpus.",
+   "in_scheme": "pbo:PropertyAttributeScheme",
+   "iri": "pbo:Attr_Demographics",
+   "kind": "skos_concept",
+   "label": "Demographics and population projections",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:PropertyAttribute",
+   "definition": "Crime context: a property attribute value named in the corpus.",
+   "in_scheme": "pbo:PropertyAttributeScheme",
+   "iri": "pbo:Attr_Crime",
+   "kind": "skos_concept",
+   "label": "Crime context",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:PropertyAttribute",
+   "definition": "Climate projections: a property attribute value named in the corpus.",
+   "in_scheme": "pbo:PropertyAttributeScheme",
+   "iri": "pbo:Attr_ClimateProjection",
+   "kind": "skos_concept",
+   "label": "Climate projections",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:PropertyAttribute",
+   "definition": "Transacted sales / sale history: a property attribute value named in the corpus.",
+   "in_scheme": "pbo:PropertyAttributeScheme",
+   "iri": "pbo:Attr_Transaction",
+   "kind": "skos_concept",
+   "label": "Transacted sales / sale history",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:PropertyAttribute",
+   "definition": "Ownership and registered interests: a property attribute value named in the corpus.",
+   "in_scheme": "pbo:PropertyAttributeScheme",
+   "iri": "pbo:Attr_Ownership",
+   "kind": "skos_concept",
+   "label": "Ownership and registered interests",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:PropertyAttribute",
+   "definition": "Title reference: a property attribute value named in the corpus.",
+   "in_scheme": "pbo:PropertyAttributeScheme",
+   "iri": "pbo:Attr_Title",
+   "kind": "skos_concept",
+   "label": "Title reference",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:PropertyAttribute",
+   "definition": "Current sale and rental listings: a property attribute value named in the corpus.",
+   "in_scheme": "pbo:PropertyAttributeScheme",
+   "iri": "pbo:Attr_Listing",
+   "kind": "skos_concept",
+   "label": "Current sale and rental listings",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:PropertyAttribute",
+   "definition": "Median rents / bond lodgements: a property attribute value named in the corpus.",
+   "in_scheme": "pbo:PropertyAttributeScheme",
+   "iri": "pbo:Attr_Rent",
+   "kind": "skos_concept",
+   "label": "Median rents / bond lodgements",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:PropertyAttribute",
+   "definition": "Valuation / AVM: a property attribute value named in the corpus.",
+   "in_scheme": "pbo:PropertyAttributeScheme",
+   "iri": "pbo:Attr_Valuation",
+   "kind": "skos_concept",
+   "label": "Valuation / AVM",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:PropertyAttribute",
+   "definition": "Dwelling attributes (bed/bath/car): a property attribute value named in the corpus.",
+   "in_scheme": "pbo:PropertyAttributeScheme",
+   "iri": "pbo:Attr_DwellingAttributes",
+   "kind": "skos_concept",
+   "label": "Dwelling attributes (bed/bath/car)",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:PropertyAttribute",
+   "definition": "Agent licence status: a property attribute value named in the corpus.",
+   "in_scheme": "pbo:PropertyAttributeScheme",
+   "iri": "pbo:Attr_AgentLicence",
+   "kind": "skos_concept",
+   "label": "Agent licence status",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:PropertyAttribute",
+   "definition": "Portal engagement and enquiries: a property attribute value named in the corpus.",
+   "in_scheme": "pbo:PropertyAttributeScheme",
+   "iri": "pbo:Attr_PortalEngagement",
+   "kind": "skos_concept",
+   "label": "Portal engagement and enquiries",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:PropertyAttribute",
+   "definition": "Pool safety register: a property attribute value named in the corpus.",
+   "in_scheme": "pbo:PropertyAttributeScheme",
+   "iri": "pbo:Attr_PoolRegister",
+   "kind": "skos_concept",
+   "label": "Pool safety register",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:PropertyAttribute",
+   "definition": "Solar installation penetration: a property attribute value named in the corpus.",
+   "in_scheme": "pbo:PropertyAttributeScheme",
+   "iri": "pbo:Attr_SolarPenetration",
+   "kind": "skos_concept",
+   "label": "Solar installation penetration",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:PropertyAttribute",
+   "definition": "Development pipeline statistics: a property attribute value named in the corpus.",
+   "in_scheme": "pbo:PropertyAttributeScheme",
+   "iri": "pbo:Attr_DevelopmentPipeline",
+   "kind": "skos_concept",
+   "label": "Development pipeline statistics",
+   "status": "accepted"
+  },
+  {
+   "definition": "Sections recommended for business-planning artefacts.",
+   "iri": "pbo:DocumentSectionScheme",
+   "kind": "individual",
+   "label": "Document section scheme",
+   "rdf_type": "skos:ConceptScheme",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:DocumentSection",
+   "definition": "Executive summary: a document section value named in the corpus.",
+   "in_scheme": "pbo:DocumentSectionScheme",
+   "iri": "pbo:Section_ExecutiveSummary",
+   "kind": "skos_concept",
+   "label": "Executive summary",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:DocumentSection",
+   "definition": "Company description and structure: a document section value named in the corpus.",
+   "in_scheme": "pbo:DocumentSectionScheme",
+   "iri": "pbo:Section_CompanyDescription",
+   "kind": "skos_concept",
+   "label": "Company description and structure",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:DocumentSection",
+   "definition": "Market analysis: a document section value named in the corpus.",
+   "in_scheme": "pbo:DocumentSectionScheme",
+   "iri": "pbo:Section_MarketAnalysis",
+   "kind": "skos_concept",
+   "label": "Market analysis",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:DocumentSection",
+   "definition": "Project description: a document section value named in the corpus.",
+   "in_scheme": "pbo:DocumentSectionScheme",
+   "iri": "pbo:Section_ProjectDescription",
+   "kind": "skos_concept",
+   "label": "Project description",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:DocumentSection",
+   "definition": "Development strategy: a document section value named in the corpus.",
+   "in_scheme": "pbo:DocumentSectionScheme",
+   "iri": "pbo:Section_DevelopmentStrategy",
+   "kind": "skos_concept",
+   "label": "Development strategy",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:DocumentSection",
+   "definition": "Marketing and sales: a document section value named in the corpus.",
+   "in_scheme": "pbo:DocumentSectionScheme",
+   "iri": "pbo:Section_MarketingAndSales",
+   "kind": "skos_concept",
+   "label": "Marketing and sales",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:DocumentSection",
+   "definition": "Financial projections and funding: a document section value named in the corpus.",
+   "in_scheme": "pbo:DocumentSectionScheme",
+   "iri": "pbo:Section_FinancialProjections",
+   "kind": "skos_concept",
+   "label": "Financial projections and funding",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:DocumentSection",
+   "definition": "Operational plan: a document section value named in the corpus.",
+   "in_scheme": "pbo:DocumentSectionScheme",
+   "iri": "pbo:Section_OperationalPlan",
+   "kind": "skos_concept",
+   "label": "Operational plan",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:DocumentSection",
+   "definition": "Risk and contingency: a document section value named in the corpus.",
+   "in_scheme": "pbo:DocumentSectionScheme",
+   "iri": "pbo:Section_RiskAndContingency",
+   "kind": "skos_concept",
+   "label": "Risk and contingency",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:DocumentSection",
+   "definition": "Exit strategy: a document section value named in the corpus.",
+   "in_scheme": "pbo:DocumentSectionScheme",
+   "iri": "pbo:Section_ExitStrategy",
+   "kind": "skos_concept",
+   "label": "Exit strategy",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:DocumentSection",
+   "definition": "Timeline and milestones: a document section value named in the corpus.",
+   "in_scheme": "pbo:DocumentSectionScheme",
+   "iri": "pbo:Section_TimelineMilestones",
+   "kind": "skos_concept",
+   "label": "Timeline and milestones",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:DocumentSection",
+   "definition": "Team and participant credentials: a document section value named in the corpus.",
+   "in_scheme": "pbo:DocumentSectionScheme",
+   "iri": "pbo:Section_TeamCredentials",
+   "kind": "skos_concept",
+   "label": "Team and participant credentials",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:DocumentSection",
+   "definition": "Location details: a document section value named in the corpus.",
+   "in_scheme": "pbo:DocumentSectionScheme",
+   "iri": "pbo:Section_LocationDetails",
+   "kind": "skos_concept",
+   "label": "Location details",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:DocumentSection",
+   "definition": "Investment / lending offer: a document section value named in the corpus.",
+   "in_scheme": "pbo:DocumentSectionScheme",
+   "iri": "pbo:Section_InvestmentOffer",
+   "kind": "skos_concept",
+   "label": "Investment / lending offer",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:DocumentSection",
+   "definition": "Services and fee structure: a document section value named in the corpus.",
+   "in_scheme": "pbo:DocumentSectionScheme",
+   "iri": "pbo:Section_ServicesAndFees",
+   "kind": "skos_concept",
+   "label": "Services and fee structure",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:DocumentSection",
+   "definition": "Compliance and trust accounting: a document section value named in the corpus.",
+   "in_scheme": "pbo:DocumentSectionScheme",
+   "iri": "pbo:Section_ComplianceTrustAccounting",
+   "kind": "skos_concept",
+   "label": "Compliance and trust accounting",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:DocumentSection",
+   "definition": "Technology and portal strategy: a document section value named in the corpus.",
+   "in_scheme": "pbo:DocumentSectionScheme",
+   "iri": "pbo:Section_TechnologyStrategy",
+   "kind": "skos_concept",
+   "label": "Technology and portal strategy",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:DocumentSection",
+   "definition": "Team structure and staffing plan: a document section value named in the corpus.",
+   "in_scheme": "pbo:DocumentSectionScheme",
+   "iri": "pbo:Section_StaffingPlan",
+   "kind": "skos_concept",
+   "label": "Team structure and staffing plan",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:DocumentSection",
+   "definition": "KPIs and management reporting: a document section value named in the corpus.",
+   "in_scheme": "pbo:DocumentSectionScheme",
+   "iri": "pbo:Section_KPIs",
+   "kind": "skos_concept",
+   "label": "KPIs and management reporting",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:DocumentSection",
+   "definition": "SWOT analysis: a document section value named in the corpus.",
+   "in_scheme": "pbo:DocumentSectionScheme",
+   "iri": "pbo:Section_SWOT",
+   "kind": "skos_concept",
+   "label": "SWOT analysis",
+   "status": "accepted"
+  },
+  {
+   "definition": "Charging models for property-management services.",
+   "iri": "pbo:FeeModelScheme",
+   "kind": "individual",
+   "label": "Fee model scheme",
+   "rdf_type": "skos:ConceptScheme",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:FeeModel",
+   "definition": "Percentage of rent collected: a fee model value named in the corpus.",
+   "in_scheme": "pbo:FeeModelScheme",
+   "iri": "pbo:Fee_PercentOfRent",
+   "kind": "skos_concept",
+   "label": "Percentage of rent collected",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:FeeModel",
+   "definition": "Flat management fee: a fee model value named in the corpus.",
+   "in_scheme": "pbo:FeeModelScheme",
+   "iri": "pbo:Fee_Flat",
+   "kind": "skos_concept",
+   "label": "Flat management fee",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:FeeModel",
+   "definition": "Hybrid: a fee model value named in the corpus.",
+   "in_scheme": "pbo:FeeModelScheme",
+   "iri": "pbo:Fee_Hybrid",
+   "kind": "skos_concept",
+   "label": "Hybrid",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:FeeModel",
+   "definition": "Letting fee: a fee model value named in the corpus.",
+   "in_scheme": "pbo:FeeModelScheme",
+   "iri": "pbo:Fee_Letting",
+   "kind": "skos_concept",
+   "label": "Letting fee",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:FeeModel",
+   "definition": "Lease renewal fee: a fee model value named in the corpus.",
+   "in_scheme": "pbo:FeeModelScheme",
+   "iri": "pbo:Fee_Renewal",
+   "kind": "skos_concept",
+   "label": "Lease renewal fee",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:FeeModel",
+   "definition": "Advertising fee: a fee model value named in the corpus.",
+   "in_scheme": "pbo:FeeModelScheme",
+   "iri": "pbo:Fee_Advertising",
+   "kind": "skos_concept",
+   "label": "Advertising fee",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:FeeModel",
+   "definition": "Ancillary / referral fees: a fee model value named in the corpus.",
+   "in_scheme": "pbo:FeeModelScheme",
+   "iri": "pbo:Fee_Ancillary",
+   "kind": "skos_concept",
+   "label": "Ancillary / referral fees",
+   "status": "accepted"
+  },
+  {
+   "definition": "How capabilities are obtained.",
+   "iri": "pbo:CapabilitySourcingScheme",
+   "kind": "individual",
+   "label": "Capability sourcing scheme",
+   "rdf_type": "skos:ConceptScheme",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:CapabilitySourcing",
+   "definition": "Owned and controlled internally: a capability sourcing value named in the corpus.",
+   "in_scheme": "pbo:CapabilitySourcingScheme",
+   "iri": "pbo:Sourcing_InternalControl",
+   "kind": "skos_concept",
+   "label": "Owned and controlled internally",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:CapabilitySourcing",
+   "definition": "Centralised: a capability sourcing value named in the corpus.",
+   "in_scheme": "pbo:CapabilitySourcingScheme",
+   "iri": "pbo:Sourcing_Centralised",
+   "kind": "skos_concept",
+   "label": "Centralised",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:CapabilitySourcing",
+   "definition": "Localised: a capability sourcing value named in the corpus.",
+   "in_scheme": "pbo:CapabilitySourcingScheme",
+   "iri": "pbo:Sourcing_Localised",
+   "kind": "skos_concept",
+   "label": "Localised",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:CapabilitySourcing",
+   "definition": "Outsourced: a capability sourcing value named in the corpus.",
+   "in_scheme": "pbo:CapabilitySourcingScheme",
+   "iri": "pbo:Sourcing_Outsourced",
+   "kind": "skos_concept",
+   "label": "Outsourced",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:CapabilitySourcing",
+   "definition": "Shared through a network: a capability sourcing value named in the corpus.",
+   "in_scheme": "pbo:CapabilitySourcingScheme",
+   "iri": "pbo:Sourcing_Network",
+   "kind": "skos_concept",
+   "label": "Shared through a network",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:CapabilitySourcing",
+   "definition": "Bringing external knowledge, services or technology in.",
+   "in_scheme": "pbo:CapabilitySourcingScheme",
+   "iri": "pbo:Sourcing_InboundOpenInnovation",
+   "kind": "skos_concept",
+   "label": "Inbound open innovation",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:CapabilitySourcing",
+   "definition": "Using external organisations to perform or commercialise functions.",
+   "in_scheme": "pbo:CapabilitySourcingScheme",
+   "iri": "pbo:Sourcing_OutboundOpenInnovation",
+   "kind": "skos_concept",
+   "label": "Outbound open innovation",
+   "status": "accepted"
+  },
+  {
+   "definition": "Property classes for tax rules.",
+   "iri": "pbo:PropertyClassScheme",
+   "kind": "individual",
+   "label": "Property class scheme",
+   "rdf_type": "skos:ConceptScheme",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:PropertyClass",
+   "definition": "New residential build: a property class value named in the corpus.",
+   "in_scheme": "pbo:PropertyClassScheme",
+   "iri": "pbo:PropertyClass_NewResidentialBuild",
+   "kind": "skos_concept",
+   "label": "New residential build",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:PropertyClass",
+   "definition": "Established residential: a property class value named in the corpus.",
+   "in_scheme": "pbo:PropertyClassScheme",
+   "iri": "pbo:PropertyClass_EstablishedResidential",
+   "kind": "skos_concept",
+   "label": "Established residential",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:PropertyClass",
+   "definition": "Commercial residential premises: a property class value named in the corpus.",
+   "in_scheme": "pbo:PropertyClassScheme",
+   "iri": "pbo:PropertyClass_CommercialResidentialPremises",
+   "kind": "skos_concept",
+   "label": "Commercial residential premises",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:PropertyClass",
+   "definition": "Build-to-rent project (50+ dwellings): a property class value named in the corpus.",
+   "in_scheme": "pbo:PropertyClassScheme",
+   "iri": "pbo:PropertyClass_BuildToRentProject",
+   "kind": "skos_concept",
+   "label": "Build-to-rent project (50+ dwellings)",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:PropertyClass",
+   "definition": "Qualifying affordable housing: a property class value named in the corpus.",
+   "in_scheme": "pbo:PropertyClassScheme",
+   "iri": "pbo:PropertyClass_AffordableHousing",
+   "kind": "skos_concept",
+   "label": "Qualifying affordable housing",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:PropertyClass",
+   "definition": "Residential rental property (any): a property class value named in the corpus.",
+   "in_scheme": "pbo:PropertyClassScheme",
+   "iri": "pbo:PropertyClass_ResidentialRental",
+   "kind": "skos_concept",
+   "label": "Residential rental property (any)",
+   "status": "accepted"
+  },
+  {
+   "definition": "Phases of an acquisition-to-operation pathway.",
+   "iri": "pbo:ProjectPhaseScheme",
+   "kind": "individual",
+   "label": "Project phase scheme",
+   "rdf_type": "skos:ConceptScheme",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:ProjectPhase",
+   "definition": "Acquisition screening: a project phase value named in the corpus.",
+   "in_scheme": "pbo:ProjectPhaseScheme",
+   "iri": "pbo:Phase_AcquisitionScreening",
+   "kind": "skos_concept",
+   "label": "Acquisition screening",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:ProjectPhase",
+   "definition": "Conditional due diligence: a project phase value named in the corpus.",
+   "in_scheme": "pbo:ProjectPhaseScheme",
+   "iri": "pbo:Phase_ConditionalDueDiligence",
+   "kind": "skos_concept",
+   "label": "Conditional due diligence",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:ProjectPhase",
+   "definition": "Concept and approvals: a project phase value named in the corpus.",
+   "in_scheme": "pbo:ProjectPhaseScheme",
+   "iri": "pbo:Phase_ConceptAndApprovals",
+   "kind": "skos_concept",
+   "label": "Concept and approvals",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:ProjectPhase",
+   "definition": "Construction: a project phase value named in the corpus.",
+   "in_scheme": "pbo:ProjectPhaseScheme",
+   "iri": "pbo:Phase_Construction",
+   "kind": "skos_concept",
+   "label": "Construction",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:ProjectPhase",
+   "definition": "Completion: a project phase value named in the corpus.",
+   "in_scheme": "pbo:ProjectPhaseScheme",
+   "iri": "pbo:Phase_Completion",
+   "kind": "skos_concept",
+   "label": "Completion",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:ProjectPhase",
+   "definition": "Operating approvals: a project phase value named in the corpus.",
+   "in_scheme": "pbo:ProjectPhaseScheme",
+   "iri": "pbo:Phase_OperatingApprovals",
+   "kind": "skos_concept",
+   "label": "Operating approvals",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:ProjectPhase",
+   "definition": "Lease-up: a project phase value named in the corpus.",
+   "in_scheme": "pbo:ProjectPhaseScheme",
+   "iri": "pbo:Phase_LeaseUp",
+   "kind": "skos_concept",
+   "label": "Lease-up",
+   "status": "accepted"
+  },
+  {
+   "also_instance_of": "pbo:ProjectPhase",
+   "definition": "Ongoing operation: a project phase value named in the corpus.",
+   "in_scheme": "pbo:ProjectPhaseScheme",
+   "iri": "pbo:Phase_OngoingOperation",
+   "kind": "skos_concept",
+   "label": "Ongoing operation",
+   "status": "accepted"
+  }
+ ],
+ "version": "0.1.0"
+}

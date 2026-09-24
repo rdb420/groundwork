@@ -7,7 +7,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from .db import SessionLocal, init_db
-from .routers import admin, artifacts, auth, boards, live, processes
+from .routers import admin, artifacts, auth, boards, live, ontology, processes
 from .seed import seed_processes
 
 logging.basicConfig(level=logging.INFO)
@@ -22,7 +22,7 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(title="Groundwork", lifespan=lifespan, docs_url="/api/docs", openapi_url="/api/openapi.json")
-for r in (auth.router, artifacts.router, processes.router, boards.router, live.router, admin.router):
+for r in (auth.router, artifacts.router, processes.router, boards.router, live.router, admin.router, ontology.router):
     app.include_router(r)
 
 # Sent by the app itself so every deployment option has them, with or without Caddy. Scripts run
