@@ -6,7 +6,7 @@ import hmac
 from collections.abc import Iterator
 from datetime import UTC, datetime
 from pathlib import Path
-from urllib.parse import quote, urlsplit
+from urllib.parse import quote, unquote, urlsplit
 from xml.etree import ElementTree
 
 from . import httpclient
@@ -39,7 +39,9 @@ def sign(method: str, url: str, headers: dict[str, str], payload_sha256: str, *,
     query = []
     for pair in filter(None, parts.query.split("&")):
         k, _, v = pair.partition("=")
-        query.append((quote(k, safe=UNRESERVED), quote(v, safe=UNRESERVED)))
+        # The URL already contains AWS-encoded parameters; decode once before
+        # constructing the canonical form so they are not double-escaped.
+        query.append((quote(unquote(k), safe=UNRESERVED), quote(unquote(v), safe=UNRESERVED)))
     canonical_query = "&".join(f"{k}={v}" for k, v in sorted(query))
     signed = sorted(out)
     canonical_headers = "".join(f"{k}:{' '.join(out[k].split())}\n" for k in signed)
