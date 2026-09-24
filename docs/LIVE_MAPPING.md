@@ -164,6 +164,21 @@ Differences Groundwork allows for when the flavour is `laya`:
 - The base checkpoints are general. Laya's own results show specialist decisions improve most with
   fine-tuning, so measure it on YSH's sentences before relying on it (below).
 
+**Measured (24 September 2026, Laya 0.3.12 on CPU, the sample files in `scripts/eval/`):**
+
+| | Jev (OpenRouter) | Laya `english` | Laya `typed-decisions` |
+|---|---|---|---|
+| Relationships between labelled entities, 17 (`extract_eval --gold-mentions`) | 15 | 13 | 14 |
+| Live mapping: kind of change, 15 sentences (`live_eval`) | 15 | 1 | 4 |
+| Live mapping: element kind, 13 | 10 | 1 | 3 |
+
+So for now: **use Laya for extraction** (`GW_EXTRACT_DECISION_*`), which keeps files with personal
+information on-prem at close to Jev's accuracy, and **keep Jev for live mapping**. Out of the box,
+Laya answers "nothing" to most live sentences, and shorter wording didn't change that (2 to 5 of
+15 across six variants). Live mapping becomes a Laya candidate once it is fine-tuned: every live
+sentence and Jev's answers are already logged in `live_utterances`, which is the training set
+(Laya's `notebooks/` and the stuntd project show how). Re-run both evaluations after any change.
+
 OpenJev also accepts the same request; it caps a Choice at 128 options and rejects pinned Jev
 version names. Groundwork keeps every Choice at or under `GW_DECISION_MAX_OPTIONS`.
 

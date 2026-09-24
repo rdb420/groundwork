@@ -105,7 +105,9 @@ Closed to the pinned ontology (`backend/ontology/pbo-<version>/`, from `rdb420/p
 
 Chunk text reaches Jev only as data in `state`. Files marked as personal (or not sure) keep their
 entities but wait for a local decision model (`GW_EXTRACT_DECISION_URL` with
-`GW_EXTRACT_DECISION_IS_LOCAL=true`) for relationships; they show as "Partly read". Names are
+`GW_EXTRACT_DECISION_IS_LOCAL=true`) for relationships; they show as "Partly read". Laya on the
+inference box is that local model: on the relationship sample it scored 13 to 14 of 17 against
+Jev's 15 (see LIVE_MAPPING.md, "Laya, the local decision model"). Names are
 kept as found and flagged `personal_info` in the graph.
 
 Measure extraction on labelled YSH chunks before switching it on for everyone:
