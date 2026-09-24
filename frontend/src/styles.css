@@ -410,3 +410,14 @@ td.actions button + button { margin-left: 0.4rem; }
   border-radius: var(--radius-m); padding: 0.7rem 1rem; box-shadow: 0 6px 24px rgba(28, 43, 54, 0.18); }
 .combine-bar p { margin: 0; flex: 1 1 320px; }
 .rows li > button.link { justify-self: start; text-align: left; padding-left: 0; }
+
+/* Terms to review, pipeline */
+.cards { list-style: none; padding: 0; display: grid; gap: 1rem; max-width: 900px; }
+.card { background: var(--panel); border: 1.5px solid var(--line); border-radius: var(--radius-m); padding: 1rem 1.2rem; }
+.card header { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; }
+.card-title { font: inherit; font-weight: 700; flex: 1 1 240px; padding: 0.3rem 0.5rem; border: 1.5px solid var(--line); border-radius: var(--radius-s); }
+.evidence { list-style: none; padding: 0; margin: 0.8rem 0; display: grid; gap: 0.5rem; }
+.evidence blockquote { margin: 0.2rem 0 0; padding: 0.4rem 0.7rem; border-left: 3px solid var(--survey-soft); color: var(--ink); font-size: 0.93rem; }
+.card details { margin-top: 0.6rem; }
+.card details input, .card details select { margin: 0.4rem 0.4rem 0.4rem 0; }
+.tiles dd.small { font-size: 1rem; font-weight: 600; }

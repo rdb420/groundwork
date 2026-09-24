@@ -23,6 +23,8 @@ export default function Shell() {
           <NavLink to="/maps">Process maps</NavLink>
           {me && me.role !== "contributor" && <NavLink to="/coverage">Coverage</NavLink>}
           {me && me.role !== "contributor" && <NavLink to="/processes">Process list</NavLink>}
+          {me && me.role !== "contributor" && <NavLink to="/terms">Terms</NavLink>}
+          {me?.role === "admin" && <NavLink to="/pipeline">Pipeline</NavLink>}
           {me?.role === "admin" && <NavLink to="/people">People</NavLink>}
           {me?.role === "admin" && <NavLink to="/retention">Retention</NavLink>}
         </nav>

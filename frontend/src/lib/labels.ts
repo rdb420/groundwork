@@ -28,6 +28,12 @@ export const STATUS: Record<string, string> = {
   quarantined: "Blocked", purged: "Deleted",
 };
 
+// Where a file is in the ingestion pipeline, in staff terms.
+export const PIPELINE: Record<string, string> = {
+  queued: "Waiting to be read", converting: "Reading", indexing: "Indexing", extracting: "Finding people and things",
+  graphing: "Linking", done: "Searchable", partial: "Partly read", skipped: "Not read", failed: "Couldn't be read",
+};
+
 export const label = (pairs: [string, string, ...string[]][], key: string) => pairs.find((p) => p[0] === key)?.[1] ?? key;
 
 export const size = (b: number) => (b > 1e6 ? `${(b / 1e6).toFixed(1)} MB` : `${Math.max(1, Math.round(b / 1e3))} KB`);

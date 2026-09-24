@@ -57,7 +57,7 @@ def to_dict(a: Artifact) -> dict:
         "original_filename": a.original_filename, "mime_type": a.mime_type, "size_bytes": a.size_bytes,
         "status": a.status, "uploaded_at": a.uploaded_at, "uploaded_by": a.uploader.email if a.uploader else None,
         "processes": [{"id": p.id, "name": p.name} for p in a.processes], "profile": a.profile,
-        "board_id": a.board_id, "scan": a.scan,
+        "board_id": a.board_id, "scan": a.scan, "pipeline_status": a.pipeline_status or "",
     }
 
 

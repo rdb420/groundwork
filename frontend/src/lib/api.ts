@@ -78,6 +78,7 @@ export type Artifact = {
   uploaded_at: string;
   uploaded_by: string | null;
   scan: string;
+  pipeline_status: string;
   processes: { id: string; name: string }[];
   profile: { summary?: string; review_flags?: string[]; sheets?: { name: string; state: string; formulas: number; dimensions: string }[]; preview?: string } | null;
 };
