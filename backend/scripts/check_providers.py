@@ -61,6 +61,14 @@ def main() -> int:
         except (ProviderError, KeyError) as e:
             ok &= line("Drafting model", FAIL, str(e))
 
+    if s.smtp_host:
+        from app import mailer
+        try:
+            ok &= line("Mail (sign-in links)", OK, mailer.check())
+        except mailer.MailError as e:
+            ok &= line("Mail (sign-in links)", FAIL, str(e))
+    else:
+        line("Mail (sign-in links)", "off", "links print in the API log")
     if s.storage_backend == "s3":
         from app.storage import get_storage
         key = f"artifacts/_check/{uuid.uuid4().hex}.txt"

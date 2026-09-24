@@ -43,6 +43,7 @@ pnpm run dev          # http://localhost:5173, proxies /api to :8000
 ```
 
 With no SMTP configured, sign-in links print to the API console. Copy the link into the browser.
+To send them through Gmail (Google Workspace), follow `backend/scripts/gmail_oauth.py`.
 
 To make yourself an analyst locally, start the API with `GW_ANALYST_EMAILS=you@example.com.au`.
 
