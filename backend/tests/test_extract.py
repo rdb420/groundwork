@@ -108,7 +108,9 @@ def test_a_lease_becomes_entities_roles_and_a_graph(client, extraction):
         assert tenant, [(r.property_iri, r.role_iri) for r in relations]
         # The catch-all span is a proposal, not an entity.
         cand = db.scalar(select(OntologyCandidate).where(OntologyCandidate.norm_label == "bond loan scheme"))
-        assert cand is not None and cand.kind == "class" and cand.occurrences == 1
+        from app.models import Chunk
+        mine = set(db.scalars(select(Chunk.id).where(Chunk.source_id == aid)).all())
+        assert cand is not None and cand.kind == "class" and mine & set(cand.evidence)
         assert not [m for m in mentions if m.surface == "Bond Loan Scheme"]
     # Jev read the chunk as data in state, and every question stayed within the limit (FakeJev asserts it).
     assert fake_jev.calls and all("text" in c["state"] for c in fake_jev.calls)

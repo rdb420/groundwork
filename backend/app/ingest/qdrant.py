@@ -33,6 +33,8 @@ def _client():
     s = get_settings()
     if not s.qdrant_url:
         raise QdrantError("GW_QDRANT_URL is not set.")
+    if not s.qdrant_api_key:
+        raise QdrantError("GW_QDRANT_API_KEY is not set. Qdrant holds file content, so it must require a key.")
     headers = {"api-key": s.qdrant_api_key} if s.qdrant_api_key else {}
     return httpclient.client("qdrant", base_url=s.qdrant_url.rstrip("/"), timeout=120, headers=headers,
                              verify=httpclient.verify_option(s.qdrant_ca_file))

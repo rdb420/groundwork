@@ -57,7 +57,8 @@ services:
     profiles: [ "pipeline" ]
     image: qdrant/qdrant:v1.18.2
     environment:
-      QDRANT__SERVICE__API_KEY: "${QDRANT_API_KEY:?set QDRANT_API_KEY in .env}"
+      # Groundwork refuses to use Qdrant without this key; the container publishes no ports.
+      QDRANT__SERVICE__API_KEY: "${QDRANT_API_KEY:-}"
       QDRANT__SERVICE__ENABLE_TLS: "true"
       QDRANT__TLS__CERT: /qdrant/tls/cert.pem
       QDRANT__TLS__KEY: /qdrant/tls/key.pem
@@ -71,7 +72,8 @@ services:
     profiles: [ "pipeline" ]
     image: neo4j:5
     environment:
-      NEO4J_AUTH: "neo4j/${NEO4J_PASSWORD:?set NEO4J_PASSWORD in .env}"
+      # Neo4j won't start with an empty password, so the pipeline profile needs NEO4J_PASSWORD set.
+      NEO4J_AUTH: "neo4j/${NEO4J_PASSWORD:-}"
       NEO4J_server_memory_heap_max__size: 1G
     ports: [ "127.0.0.1:7474:7474" ]
     volumes: [ "neo4j_data:/data" ]
