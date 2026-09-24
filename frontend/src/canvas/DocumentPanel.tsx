@@ -11,20 +11,25 @@ export default function DocumentPanel({ boardId, docKind, setDocKind, proposal, 
   const [saved, setSaved] = useState("");
   const [editing, setEditing] = useState(false);
   const [error, setError] = useState("");
+  const [stale, setStale] = useState(false);
+  const [version, setVersion] = useState(0);
 
-  useEffect(() => {
-    api.get<{ markdown: string; doc_kind: "sop" | "wi" }>(`/api/boards/${boardId}/document`).then((d) => {
-      setText(d.markdown); setSaved(d.markdown);
-      if (d.markdown) setDocKind(d.doc_kind);
-    });
-  }, [boardId]);
+  const load = () => api.get<{ markdown: string; doc_kind: "sop" | "wi"; version: number }>(`/api/boards/${boardId}/document`).then((d) => {
+    setText(d.markdown); setSaved(d.markdown); setVersion(d.version); setStale(false); setError("");
+    if (d.markdown) setDocKind(d.doc_kind);
+  });
+  useEffect(() => { load(); }, [boardId]);
 
+  // Saves carry the version this person started from, so nobody overwrites a colleague's edit.
   const save = async (md: string) => {
     setError("");
     try {
-      await api.send("PUT", `/api/boards/${boardId}/document`, { markdown: md, doc_kind: docKind });
-      setText(md); setSaved(md); setEditing(false);
-    } catch (e) { setError((e as Error).message); }
+      const r = await api.send<{ version: number }>("PUT", `/api/boards/${boardId}/document`, { markdown: md, doc_kind: docKind, version });
+      setText(md); setSaved(md); setVersion(r.version); setEditing(false);
+    } catch (e) {
+      setStale((e as { status?: number }).status === 409);
+      setError((e as Error).message);
+    }
   };
 
   const download = () => {
@@ -61,7 +66,7 @@ export default function DocumentPanel({ boardId, docKind, setDocKind, proposal, 
           <div className="actions"><button onClick={() => setEditing(true)}>Edit</button>{text && <button onClick={download}>Download</button>}</div>
         </>
       )}
-      {error && <p className="error" role="alert">{error}</p>}
+      {error && <p className="error" role="alert">{error} {stale && <button className="link" onClick={() => { void navigator.clipboard?.writeText(text); load(); setEditing(false); }}>Copy my text and reload</button>}</p>}
     </div>
   );
 }

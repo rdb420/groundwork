@@ -63,12 +63,12 @@ def test_upload_profile_and_visibility(client):
     assert a["profile"]["sheets"][0]["formulas"] == 1
     assert {p["name"] for p in a["processes"]} == {"Rent collection and arrears", "Payment plan follow-up"}
 
-    sign_in(client, "other@example.com.au")
+    sign_in(client, "outsider@example.com.au")
     assert client.get("/api/artifacts").json() == []
     assert client.get(f"/api/artifacts/{aid}").status_code == 404
 
     sign_in(client, "lead@example.com.au")
-    assert len(client.get("/api/artifacts").json()) == 1
+    assert aid in {a["id"] for a in client.get("/api/artifacts").json()}
 
 
 def test_rejects_unknown_extension(client):

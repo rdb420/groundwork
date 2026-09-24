@@ -8,7 +8,7 @@ scripted stand-in models, then with the real ones.
 ```bash
 cd backend
 uv sync
-uv run pytest -q                         # expect 20 passed
+uv run pytest -q                         # expect every test to pass
 
 cd ../frontend
 pnpm install
@@ -61,23 +61,29 @@ The stand-ins choose by keyword, so expect odd labels. You're testing the plumbi
 
 ## 3. Switch to the real models
 
-Stop terminal 1. In terminal 2, replace the stand-in settings:
+Stop terminal 1. Put the keys in `.env` at the repo root (copy `.env.example` if it isn't there):
+`GW_OPENROUTER_API_KEY` for Jev and `GW_OPENAI_API_KEY` plus `GW_OPENAI_MODEL` for drafting and
+review. Check both answer:
 
 ```bash
-GW_DECISION_PROVIDER=jev GW_DECISION_API_KEY=<TypeSafe key> \
-GW_AI_PROVIDER=ollama GW_OLLAMA_URL=http://<inference box>:11434 GW_OLLAMA_MODEL=<model>
-# or GW_AI_PROVIDER=anthropic GW_ANTHROPIC_API_KEY=...
+cd backend && uv run python -m scripts.check_providers
 ```
 
-Leave personal information unticked on test maps while Jev is hosted. Then:
+Restart terminal 2 without the stand-in settings (the API reads `.env`):
 
 ```bash
-cd backend && GW_DECISION_PROVIDER=jev GW_DECISION_API_KEY=... \
-  uv run python -m scripts.live_eval scripts/eval/sample.jsonl
+cd backend && GW_DATA_DIR=../data uv run uvicorn app.main:app --reload --port 8000
+```
+
+Leave personal information unticked on test maps: OpenRouter and OpenAI are both hosted. Then:
+
+```bash
+cd backend && uv run python -m scripts.live_eval scripts/eval/sample.jsonl
 ```
 
 Replace the sample sentences with ones from a recorded mock session and re-run. Compare against
-a local Laya or OpenJev server by changing `GW_DECISION_URL` and `GW_DECISION_MODEL`.
+a local Laya or OpenJev server with `GW_DECISION_PROVIDER=jev`, `GW_DECISION_URL`,
+`GW_DECISION_MODEL` and `GW_DECISION_IS_LOCAL=true`.
 
 ## 4. What to note during the test
 

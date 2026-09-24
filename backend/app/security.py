@@ -4,7 +4,7 @@ Tokens and session secrets are random, sent once, and stored only as SHA-256 has
 """
 import hashlib
 import secrets
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from fastapi import Depends, HTTPException, Request
 from sqlalchemy import select
@@ -27,12 +27,12 @@ def digest(secret: str) -> str:
 
 
 def utcnow() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def aware(dt: datetime) -> datetime:
     """SQLite drops tzinfo on read; treat stored values as UTC."""
-    return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+    return dt if dt.tzinfo else dt.replace(tzinfo=UTC)
 
 
 def role_for(email: str) -> str:
@@ -64,8 +64,13 @@ def current_user(request: Request, db: DB = Depends(get_db)) -> User:
     if not sess or aware(sess.expires_at) < utcnow():
         raise HTTPException(401, "Your session has ended. Sign in again.")
     user = sess.user
+    if user.blocked:
+        raise HTTPException(401, "Your access to Groundwork has been removed. Ask the AI lead if that's a mistake.")
     if request.method not in ("GET", "HEAD", "OPTIONS") and request.headers.get("x-requested-with") != "groundwork":
         raise HTTPException(403, "Request blocked. Reload the page and try again.")
+    # Roles come from GW_ADMIN_EMAILS and GW_ANALYST_EMAILS, so removing an address takes effect
+    # on the person's next request, not their next sign-in.
+    user.role = role_for(user.email)
     user.last_seen_at = utcnow()
     db.commit()
     return user

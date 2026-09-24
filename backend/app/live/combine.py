@@ -8,8 +8,9 @@ outside parties as pools, and returns ordinary changes that the canvas lays out.
 from sqlalchemy import select
 from sqlalchemy.orm import Session as DB
 
+from .. import access
 from ..ai.context import describe_board
-from ..ai.generate import GenerationRefused, _parse
+from ..ai.generate import GenerationRefused, _parse, saved_map
 from ..ai.providers import ProviderError, complete, is_local
 from ..config import get_settings
 from ..models import AIDraft, Board, Process, User
@@ -40,25 +41,25 @@ Use only add and connect. List elements in the order the work happens."""
 
 def combine_views(db: DB, process: Process, user: User) -> tuple[Board, AIDraft]:
     s = get_settings()
-    boards = db.scalars(select(Board).where(Board.process_id == process.id, Board.perspective != "")
-                        .order_by(Board.created_at)).all()
+    boards = [b for b in db.scalars(select(Board).where(Board.process_id == process.id, Board.perspective != "")
+                                    .order_by(Board.created_at)).all() if access.can_open_board(b, user)]
     if len(boards) < 2:
         raise GenerationRefused("Combining needs at least two maps of this process, each showing one person's view.")
     if any(b.personal_info for b in boards) and not is_local() and not s.ai_allow_cloud_for_personal_info:
         raise GenerationRefused("One of these maps holds personal information and AI is set to a cloud model.")
-    views = "\n\n".join(f"VIEW OF {b.perspective.upper()} (map \"{b.title}\"):\n{describe_board(b.doc, 'detail', b.rules)}"
+    views = "\n\n".join(f"VIEW OF {b.perspective.upper()} (map \"{b.title}\"):\n{describe_board(saved_map(b), 'detail', b.rules)}"
                         for b in boards)
     prompt = f"PROCESS: {process.name}\n\n{views}\n\n" + TASK.format(
         kinds=", ".join(f"{k} ({v['desc']})" for k, v in KINDS.items()))
     try:
         raw, provider, model = complete(SYSTEM.format(org=s.org_name), prompt)
     except ProviderError as e:
-        raise GenerationRefused(str(e))
+        raise GenerationRefused(str(e)) from e
     out = _parse(raw)
     changes = [c for c in validate(out.get("changes") or [], {"nodes": [], "edges": []})
                if c["op"] in {"add", "connect"}]
     for c in changes:
-        c["auto"] = True  # a new map built on request; nothing to protect yet
+        c["auto"] = False  # a proposal like any other model output: a person keeps or discards it
         c["source"] = "combine"
     board = Board(title=f"Combined: {process.name}", process_id=process.id, created_by=user.id,
                   personal_info=any(b.personal_info for b in boards), session_pass="detail",

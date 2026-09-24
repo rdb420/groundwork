@@ -6,17 +6,23 @@ from pathlib import Path
 
 from pypdf import PdfReader
 
+from .limits import too_big
+
 PREVIEW = 1500
+MAX_TEXT = 20_000_000
 
 
 def extract_text(path: Path) -> str | None:
     ext = path.suffix.lower()
     if ext in {".txt", ".md", ".csv", ".tsv"}:
-        return path.read_text(errors="replace")
+        with path.open(encoding="utf-8", errors="replace") as f:
+            return f.read(MAX_TEXT)  # enough for any summary; a huge export isn't read whole
     if ext == ".pdf":
         reader = PdfReader(str(path))
         return "\n".join((p.extract_text() or "") for p in reader.pages[:200])
     if ext == ".docx":
+        if too_big(path):
+            return None
         with zipfile.ZipFile(path) as z:
             xml = z.read("word/document.xml").decode("utf8", "replace")
         xml = re.sub(r"</w:p>", "\n", xml)

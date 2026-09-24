@@ -11,6 +11,7 @@ sends problems, exceptions, workarounds and rules to the parking lot. The detail
 everything on the map.
 """
 import uuid
+from typing import Any
 
 from ..ai.context import _abs_positions
 from ..config import get_settings
@@ -181,13 +182,13 @@ def plan(answers: dict, ctx: dict, mode: str, text: str) -> tuple[list[dict], li
             if p(flag) > 0.7:
                 park(cat)
         if action == "add" and (group != "step" or kind not in OVERVIEW_FLOW or p("exception") > 0.7):
-            park(PARKING_FOR_KIND.get(kind, "detail"))
+            park(PARKING_FOR_KIND.get(kind or "", "detail"))
             return [], parking, summary
 
     label = _span(ctx, label_key)
     actor = _span(ctx, actor_key)
-    who_fields = {}
-    if who in ctx["lanes"]:
+    who_fields: dict[str, str] = {}
+    if who and who in ctx["lanes"]:
         who_fields = {"lane_id": who}
     elif who in ctx["pools"]:
         who_fields = {"party": ctx["pools"][who]["label"]}
@@ -197,7 +198,7 @@ def plan(answers: dict, ctx: dict, mode: str, text: str) -> tuple[list[dict], li
         who_fields = {"party": actor}
 
     threshold = s.live_auto_threshold * (0.85 if directed >= 0.5 else 1.0)  # direct instructions need less
-    ops: list[dict] = []
+    ops: list[dict[str, Any]] = []
 
     if action == "add" and kind in FLOW_KINDS | CONTEXT_KINDS:
         conf = min(a_conf, g_conf, k_conf, lb_conf if label else 0.5)
@@ -210,7 +211,7 @@ def plan(answers: dict, ctx: dict, mode: str, text: str) -> tuple[list[dict], li
                             "confidence": round(min(conf, 0.99), 2)})
         else:
             tags = [t for t in ("workaround", "issue") if p(t) > 0.7 and kind != t]
-            op = {"op": "add", "ref": f"n{uuid.uuid4().hex[:8]}", "kind": kind, "label": label, "after": target,
+            op: dict[str, Any] = {"op": "add", "ref": f"n{uuid.uuid4().hex[:8]}", "kind": kind, "label": label, "after": target,
                   "tags": tags, **who_fields}
             if "party" in who_fields:
                 op["direction"] = "in" if p("from_outside") > 0.5 else "out"

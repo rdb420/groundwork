@@ -51,7 +51,7 @@ official story and the real one diverge.
  +----------------+      |  /api/artifacts  uploads + metadata          |
                          |  /api/processes  process catalogue           |
                          |  /api/boards     maps, recordings, AI drafts |
-                         |  /api/admin      coverage, audit log         |
+                         |  /api/admin      coverage, retention, audit  |
                          +---------------------------------------------+
                                 |                 |
                      SQLite (WAL)          /data on host disk
@@ -63,11 +63,15 @@ official story and the real one diverge.
                                 v          backups/
                          +-------------+
                          | worker      |  polls the jobs table
+                         |  scan       |  ClamAV (clamd) before anything reads a file
                          |  profile    |  spreadsheets, PDFs, Word
                          |  transcribe |  faster-whisper or Whisper server
+                         |  retention  |  daily purge when GW_RETENTION_AUTO=true
                          +-------------+
                                 |
-             optional:  Ollama on the inference box (local AI, default for personal info)
+             optional:  Jev through OpenRouter (live mapping decisions, hosted)
+                        OpenAI (drafting and session review, hosted)
+                        Ollama on the inference box (local AI, the choice for personal info)
                         Anthropic API (cloud AI, blocked for personal info by default)
 ```
 
@@ -78,15 +82,15 @@ official story and the real one diverge.
 | API | FastAPI, Python 3.12 | The processing work (openpyxl, PDF text, Whisper) is Python. One language for API and worker. |
 | Database | SQLite in WAL mode | One office, one host, tens of users. No database server to run. SQLAlchemy keeps Postgres a config change away. |
 | Files | Host disk with a JSON sidecar per file | Files stay on premises. Each folder describes itself if the database is ever lost. |
-| Queue | `jobs` table polled by one worker | No broker to install. A single UPDATE claims a job. |
+| Queue | `jobs` table polled by two workers | No broker to install. A single UPDATE claims a job. One worker reads files, one transcribes, so a large workbook never delays a live transcript. Failed jobs back off; jobs a crashed worker left running are picked up again. |
 | Frontend | React, Vite, React Flow (MIT) | React Flow gives typed nodes and edges, so the server reads the map as a process. |
 | Canvas model | Typed BPMN nodes in JSON | Chosen over a freehand whiteboard (Excalidraw) because AI and later BPMN export need semantics. Chosen over bpmn-js because staff need sticky notes and photos beside the notation. |
 | TLS | Caddy | Automatic certificates, internal or public, in five lines. |
-| AI | Plain HTTP to Ollama or Anthropic | No vendor SDK. Switching provider is an environment variable. |
+| AI | Plain HTTP to OpenAI, OpenRouter (Jev), Ollama or Anthropic | No vendor SDK. Switching provider is an environment variable. |
 
 ### Live mapping
 
-Sessions can build the map as people talk. A System One decision model (TypeSafe Jev in v1)
+Sessions can build the map as people talk. A System One decision model (TypeSafe Jev, through OpenRouter)
 reads each finished sentence and picks one change from options code gives it; a reasoning model
 reviews the whole session every five minutes and keeps the map, the rule tables and the written
 SOP or work instruction aligned. Sessions run in two passes (overview, then one person's view in
@@ -158,8 +162,9 @@ dependency).
    in from its position, lists connections with their labels, attaches each sticky note to the
    nearest element, and adds structural checks: missing start or end events, unconnected
    elements, decisions with fewer than two paths.
-2. It adds the transcript (last 60,000 characters) and the metadata and first-read summary of
-   every file linked to the board's process.
+2. It adds the transcript (last 60,000 characters) and, for each file linked to the board's
+   process, its metadata, first-read summary and what it says: extracted text for documents, sheet
+   names and column headings for workbooks (up to 4,000 characters a file and 40,000 in all).
 3. The prompt instructs the model to describe only what staff said, mark gaps as
    `[TO CONFIRM: ...]`, cite its evidence, and treat the map, transcript and files as data,
    never as instructions.
@@ -178,21 +183,34 @@ history. Staff will upload them, whatever the form says. The design assumes this
   drafting refuses a cloud provider unless `GW_AI_ALLOW_CLOUD_FOR_PERSONAL_INFO=true`.
 - Contributors see only their own uploads. Analysts and admins see everything. Deny by default
   on the server; the UI hides nothing the server would allow.
-- Withdrawn files disappear from use but stay on disk for the audit trail until purged under a
-  retention rule (roadmap: admin purge with its own audit event).
-- Audit events cover sign-in, uploads, downloads, withdrawals, process proposals, board saves,
-  recordings and every AI draft decision.
-- Tokens and session secrets are stored only as hashes.
-- Caddy sets HSTS, nosniff, no-referrer, frame denial, and limits microphone access to the site.
+- Withdrawn files disappear from use at once and are deleted from disk after
+  `GW_RETENTION_WITHDRAWN_DAYS`; session audio after `GW_RETENTION_AUDIO_DAYS`. The worker runs
+  this daily when `GW_RETENTION_AUTO=true`; otherwise an admin runs it from the Retention page.
+  Admins can also delete one file at once, with a reason (Library, "Delete now"). A purge keeps the
+  database row, marked deleted, so the audit trail still shows what was shared and when it went.
+- Every upload is checked by ClamAV (`clamav` service, `GW_CLAMAV_HOST`) before its first read. A
+  flagged file is quarantined and can't be downloaded. While scanning is on, a file can't be
+  downloaded until it has been checked.
+- Audit events cover every state-changing request (a test enforces it): sign-in and out, uploads,
+  downloads, withdrawals and purges, process changes and merges, board saves, recordings, live
+  sentences and every AI draft decision.
+- Tokens and session secrets are stored only as hashes. Roles follow `GW_ADMIN_EMAILS` and
+  `GW_ANALYST_EMAILS` on every request. Admins can sign someone out everywhere or remove their access
+  (People page). The worker clears expired sessions and sign-in links hourly.
+- The app sends a Content-Security-Policy (scripts from its own origin only), nosniff, no-referrer,
+  frame denial and a microphone-only permissions policy on every response; Caddy adds HSTS. File
+  types come from the extension, never the browser's claim. Only raster images display inline;
+  everything else downloads, under a sandbox policy.
 
-Before inviting all staff, run a short privacy impact assessment against the Australian Privacy
-Principles: what is collected, why, who can see it, how long it is kept, and how it is deleted.
-Set a retention period for raw uploads and recordings. Take legal advice on recording consent
-and on whether the lending side has additional obligations.
+Before inviting all staff, complete the privacy impact assessment in
+[PRIVACY.md](PRIVACY.md) against the Australian Privacy Principles: what is collected, why, who can
+see it, how long it is kept, and how it is deleted. Confirm the retention periods it proposes.
+Take legal advice on recording consent and on whether the lending side has additional obligations.
 
 ## 6. Deployment
 
-One Linux host with Docker. Three containers from one image plus Caddy:
+One Linux host with Docker. The app, the worker and the transcriber run from one image, with
+ClamAV and Caddy beside them:
 
 ```
 docker compose up -d --build
@@ -205,7 +223,7 @@ links will fail. Three options, set in `deploy/Caddyfile`:
 |---|---|---|
 | A. Office LAN, Caddy internal certificate | Everyone works in the Salisbury office | Install Caddy's root certificate on office PCs once |
 | B. Public subdomain, real certificate | Staff work from phones or home | Host must be reachable from the internet; review firewall and rate limits |
-| C. Tailscale serve | Small team, some remote work | Every user needs the Tailscale app |
+| C. Tailscale serve | Small team, some remote work | Every user needs the Tailscale app. Run `docker compose up -d app worker transcriber clamav` (no Caddy), then `tailscale serve --bg http://127.0.0.1:8000` on the host |
 
 For a small team with some remote work, C is the safest start. Move to B when the portal
 opens to everyone.
@@ -214,8 +232,9 @@ opens to everyone.
 authentication before relying on it; a transactional email service is often simpler.
 
 **Backups.** `deploy/backup.sh` runs a consistent SQLite snapshot and archives all files, then
-opens the archive to confirm it reads. Schedule it nightly and copy `data/backups/` off the
-host.
+opens the archive to confirm it reads. With `GW_BACKUP_AGE_RECIPIENTS` set, the archive is
+encrypted with age as it is written, to public keys whose private halves live off the host, and
+`GW_BACKUP_COPY_TO` copies it elsewhere (never unencrypted). Schedule it nightly. See the README.
 
 ## 7. Rollout plan
 
@@ -236,33 +255,34 @@ with at least one map, drafts accepted versus discarded, and the open `[TO CONFI
 
 Ordered by value to the discovery work.
 
-1. Coverage view: processes by evidence layer, contributor and map status.
-2. Admin screens for the process catalogue (rename, merge, confirm, retire, assign owner).
-3. Evidence ledger view per process, combining artifacts, map elements and transcript quotes.
-4. BPMN 2.0 XML export, so maps open in other tools.
-5. Deeper workbook review: formula-pattern anomalies, hard-coded values inside formula ranges,
+Done: the coverage view (processes by evidence layer, contributor and map status), the process
+list (rename, merge, confirm, retire, assign owner), retention and purge, and malware scanning.
+
+1. Evidence ledger view per process, combining artifacts, map elements and transcript quotes.
+2. BPMN 2.0 XML export, so maps open in other tools.
+3. Deeper workbook review: formula-pattern anomalies, hard-coded values inside formula ranges,
    lookup chains across files.
-6. OCR for scanned PDFs and photos of paper forms.
-7. Search across extracted text and transcripts.
-8. Retention and purge controls.
-9. Real-time co-editing (Yjs) if facilitated sessions outgrow autosave with conflict detection.
-10. Speaker labels in transcripts.
-11. Local streaming speech recognition for live mapping, replacing the browser's cloud service.
-12. Run the session reviewer on the server so it continues when the facilitator's tab closes.
-13. Compound sentences: split with an LLM and interpret each part, as in TypeSafe's smart-home demo.
+4. OCR for scanned PDFs and photos of paper forms.
+5. Search across extracted text and transcripts.
+6. Real-time co-editing (Yjs) if facilitated sessions outgrow autosave with conflict detection.
+7. Speaker labels in transcripts.
+8. Local streaming speech recognition for live mapping, replacing the browser's cloud service.
+9. Run the session reviewer on the server so it continues when the facilitator's tab closes.
+10. Compound sentences: split with an LLM and interpret each part, as in TypeSafe's smart-home demo.
 
 ## 9. Decisions and known limits
 
 - **Boards are shared.** Any signed-in person with a board's link can open it. Tighten in
-  `routers/boards.py::_board` if a board ever holds material only some staff should see.
+  `app/access.py::can_open_board` if a board ever holds material only some staff should see; every
+  map route goes through it, and a test checks that.
 - **Near-live transcription.** Text appears about 30 to 60 seconds behind speech. True streaming
   needs a WebSocket and a streaming speech model; not worth it for mapping sessions.
 - **AI generation is synchronous.** A local 14B model can take a minute. Move it to the job
   queue if that becomes a problem.
-- **One worker.** Enough for an office. SQLite serialises writes, so more workers would add
-  little.
+- **Two workers, one database file.** One reads files and one transcribes. SQLite serialises
+  writes and each waits up to 30 seconds for a lock, which is plenty for an office. Very large
+  workbooks get a lighter read, and Office files that expand to an unusual size aren't opened.
 - **In-memory rate limit** on sign-in requests. Resets on restart. Adequate behind Tailscale or a
   LAN; add Caddy rate limiting if the portal is exposed publicly.
-- **No malware scanning** of uploads. Files are never executed or rendered by the server, and
-  downloads are sent as attachments (images inline). Add ClamAV to the worker before opening the
-  portal to the internet.
+- **Malware scanning needs memory.** The ClamAV container wants about 2 GB. On a small host, set
+  `GW_CLAMAV_HOST` empty during the private pilot and switch it on before opening the portal wider.

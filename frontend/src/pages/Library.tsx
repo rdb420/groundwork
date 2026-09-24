@@ -1,12 +1,16 @@
 import { useEffect, useState } from "react";
 import { api, type Artifact, type ProcessRow } from "../lib/api";
 import { KINDS, LAYERS, STATUS, label, size } from "../lib/labels";
+import { useSession } from "../lib/session";
 
 export default function Library() {
   const [rows, setRows] = useState<Artifact[] | null>(null);
   const [processes, setProcesses] = useState<ProcessRow[]>([]);
   const [pid, setPid] = useState("");
   const [open, setOpen] = useState<Artifact | null>(null);
+  const [reason, setReason] = useState("");
+  const [error, setError] = useState("");
+  const { me } = useSession();
   useEffect(() => { api.get<ProcessRow[]>("/api/processes").then(setProcesses); }, []);
   useEffect(() => { api.get<Artifact[]>(`/api/artifacts${pid ? `?process_id=${pid}` : ""}`).then(setRows); }, [pid]);
 
@@ -15,6 +19,16 @@ export default function Library() {
     await api.send("POST", `/api/artifacts/${a.id}/withdraw`);
     setOpen(null);
     setRows((r) => r?.filter((x) => x.id !== a.id) ?? null);
+  };
+  // Admins can delete a file straight away, for example an ID document shared by mistake.
+  const purge = async (a: Artifact) => {
+    setError("");
+    try {
+      await api.send("POST", `/api/admin/artifacts/${a.id}/purge`, { reason });
+      setOpen(null);
+      setReason("");
+      setRows((r) => r?.filter((x) => x.id !== a.id) ?? null);
+    } catch (e) { setError((e as Error).message); }
   };
 
   return (
@@ -48,7 +62,7 @@ export default function Library() {
       )}
       {open && (
         <aside className="drawer" aria-label="File detail">
-          <button className="link close" onClick={() => setOpen(null)}>Close</button>
+          <button className="link close" onClick={() => { setOpen(null); setError(""); }}>Close</button>
           <h2>{open.title}</h2>
           <p>{open.description || <span className="quiet">No description given.</span>}</p>
           <dl>
@@ -69,9 +83,20 @@ export default function Library() {
             </section>
           )}
           <div className="actions">
-            <a className="button" href={`/api/artifacts/${open.id}/file`}>Download</a>
-            <button onClick={() => withdraw(open)}>Withdraw</button>
+            {open.status === "quarantined"
+              ? <p className="error">The malware check flagged this file, so it can't be downloaded.</p>
+              : <a className="button" href={`/api/artifacts/${open.id}/file`}>Download</a>}
+            {(open.uploaded_by === me?.email || me?.role === "admin") && <button onClick={() => withdraw(open)}>Withdraw</button>}
           </div>
+          {me?.role === "admin" && (
+            <section>
+              <h3>Delete now</h3>
+              <p className="quiet">Removes the file from the server straight away. The record that it was shared stays in the audit log.</p>
+              <label>Why<input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="For example: holds a tenant's licence" /></label>
+              {error && <p className="error" role="alert">{error}</p>}
+              <button onClick={() => purge(open)} disabled={reason.trim().length < 3}>Delete the file</button>
+            </section>
+          )}
         </aside>
       )}
     </div>

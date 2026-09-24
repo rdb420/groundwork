@@ -30,7 +30,7 @@ uv python install     # once; uv sync also fetches it when missing
 uv sync
 GW_DATA_DIR=../data uv run uvicorn app.main:app --reload --port 8000
 
-# Worker (second terminal)
+# Worker (second terminal): every job kind, transcription first
 cd backend
 GW_DATA_DIR=../data uv run python -m app.worker
 
@@ -51,28 +51,55 @@ cp .env.example .env        # fill in hostname, domains, SMTP, AI and transcript
 docker compose up -d --build
 ```
 
-Choose the HTTPS option in `deploy/Caddyfile` (office network, public subdomain, or Tailscale).
-Schedule `deploy/backup.sh` nightly and copy `data/backups/` off the host.
+That starts the app, a worker for files, a transcriber, ClamAV and Caddy. Choose the HTTPS option
+in `deploy/Caddyfile` (office network, public subdomain, or Tailscale; for Tailscale, start
+everything except `caddy` and follow the comment there). Schedule `deploy/backup.sh` nightly; see
+[Backups](#backups).
 
 To catch sign-in emails while testing: `docker compose --profile dev up -d`, set
 `GW_SMTP_HOST=mailpit`, `GW_SMTP_PORT=1025`, `GW_SMTP_STARTTLS=false`, and open port 8025.
+
+## Backups
+
+`deploy/backup.sh` takes a consistent snapshot of the database and every stored file, checks it,
+and keeps `GW_BACKUP_KEEP_DAYS` of them in `data/backups/`. Schedule it nightly from the host's
+crontab.
+
+Backups hold tenant and borrower information, so encrypt them before they leave the host:
+
+1. On a machine other than the host, run `age-keygen -o groundwork-backup.key`. Keep that file
+   there and in your password manager.
+2. Put the public key it prints (`age1...`) in `.env` as `GW_BACKUP_AGE_RECIPIENTS`.
+3. Set `GW_BACKUP_COPY_TO` to an rsync destination off the host. `backup.sh` refuses to copy
+   unencrypted backups.
+4. Test a restore now and then where the key lives:
+   `age -d -i groundwork-backup.key groundwork-....tar.gz.age | tar tz`.
 
 ## AI and transcription
 
 | Setting | Values |
 |---|---|
-| `GW_AI_PROVIDER` | `none`, `ollama` (local, point `GW_OLLAMA_URL` at the inference box), `anthropic`, `openai` (any OpenAI-compatible endpoint) |
-| `GW_DECISION_PROVIDER` | `none`, `jev` (hosted TypeSafe Jev, or a Laya or OpenJev server via `GW_DECISION_URL`) |
+| `GW_AI_PROVIDER` | `none`, `openai` (OpenAI with `GW_OPENAI_API_KEY` and `GW_OPENAI_MODEL`, or any OpenAI-compatible endpoint), `ollama` (local, point `GW_OLLAMA_URL` at the inference box), `anthropic` |
+| `GW_DECISION_PROVIDER` | `none`, `openrouter` (TypeSafe Jev through OpenRouter's System One API, with `GW_OPENROUTER_API_KEY`), `jev` (TypeSafe directly, or a Laya or OpenJev server via `GW_DECISION_URL`) |
 | `GW_TRANSCRIPTION_PROVIDER` | `none`, `faster_whisper` (build with `WITH_WHISPER=true`, or `uv sync --extra whisper` locally), `openai_compatible` (a Whisper server URL) |
+
+The default set-up runs live mapping on Jev through OpenRouter and drafting and review on OpenAI.
+Put both keys in `.env`, then check they answer:
+
+```bash
+cd backend && uv run python -m scripts.check_providers
+```
 
 Maps and files flagged as holding personal information never go to a cloud model unless
 `GW_AI_ALLOW_CLOUD_FOR_PERSONAL_INFO=true`.
 
-## Tests
+## Checks
+
+CI runs the same checks on every push and pull request.
 
 ```bash
-cd backend && uv run pytest -q
-cd frontend && pnpm run build
+cd backend && uv run ruff check app tests scripts && uv run mypy app && uv run pytest -q
+cd frontend && pnpm run lint && pnpm run test && pnpm run build
 ```
 
 ## Layout
@@ -83,18 +110,21 @@ backend/app/
   config.py            every setting (env prefix GW_)
   models.py            tables
   security.py          tokens, sessions, roles, CSRF header
-  routers/             auth, artifacts, processes, boards (maps, recordings, AI), admin
+  routers/             auth, artifacts, processes (catalogue, merge), boards (maps, recordings, AI), admin (coverage, retention, purge)
   ai/context.py        canvas to structured text
   ai/generate.py       prompts, personal-info guard, draft storage
   ai/providers.py      Ollama, Anthropic and OpenAI-compatible over HTTP
   live/                live mapping: Jev client, vocabulary, spans, interpreter, reviewer, rule tables, combiner
   routers/live.py      sentence in, map changes out; passes, parking lot, rules, checks, review, combine, document
   processing/          workbook profiler, document text extraction
-  worker.py            job loop
+  worker.py            job loop, daily retention
+  scan.py              ClamAV malware check for uploads
+  retention.py         purge withdrawn files and old session audio
+  housekeeping.py      hourly upkeep: expired sessions and links, recordings nobody stopped
   backup.py            snapshot, archive, restore check
   seed.py              starter process catalogue (confirm with the business)
 frontend/src/
-  pages/               Login, Verify, Home, Share, Library, Boards, BoardPage
+  pages/               Login, Verify, Home, Share, Library, Boards, BoardPage, Coverage, ProcessList, People, Retention
   canvas/              BPMN and context nodes, palette, op engine, live, recording, document and AI panels
 backend/scripts/       live_eval.py, labelled sample sentences, fake_models.py (stand-ins for testing)
 deploy/                Dockerfile, Caddyfile, backup script

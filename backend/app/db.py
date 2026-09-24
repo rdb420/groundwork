@@ -17,7 +17,8 @@ def engine():
     if _engine is None:
         url = get_settings().db_url
         is_sqlite = url.startswith("sqlite")
-        _engine = create_engine(url, connect_args={"check_same_thread": False} if is_sqlite else {})
+        # The API, the worker and the transcriber share one SQLite file; wait for a lock rather than fail.
+        _engine = create_engine(url, connect_args={"check_same_thread": False, "timeout": 30} if is_sqlite else {})
         if is_sqlite:
             @event.listens_for(_engine, "connect")
             def _pragmas(conn, _):

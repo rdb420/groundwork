@@ -5,7 +5,7 @@ session follows the two-pass method from Freund and Rücker's *Real-Life BPMN* (
 
 | | Fast lane | Slow lane |
 |---|---|---|
-| Model | A System One decision model: TypeSafe Jev (v1), or a Jev-compatible server you run (Laya, OpenJev) | A reasoning LLM: Anthropic, an OpenAI-compatible endpoint, or Ollama |
+| Model | A System One decision model: TypeSafe Jev through OpenRouter (default), TypeSafe directly, or a Jev-compatible server you run (Laya, OpenJev) | A reasoning LLM: OpenAI (default), another OpenAI-compatible endpoint, Anthropic, or Ollama |
 | When | Every finished sentence | Every 5 minutes while listening, or on "Review now" |
 | Sees | The sentence, the three before it, and up to 19 nearby map elements | The whole transcript, the map, the rule tables, the parking lot, the current SOP or work instruction, and linked files |
 | Does | Picks one change from fixed options, or parks the sentence | Proposes map corrections, rule tables and a revised document |
@@ -27,7 +27,8 @@ For the detail pass, map **one person's view at a time** (create the map as "One
 Each map shows what that person does and what they wait for from others, so its owner can check
 it. When a process has two or more of these, **Combine** on the Maps page builds a single map
 with a lane per person and joins their hand-offs. Where views disagree, the combiner keeps both
-and adds a question.
+and adds a question. The combined map opens with every element as a suggestion: keep or drop
+them one by one, or use Keep all or Discard all.
 
 ## How a sentence becomes a change
 
@@ -112,17 +113,27 @@ canvas. Nothing the reviewer proposes applies without a click; "Accept all" does
 
 ## Privacy
 
-Hosted Jev and browser speech recognition both send session content off the premises. When a
-map is marked as holding personal information, live mapping refuses a hosted decision model
-unless `GW_DECISION_IS_LOCAL=true` (a server you run) or `GW_AI_ALLOW_CLOUD_FOR_PERSONAL_INFO=true`.
+Jev on OpenRouter and browser speech recognition both send session content off the premises.
+When a map is marked as holding personal information, live mapping refuses a hosted decision
+model unless it is a Jev-compatible server you run (`GW_DECISION_PROVIDER=jev` with
+`GW_DECISION_IS_LOCAL=true`) or `GW_AI_ALLOW_CLOUD_FOR_PERSONAL_INFO=true`. OpenRouter always
+counts as hosted.
 The reviewer and the combiner follow the same rule. In Chrome, speech audio goes to Google; in
-Edge, to Microsoft. For sensitive sessions, type key sentences or swap in local streaming speech
-recognition (roadmap).
+Edge, to Microsoft, whichever decision model you use. So on a map marked as holding personal
+information, listening is switched off and the facilitator types key sentences instead. The
+Recording tab still keeps a local recording. Local streaming speech recognition is on the roadmap.
 
-## Moving off the hosted API
+## Providers
 
-Laya and OpenJev accept the same request and return the same answers as Jev. Point
-`GW_DECISION_URL` at your server and set `GW_DECISION_MODEL` to a name it accepts. OpenJev caps a
+`GW_DECISION_PROVIDER=openrouter` sends each request to OpenRouter's System One API
+(`https://openrouter.ai/api/v1/systemone`) with `GW_OPENROUTER_API_KEY`. OpenRouter routes
+`jev-latest` to `~typesafe/jev-latest`; pin a version such as `jev-1.13` in `GW_DECISION_MODEL`
+when you want answers to stay stable between sessions. Requests are billed per input token to the
+OpenRouter account.
+
+Laya and OpenJev accept the same request and return the same answers as Jev. Set
+`GW_DECISION_PROVIDER=jev`, point `GW_DECISION_URL` at your server, set `GW_DECISION_MODEL` to a
+name it accepts, and set `GW_DECISION_IS_LOCAL=true`. OpenJev caps a
 Choice at 128 options and rejects pinned Jev version names; Laya's accuracy falls as options grow.
 Groundwork keeps every Choice at or under `GW_DECISION_MAX_OPTIONS` (20). Both are new community
 projects; measure them with `scripts/live_eval.py` on your own sentences first.

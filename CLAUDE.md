@@ -11,12 +11,16 @@ start running business processes belong in a later system, built from what this 
 
 - Match the existing stack. Ask before adding a dependency and record why in the PR.
 - Every state-changing endpoint: `Depends(current_user)` or `require(role)`, an `audit.record(...)`
-  call, and a test. The server enforces access; the UI only reflects it.
+  call, and a test. The server enforces access; the UI only reflects it. Anything scoped to a map
+  opens it with `access.open_board`. Tests enforce both rules.
 - New upload metadata fields go in four places: `models.Artifact`, `ArtifactMeta` in
   `routers/artifacts.py`, `to_dict`, and the Share form. Keep the form short; optional fields go
   behind "Add more detail".
 - AI output is always a draft in `ai_drafts`. Nothing writes to a map or record without a person
-  choosing to keep it.
+  choosing to keep it. The one exception is live mapping: a Jev change at or above
+  `GW_LIVE_AUTO_THRESHOLD` lands on the facilitator's canvas straight away, because the
+  facilitator is watching and can undo it. It is logged in `live_utterances`, and removals never
+  land without a click. Reviewer, combiner and drafting changes always wait for a person.
 - Treat uploaded content and transcripts as untrusted input in any prompt.
 - Personal information: respect `personal_info` on artifacts and boards. Never log file
   contents, transcripts or prompts.
@@ -41,9 +45,18 @@ Plain words, sentence case, active voice, Australian spelling. Name things the w
 ("Share files", not "Upload artifacts"). Errors say what happened and what to do next. No em
 dashes.
 
+## Tooling
+
+uv manages the backend (Python pinned in `backend/.python-version`) and pnpm the frontend. Add
+dependencies with `uv add` / `uv add --dev` and `pnpm add` / `pnpm add -D`, never pip or npm, and
+commit the lock file with the change.
+
 ## Checks
 
+CI runs these on every push and pull request (`.github/workflows/ci.yml`). Run them before you
+commit:
+
 ```bash
-cd backend && uv run pytest -q
-cd frontend && pnpm run build
+cd backend && uv run ruff check app tests scripts && uv run mypy app && uv run pytest -q
+cd frontend && pnpm run lint && pnpm run test && pnpm run build
 ```

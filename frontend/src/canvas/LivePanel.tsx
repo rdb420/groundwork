@@ -86,6 +86,9 @@ export default function LivePanel(props: Props) {
   const sinceReview = useRef(0);
 
   const blocked = personalInfo && !me.live_local;
+  // Browser speech recognition sends audio to Google (Chrome) or Microsoft (Edge), wherever the
+  // decision model runs, so maps with personal information are typed only.
+  const speechOff = personalInfo;
 
   useEffect(() => {
     api.get<any[]>(`/api/boards/${boardId}/live/utterances`).then((rows) =>
@@ -127,6 +130,7 @@ export default function LivePanel(props: Props) {
 
   const start = () => {
     setError("");
+    if (speechOff) return;
     if (!SpeechRecognition) return setError("This browser has no built-in speech recognition. Use Chrome or Edge, or type what was said below.");
     const r = new SpeechRecognition();
     r.lang = "en-AU";
@@ -241,12 +245,18 @@ export default function LivePanel(props: Props) {
         <label className={mode === "listen" ? "on" : ""}><input type="radio" checked={mode === "listen"} onChange={() => setMode("listen")} />Map the conversation</label>
         <label className={mode === "command" ? "on" : ""}><input type="radio" checked={mode === "command"} onChange={() => setMode("command")} />Only my instructions</label>
       </div>
-      {!listening ? (
-        <button className="primary" onClick={start}>Start listening</button>
+      {speechOff ? (
+        <p className="quiet small">Listening is off because this map holds personal information: browser speech recognition sends audio to Google or Microsoft. Type the key sentences below instead.</p>
       ) : (
-        <div className="recording" role="status"><span className="dot" aria-hidden="true" /> Listening<button onClick={stop}>Stop</button></div>
+        <>
+          {!listening ? (
+            <button className="primary" onClick={start}>Start listening</button>
+          ) : (
+            <div className="recording" role="status"><span className="dot" aria-hidden="true" /> Listening<button onClick={stop}>Stop</button></div>
+          )}
+          <p className="quiet small">Browser speech recognition sends audio to the browser maker's service (Google for Chrome, Microsoft for Edge). Use the Recording tab for the kept record.</p>
+        </>
       )}
-      <p className="quiet small">Browser speech recognition sends audio to the browser maker's service (Google for Chrome, Microsoft for Edge). Use the Recording tab for the kept record.</p>
       {interim && <p className="interim">{interim}</p>}
       <form className="typed" onSubmit={(e) => { e.preventDefault(); send(typed, "typed"); setTyped(""); }}>
         <input value={typed} onChange={(e) => setTyped(e.target.value)} placeholder="Or type what was said" aria-label="Type what was said" />

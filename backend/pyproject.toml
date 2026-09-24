@@ -19,7 +19,30 @@ dependencies = [
 whisper = ["faster-whisper>=1.1"]
 
 [dependency-groups]
-dev = ["pytest>=8"]
+dev = [
+    "mypy>=2.3.1",
+    "pytest>=8",
+    "ruff>=0.16.8",
+]
 
 [tool.uv]
 package = false
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S110", "DTZ005"]
+ignore = ["B008", "E501"]  # Depends()/File() defaults are FastAPI idiom; prompts and dict literals run long
+
+[tool.ruff.lint.per-file-ignores]
+"scripts/fake_models.py" = ["E401", "E702", "E741"]  # a throwaway stand-in, kept compact on purpose
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+warn_unused_ignores = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

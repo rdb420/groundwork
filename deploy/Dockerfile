@@ -12,6 +12,8 @@ RUN pnpm run build
 
 FROM python:3.12-slim
 COPY --from=ghcr.io/astral-sh/uv:0.12.18 /uv /uvx /bin/
+# age encrypts backups (GW_BACKUP_AGE_RECIPIENTS)
+RUN apt-get update && apt-get install -y --no-install-recommends age && rm -rf /var/lib/apt/lists/*
 ARG WITH_WHISPER=false
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \

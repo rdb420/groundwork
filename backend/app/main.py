@@ -2,7 +2,7 @@ import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -24,6 +24,24 @@ async def lifespan(_: FastAPI):
 app = FastAPI(title="Groundwork", lifespan=lifespan, docs_url="/api/docs", openapi_url="/api/openapi.json")
 for r in (auth.router, artifacts.router, processes.router, boards.router, live.router, admin.router):
     app.include_router(r)
+
+# Sent by the app itself so every deployment option has them, with or without Caddy. Scripts run
+# only from this origin; the one outside source is the Google Fonts stylesheet and its font files.
+CSP = ("default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+       "font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; "
+       "connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'")
+SECURITY_HEADERS = {"X-Content-Type-Options": "nosniff", "Referrer-Policy": "no-referrer", "X-Frame-Options": "DENY",
+                    "Permissions-Policy": "camera=(), geolocation=(), microphone=(self)"}
+
+
+@app.middleware("http")
+async def security_headers(request: Request, call_next):
+    response = await call_next(request)
+    for k, v in SECURITY_HEADERS.items():
+        response.headers.setdefault(k, v)
+    if not request.url.path.startswith("/api/docs"):  # the API explorer loads its own scripts
+        response.headers.setdefault("Content-Security-Policy", CSP)
+    return response
 
 
 @app.get("/api/health")

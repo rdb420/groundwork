@@ -15,16 +15,24 @@ export default function RulesPanel({ boardId, ruleSteps, proposed, clearProposed
   const [tables, setTables] = useState<RuleTable[]>([]);
   const [dirty, setDirty] = useState(false);
   const [error, setError] = useState("");
+  const [version, setVersion] = useState(0);
+  const [stale, setStale] = useState(false);
 
-  useEffect(() => { api.get<RuleTable[]>(`/api/boards/${boardId}/rules`).then(setTables); }, [boardId]);
+  const load = () => api.get<{ rules: RuleTable[]; version: number }>(`/api/boards/${boardId}/rules`).then((r) => {
+    setTables(r.rules); setVersion(r.version); setDirty(false); setStale(false); setError("");
+  });
+  useEffect(() => { load(); }, [boardId]);
 
   const edit = (i: number, f: (t: RuleTable) => RuleTable) => { setTables((ts) => ts.map((t, j) => (j === i ? f(structuredClone(t)) : t))); setDirty(true); };
   const save = async (next = tables) => {
     setError("");
     try {
-      const saved = await api.send<RuleTable[]>("PUT", `/api/boards/${boardId}/rules`, { rules: next });
-      setTables(saved); setDirty(false); onSaved(saved);
-    } catch (e) { setError((e as Error).message); }
+      const saved = await api.send<{ rules: RuleTable[]; version: number }>("PUT", `/api/boards/${boardId}/rules`, { rules: next, version });
+      setTables(saved.rules); setVersion(saved.version); setDirty(false); onSaved(saved.rules);
+    } catch (e) {
+      setStale((e as { status?: number }).status === 409);
+      setError((e as Error).message);
+    }
   };
 
   return (
@@ -90,7 +98,7 @@ export default function RulesPanel({ boardId, ruleSteps, proposed, clearProposed
         <button onClick={() => { setTables((ts) => [...ts, blank()]); setDirty(true); }}>Add a rule table</button>
         {dirty && <button className="primary" onClick={() => save()}>Save rules</button>}
       </div>
-      {error && <p className="error" role="alert">{error}</p>}
+      {error && <p className="error" role="alert">{error} {stale && <button className="link" onClick={load}>Reload the rule tables</button>}</p>}
     </div>
   );
 }

@@ -4,7 +4,7 @@ Artifacts are the evidence staff hand over. Processes are the catalogue those ar
 link to. Boards are the mapping canvases. Every material action lands in audit_events.
 """
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -17,7 +17,7 @@ def uid() -> str:
 
 
 def now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class User(Base):
@@ -26,7 +26,8 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(320), unique=True, index=True)
     display_name: Mapped[str] = mapped_column(String(200), default="")
     team: Mapped[str] = mapped_column(String(200), default="")
-    role: Mapped[str] = mapped_column(String(20), default="contributor")  # contributor | analyst | admin
+    role: Mapped[str] = mapped_column(String(20), default="contributor")  # contributor | analyst | admin, from config
+    blocked: Mapped[bool] = mapped_column(Boolean, default=False)  # an admin removed their access
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     last_seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
@@ -91,8 +92,11 @@ class Artifact(Base):
     if_it_disappeared: Mapped[str] = mapped_column(Text, default="")
 
     # Pipeline
-    status: Mapped[str] = mapped_column(String(20), default="received")  # received | processing | processed | failed | withdrawn
+    status: Mapped[str] = mapped_column(String(20), default="received")  # received | processing | processed | failed | withdrawn | quarantined | purged
     profile: Mapped[dict | None] = mapped_column(JSON, nullable=True)  # output of processors
+    scan: Mapped[str] = mapped_column(String(20), default="")  # "" not yet | clean | infected | off (no scanner)
+    withdrawn_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    purged_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     board_id: Mapped[str | None] = mapped_column(ForeignKey("boards.id"), nullable=True)  # set for canvas images
 
     processes: Mapped[list["Process"]] = relationship(secondary="artifact_processes")
@@ -122,6 +126,8 @@ class Board(Base):
     document_kind: Mapped[str] = mapped_column(String(10), default="sop")  # sop | wi
     document_markdown: Mapped[str] = mapped_column(Text, default="")
     document_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    document_version: Mapped[int] = mapped_column(Integer, default=0)  # optimistic concurrency, as for doc
+    rules_version: Mapped[int] = mapped_column(Integer, default=0)
     # Session settings. Overview: standard path only. Detail: everything, one person's view at a time.
     session_pass: Mapped[str] = mapped_column(String(10), default="overview")  # overview | detail
     perspective: Mapped[str] = mapped_column(String(200), default="")  # whose view this map shows, if one person's
@@ -140,6 +146,7 @@ class Recording(Base):
     ended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     consent_note: Mapped[str] = mapped_column(Text)  # who agreed to be recorded
     status: Mapped[str] = mapped_column(String(20), default="recording")  # recording | ended
+    audio_purged_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 class TranscriptSegment(Base):
@@ -207,6 +214,7 @@ class Job(Base):
     ref_id: Mapped[str] = mapped_column(String(32), index=True)
     status: Mapped[str] = mapped_column(String(20), default="queued", index=True)  # queued | running | done | failed
     attempts: Mapped[int] = mapped_column(Integer, default=0)
+    run_after: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)  # backoff after a failure
     error: Mapped[str] = mapped_column(Text, default="")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)

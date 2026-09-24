@@ -21,6 +21,10 @@ export default function Shell() {
           <NavLink to="/share">Share files</NavLink>
           <NavLink to="/library">{me && me.role !== "contributor" ? "Library" : "My files"}</NavLink>
           <NavLink to="/maps">Process maps</NavLink>
+          {me && me.role !== "contributor" && <NavLink to="/coverage">Coverage</NavLink>}
+          {me && me.role !== "contributor" && <NavLink to="/processes">Process list</NavLink>}
+          {me?.role === "admin" && <NavLink to="/people">People</NavLink>}
+          {me?.role === "admin" && <NavLink to="/retention">Retention</NavLink>}
         </nav>
         <div className="who">
           <span>{me?.display_name || me?.email}</span>

@@ -3,7 +3,7 @@ next to each file keeps it self-describing if the database is ever lost."""
 import hashlib
 import json
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from fastapi import HTTPException, UploadFile
@@ -27,7 +27,7 @@ def safe_name(name: str) -> str:
 
 
 def artifact_dir(artifact_id: str) -> Path:
-    d = datetime.now(timezone.utc)
+    d = datetime.now(UTC)
     p = get_settings().data_dir / "artifacts" / f"{d:%Y}" / f"{d:%m}" / artifact_id
     p.mkdir(parents=True, exist_ok=True)
     return p

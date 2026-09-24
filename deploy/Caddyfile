@@ -7,8 +7,12 @@
 # Option B, a real subdomain (e.g. groundwork.yshproperty.com.au) with DNS pointing at the host
 # and ports 80/443 reachable: remove "tls internal" and Caddy fetches a public certificate.
 #
-# Option C, Tailscale: skip Caddy and run `tailscale serve --bg https / http://localhost:8000`
-# on the host. Staff on the tailnet get a trusted *.ts.net certificate.
+# Option C, Tailscale: skip Caddy. Start everything except caddy:
+#   docker compose up -d app worker transcriber clamav
+# then, on the host: tailscale serve --bg http://127.0.0.1:8000
+# The app listens on the host's loopback only (see docker-compose.yml), so nothing else can reach
+# it. Set GW_PUBLIC_BASE_URL=https://<machine>.<tailnet>.ts.net and GW_COOKIE_SECURE=true. Staff on
+# the tailnet get a trusted *.ts.net certificate.
 
 {$GW_HOSTNAME} {
 	tls internal
@@ -16,6 +20,8 @@
 	request_body {
 		max_size 110MB
 	}
+	# The app sends its own Content-Security-Policy, nosniff, frame and referrer headers (app/main.py),
+	# so every option below gets them. Caddy adds HSTS, which only makes sense behind HTTPS.
 	header {
 		Strict-Transport-Security "max-age=31536000"
 		X-Content-Type-Options "nosniff"

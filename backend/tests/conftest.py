@@ -3,9 +3,11 @@ import tempfile
 
 import pytest
 
+os.environ["GW_ENV_FILES"] = ""  # ignore the developer's .env
 os.environ["GW_DATA_DIR"] = tempfile.mkdtemp(prefix="gw-test-")
 os.environ["GW_ALLOWED_EMAIL_DOMAINS"] = "example.com.au"
 os.environ["GW_ANALYST_EMAILS"] = "lead@example.com.au"
+os.environ["GW_ADMIN_EMAILS"] = "boss@example.com.au"
 os.environ["GW_AI_PROVIDER"] = "anthropic"
 os.environ["GW_ANTHROPIC_API_KEY"] = "test"
 
@@ -35,3 +37,31 @@ def sign_in(client, email):
     r = client.post("/api/auth/verify", json={"token": token})
     assert r.status_code == 200, r.text
     return token
+
+
+def audited(action: str, entity_id: str | None = None) -> int:
+    """How many audit events of this kind exist (for one record, if given)."""
+    from sqlalchemy import func, select
+
+    from app.db import SessionLocal
+    from app.models import AuditEvent
+    q = select(func.count()).select_from(AuditEvent).where(AuditEvent.action == action)
+    if entity_id:
+        q = q.where(AuditEvent.entity_id == entity_id)
+    with SessionLocal() as db:
+        return db.scalar(q) or 0
+
+
+def api_routes():
+    """Every APIRoute in the app, including those inside included routers (FastAPI wraps them)."""
+    from fastapi.routing import APIRoute
+
+    from app.main import app
+
+    def walk(routes):
+        for r in routes:
+            if isinstance(r, APIRoute):
+                yield r
+            elif hasattr(r, "original_router"):
+                yield from walk(r.original_router.routes)
+    return list(walk(app.routes))

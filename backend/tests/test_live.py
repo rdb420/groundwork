@@ -1,8 +1,8 @@
 import json
 
 from app.config import get_settings
-from app.live import review as rv
 from app.live import combine as cb
+from app.live import review as rv
 from app.routers import live as live_router
 from tests.conftest import sign_in
 
@@ -170,9 +170,9 @@ def test_rules_are_normalised(client):
     rules = [{"name": "Breach notice", "inputs": ["days late", "payment plan"], "output": "notice",
               "rows": [{"when": {"days late": "more than 7", "payment plan": "no", "ignored": "x"}, "then": "issue"}]},
              {"name": ""}]
-    out = client.put(f"/api/boards/{b['id']}/rules", headers=H, json={"rules": rules}).json()
+    out = client.put(f"/api/boards/{b['id']}/rules", headers=H, json={"rules": rules, "version": 0}).json()["rules"]
     assert len(out) == 1 and out[0]["rows"][0]["when"] == {"days late": "more than 7", "payment plan": "no"}
-    assert client.get(f"/api/boards/{b['id']}/rules").json()[0]["id"].startswith("rule-")
+    assert client.get(f"/api/boards/{b['id']}/rules").json()["rules"][0]["id"].startswith("rule-")
 
 
 def test_review_validates_changes_rules_and_parking(client, monkeypatch):
@@ -234,12 +234,15 @@ def test_combine_views(client, monkeypatch):
     drafts = client.get(f"/api/boards/{r.json()['id']}/drafts").json()
     assert drafts[0]["mode"] == "combine"
     assert [c["op"] for c in drafts[0]["proposal"]["changes"]] == ["add", "add", "connect"]
-    assert all(c["auto"] for c in drafts[0]["proposal"]["changes"])
+    # A combined map is a proposal: nothing lands until a person keeps it (audit M7).
+    assert not any(c["auto"] for c in drafts[0]["proposal"]["changes"]) and drafts[0]["status"] == "draft"
 
 
 def test_new_columns_added_to_old_database(tmp_path):
     import sqlite3
+
     from sqlalchemy import create_engine, inspect
+
     from app import db as dbmod
     path = tmp_path / "old.db"
     con = sqlite3.connect(path)
@@ -254,3 +257,40 @@ def test_new_columns_added_to_old_database(tmp_path):
         assert {"document_markdown", "session_pass", "perspective", "rules"} <= cols
     finally:
         dbmod._engine = old_engine
+
+
+def test_openrouter_route_and_privacy(client, monkeypatch):
+    from app.live import jev
+    enable(monkeypatch, decision_provider="openrouter", openrouter_api_key="", decision_is_local=True)
+    try:
+        jev.system_one({}, {})
+        raise AssertionError("expected a missing-key error")
+    except jev.DecisionError as e:
+        assert "GW_OPENROUTER_API_KEY" in str(e)
+
+    enable(monkeypatch, decision_provider="openrouter", openrouter_api_key="or-key", decision_is_local=True)
+    sent = {}
+
+    class Resp:
+        status_code = 200
+        headers: dict = {}
+
+        def json(self):
+            return {"model": "typesafe/jev-1.13-20260917", "answers": {"x": {"type": "noul", "noul": 0.9}}}
+
+    def post(url, json, headers, timeout):
+        sent.update(url=url, headers=headers, body=json)
+        return Resp()
+
+    monkeypatch.setattr(jev.httpx, "post", post)
+    answers, model, _ = jev.system_one({"latest": "hi"}, {"x": jev.noul("?")})
+    assert sent["url"] == "https://openrouter.ai/api/v1/systemone"
+    assert sent["headers"]["Authorization"] == "Bearer or-key"
+    assert sent["body"]["model"] == "jev-latest"
+    assert model.startswith("typesafe/jev") and answers["x"]["noul"] == 0.9
+
+    # OpenRouter is hosted, so GW_DECISION_IS_LOCAL can't open personal-information maps to it.
+    sign_in(client, "lead@example.com.au")
+    b = new_board(client, personal_info=True)
+    assert say(client, b, "The tenant pays").status_code == 409
+    assert client.get("/api/auth/me").json()["live_local"] is False

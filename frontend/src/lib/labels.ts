@@ -25,6 +25,7 @@ export const FREQ: [string, string][] = [
 
 export const STATUS: Record<string, string> = {
   received: "Waiting", processing: "Reading", processed: "Read", failed: "Needs a look", withdrawn: "Withdrawn",
+  quarantined: "Blocked", purged: "Deleted",
 };
 
 export const label = (pairs: [string, string, ...string[]][], key: string) => pairs.find((p) => p[0] === key)?.[1] ?? key;

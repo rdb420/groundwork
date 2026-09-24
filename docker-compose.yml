@@ -6,6 +6,8 @@ services:
     build: { context: ., dockerfile: deploy/Dockerfile, args: { WITH_WHISPER: "${WITH_WHISPER:-false}" } }
     env_file: .env
     volumes: [ "./data:/data" ]
+    # Reachable from this host only (for `tailscale serve`, option C). Caddy reaches it inside compose.
+    ports: [ "127.0.0.1:8000:8000" ]
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
@@ -13,13 +15,30 @@ services:
       timeout: 5s
       retries: 3
 
+  # Files: malware check, first read, retention and hourly upkeep.
   worker:
     build: { context: ., dockerfile: deploy/Dockerfile, args: { WITH_WHISPER: "${WITH_WHISPER:-false}" } }
     env_file: .env
-    command: ["python", "-m", "app.worker"]
+    command: ["python", "-m", "app.worker", "--kinds", "profile_artifact"]
     volumes: [ "./data:/data" ]
     restart: unless-stopped
     depends_on: [ app ]
+
+  # Transcription on its own, so a large workbook never delays a live session's transcript.
+  transcriber:
+    build: { context: ., dockerfile: deploy/Dockerfile, args: { WITH_WHISPER: "${WITH_WHISPER:-false}" } }
+    env_file: .env
+    command: ["python", "-m", "app.worker", "--kinds", "transcribe_segment"]
+    volumes: [ "./data:/data" ]
+    restart: unless-stopped
+    depends_on: [ app ]
+
+  # Malware scanning for uploads. Needs about 2 GB of memory and a few minutes to load signatures
+  # on first start. Set GW_CLAMAV_HOST=clamav in .env to use it; leave it empty to switch off.
+  clamav:
+    image: clamav/clamav:stable
+    volumes: [ "clamav_db:/var/lib/clamav" ]
+    restart: unless-stopped
 
   caddy:
     image: caddy:2
@@ -39,5 +58,6 @@ services:
     ports: [ "8025:8025" ]
 
 volumes:
+  clamav_db:
   caddy_data:
   caddy_config:

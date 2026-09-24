@@ -135,7 +135,7 @@ export default function Share() {
 
           <section className="step">
             <h2>Do they contain personal information about tenants, borrowers or staff?</h2>
-            <p className="quiet">Names, contact details, bank details, ID, rent or loan history. We store these files on the office server and keep them out of cloud AI.</p>
+            <p className="quiet">Names, contact details, bank details, ID, rent or loan history. We store these files on the office server and keep them out of cloud AI. If you're not sure, we treat them as personal.</p>
             <div className="segmented" role="radiogroup">
               {[["yes", "Yes"], ["no", "No"], ["unsure", "Not sure"]].map(([v, l]) => (
                 <label key={v} className={personal === v ? "on" : ""}>
