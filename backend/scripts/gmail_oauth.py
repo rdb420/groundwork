@@ -22,8 +22,11 @@ shared drives. Revoke it any time at https://myaccount.google.com/permissions.
 import base64
 import hashlib
 import json
+import os
 import secrets
+import stat
 import sys
+import tempfile
 from pathlib import Path
 from urllib.parse import parse_qs, urlencode, urlsplit
 
@@ -72,7 +75,25 @@ def _save(key: str, value: str) -> None:
             out.append(line)
     if not done:
         out.append(f"{key}={value}")
-    ENV.write_text("\n".join(out) + "\n")
+    content = "\n".join(out) + "\n"
+    fd, temporary = tempfile.mkstemp(prefix=".env.", dir=ENV.parent, text=True)
+    try:
+        os.fchmod(fd, 0o600)
+        with os.fdopen(fd, "w") as file:
+            fd = -1
+            file.write(content)
+        os.replace(temporary, ENV)
+        os.chmod(ENV, 0o600)
+        if stat.S_IMODE(ENV.stat().st_mode) != 0o600:
+            raise OSError(".env permissions are not owner-only")
+    except (OSError, ValueError) as error:
+        if fd != -1:
+            os.close(fd)
+        try:
+            os.unlink(temporary)
+        except FileNotFoundError:
+            pass
+        raise RuntimeError(f"Could not securely save {ENV}: {error}") from error
 
 
 def exchange(address: str) -> None:
