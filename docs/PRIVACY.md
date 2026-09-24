@@ -29,7 +29,10 @@ Staff browser --HTTPS--> Caddy --> app (FastAPI) --> SQLite + files on the YSH h
                                      |                         |
                                      |                         +--> nightly backup archive (copy off host)
                                      +--> worker: ClamAV scan, first read, transcription (local or inference box)
-                                     +--> OpenRouter (Jev): each live-mapping sentence and nearby map labels
+                                     +--> ingestion, all on-prem: object storage (self-hosted Supabase),
+                                          MinerU, Parakeet, embedding and extraction sidecars, Qdrant, Neo4j
+                                     +--> OpenRouter (Jev): each live-mapping sentence and nearby map labels;
+                                          for extraction, a chunk of a file not marked personal and a pair of names in it
                                      +--> OpenAI: map, transcript and file summaries for drafts and reviews
 Browser speech recognition (Chrome: Google, Edge: Microsoft): session audio during live mapping
 ```
@@ -53,7 +56,7 @@ holding personal information, or where it is unsure, are refused by every hosted
 | 9 Government identifiers | Don't adopt them | Not adopted. They may appear inside shared files | Covered by A2 and A3 |
 | 10 Quality | Keep information accurate and complete | Maps and drafts carry `[TO CONFIRM]` markers; drafts cite their evidence | None |
 | 11 Security | Protect from misuse, loss and unauthorised access; destroy when no longer needed | Email sign-in with single-use links, HttpOnly session cookies, server-side role checks, a CSRF guard, HTTPS with a strict content security policy, ClamAV scanning, audit log of every change, files stored on YSH's host, retention and purge, backups encrypted with age before they leave the host | Turn on backup encryption and the off-host copy; restrict host access to named administrators (A6) |
-| 12 Access | Give people access to their information | Staff see their own uploads; analysts can find anything by person | Agree how a customer's access request would be searched and answered (A7) |
+| 12 Access | Give people access to their information | Staff see their own uploads; analysts can find anything by person. Names found in files are kept in the knowledge graph (flagged personal) and in the search index | Agree how a customer's access request would be searched and answered: files, transcripts, the search index and the graph (A7) |
 | 13 Correction | Correct information on request | Contributors can withdraw files; admins can delete them; maps and documents are editable | None |
 
 ## 4. Retention schedule (proposed)
@@ -66,6 +69,8 @@ holding personal information, or where it is unsure, are refused by every hosted
 | Backups | 30 days | Oldest archives removed by the backup job | `GW_BACKUP_KEEP_DAYS=30` |
 | Audit log | Life of the system | Kept with the database | None |
 | Sign-in links and sessions | 15 minutes and 14 days | Expire; stored only as hashes | `GW_MAGIC_LINK_MINUTES`, `GW_SESSION_DAYS` |
+| Conversions, chunks, embeddings, entities and relationships from a file | As long as the file | Withdrawal removes the file from search and the graph at once; the purge removes the rest everywhere | Follows the file |
+| Ontology proposals | Until decided and exported | Evidence from a purged file is removed; a proposal left with none is deleted | None |
 
 With `GW_RETENTION_AUTO=true` the worker applies the first two rows daily. Deleted files survive in
 backups until those backups age out.
@@ -73,7 +78,9 @@ backups until those backups age out.
 ## 5. Personal-information flag
 
 Each file carries yes, no or unsure; each map carries a yes or no tick. Hosted models (OpenAI,
-OpenRouter, Anthropic) refuse any map whose own tick or linked files say yes or unsure. Only a
+OpenRouter, Anthropic) refuse any map whose own tick or linked files say yes or unsure. The
+ingestion pipeline is on-prem; its one hosted step, relationship choices by Jev, skips files marked
+yes or unsure unless a local decision model is set up (`GW_EXTRACT_DECISION_URL`). Only a
 model on YSH's own hardware (Ollama, or a Jev-compatible server with `GW_DECISION_IS_LOCAL=true`)
 can work on them, unless an administrator sets `GW_AI_ALLOW_CLOUD_FOR_PERSONAL_INFO=true`. That
 setting should stay false.
@@ -96,6 +103,8 @@ setting should stay false.
 | Unauthorised access to the portal | Low | High | Allowed email domains, single-use links, server-side roles, HTTPS, CSP | Low |
 | Malicious file shared and downloaded by a colleague | Low | Medium | ClamAV before first read, quarantine, downloads as attachments | Low |
 | Loss of the host | Low | High | Nightly consistent backup with a restore check, copied off host | Low once A6 is done |
+| Names and roles of tenants and borrowers in the knowledge graph | High | Medium | Kept only on-prem, flagged personal, analysts only; removed with the file; hosted extraction blocked for personal files | Medium: review with the privacy contact |
+| Extraction models getting a relationship wrong | Medium | Low | Every graph relationship is a draft citing its chunks; nothing acts on the graph | Low |
 
 ## 8. Open questions
 

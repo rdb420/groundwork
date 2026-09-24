@@ -39,6 +39,24 @@ start running business processes belong in a later system, built from what this 
   facilitator and the reviewer see the same findings.
 - The overview pass only records the standard path. Anything else heard then goes to the parking lot.
 
+## Ingestion pipeline (docs/INGESTION.md)
+
+- SQL is the source of truth; Qdrant and Neo4j are projections rebuilt from it. Never write
+  anything to them that SQL doesn't hold.
+- Each stage is a job kind in `ingest/pipeline.py::STAGES`, idempotent (skip when its input key is
+  unchanged), and ends by queueing the next stage only if that stage's service is set up. A new
+  stage goes in `STAGES`, the worker's `PRIORITY`, a compose worker's `--kinds`, and a test.
+- Every converter produces blocks (`ingest/blocks.py`); the chunker reads only blocks.
+- Anything derived from a file is removed with it: add new tables or stores to
+  `ingest/cascade.py` and its test.
+- Extraction is closed to the pinned ontology (`backend/ontology/`). Never edit a vendored
+  snapshot; new terms are `ontology_candidates` a person decides, exported for property_ontology.
+- Jev questions follow the live-mapping rule: code builds the options, at most
+  `GW_DECISION_MAX_OPTIONS`, chunk text only in `state`. Personal or unsure files never reach a
+  hosted decision model.
+- Service clients use `app/httpclient.py` so tests can use the fakes in `tests/fakes.py`. No
+  vendor SDKs. Never log file content, chunk text, transcripts or prompts.
+
 ## Writing in the interface
 
 Plain words, sentence case, active voice, Australian spelling. Name things the way staff would

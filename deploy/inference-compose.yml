@@ -1,0 +1,59 @@
+# GPU services for the ingestion pipeline, on the inference box (RTX 3090, 24 GB).
+#
+#   git clone https://github.com/rdb420/MinerU deploy/src/MinerU
+#   git clone https://github.com/rdb420/parakeet-transcription-app deploy/src/parakeet
+#   git clone https://github.com/rdb420/embedding-sidecar deploy/src/embedding-sidecar
+#   docker compose -f deploy/inference-compose.yml up -d --build
+#
+# Rough VRAM: MinerU hybrid 8-10 GB, Parakeet 3-4 GB (moves to CPU between requests), GLiNER2
+# large about 2 GB. The embedding sidecar runs on CPU. None of these has authentication: publish
+# the ports on the private network or the tailnet only, never the internet.
+#
+# Groundwork's .env then points at this box:
+#   GW_MINERU_URL=http://<box>:8000   GW_MINERU_BACKEND=hybrid-engine
+#   GW_PARAKEET_URL=http://<box>:7861 GW_TRANSCRIPTION_PROVIDER=parakeet
+#   GW_EMBED_URL=http://<box>:7860    GW_EXTRACT_URL=http://<box>:7870
+x-gpu: &gpu
+  deploy:
+    resources:
+      reservations:
+        devices: [ { driver: nvidia, count: all, capabilities: [ gpu ] } ]
+
+services:
+  mineru:
+    # MinerU's own image (vLLM base, models downloaded at build). The fork has no changes of its
+    # own, so this can equally be built from upstream opendatalab/MinerU.
+    build: { context: ./src/MinerU, dockerfile: docker/global/Dockerfile }
+    command: [ "mineru-api", "--host", "0.0.0.0", "--port", "8000" ]
+    environment: { MINERU_MODEL_SOURCE: local }
+    ipc: host
+    ports: [ "8000:8000" ]
+    restart: unless-stopped
+    <<: *gpu
+
+  parakeet:
+    build: { context: ./src/parakeet, args: { PREFETCH_MODEL: "true" } }
+    environment: { GRADIO_SERVER_NAME: 0.0.0.0 }
+    ports: [ "7861:7860" ]
+    volumes: [ "parakeet_data:/data" ]
+    restart: unless-stopped
+    <<: *gpu
+
+  embedding:
+    build: { context: ./src/embedding-sidecar, args: { PREFETCH_MODELS: "true" } }
+    ports: [ "7860:7860" ]
+    volumes: [ "embedding_data:/data" ]
+    restart: unless-stopped
+
+  extraction:
+    build: { context: ./extraction-sidecar, args: { PREFETCH_MODEL: "true" } }
+    environment: { GLINER2_MODEL: fastino/gliner2-large-v1, DEVICE: cuda }
+    ports: [ "7870:7870" ]
+    volumes: [ "extraction_data:/data" ]
+    restart: unless-stopped
+    <<: *gpu
+
+volumes:
+  parakeet_data:
+  embedding_data:
+  extraction_data:

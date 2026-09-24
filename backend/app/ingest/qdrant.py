@@ -86,11 +86,14 @@ def upsert(points: list[dict]) -> None:
                             json={"points": points[i:i + 64]}), "saving chunks")
 
 
-def _source_filter(source_type: str, source_id: str) -> list[dict]:
-    return [{"key": "source_type", "match": {"value": source_type}}, {"key": "source_id", "match": {"value": source_id}}]
+def _source_filter(source_type: str | None, source_id: str) -> list[dict]:
+    must = [{"key": "source_id", "match": {"value": source_id}}]
+    if source_type:
+        must.append({"key": "source_type", "match": {"value": source_type}})
+    return must
 
 
-def delete_from(source_type: str, source_id: str, first_index: int = 0) -> None:
+def delete_from(source_type: str | None, source_id: str, first_index: int = 0) -> None:
     """Remove a source's chunks at or after first_index (all of them by default)."""
     must = _source_filter(source_type, source_id)
     if first_index:

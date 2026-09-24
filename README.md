@@ -7,7 +7,9 @@ transcribed, and AI drafts SOPs, map suggestions and follow-up questions for peo
 Read [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the design, security model and rollout plan,
 [docs/LIVE_MAPPING.md](docs/LIVE_MAPPING.md) for the live canvas driven by Jev, and
 [docs/TEST_RUN.md](docs/TEST_RUN.md) for a first test run with stand-in models, and
-[docs/AUDIT.md](docs/AUDIT.md) for the pre-pilot audit and its progress.
+[docs/INGESTION.md](docs/INGESTION.md) for the pipeline that turns files and sessions into Markdown,
+a search index and a knowledge graph, [docs/PRIVACY.md](docs/PRIVACY.md) for the draft privacy
+impact assessment, and [docs/AUDIT.md](docs/AUDIT.md) for the pre-pilot audit and its progress.
 
 ## Tooling
 
@@ -75,13 +77,21 @@ Backups hold tenant and borrower information, so encrypt them before they leave 
 4. Test a restore now and then where the key lives:
    `age -d -i groundwork-backup.key groundwork-....tar.gz.age | tar tz`.
 
+## Ingestion pipeline
+
+Off by default. With the services running (office host: `docker compose --profile pipeline up -d`;
+inference box: `docker compose -f deploy/inference-compose.yml up -d --build`), set the `GW_MINERU_*`,
+`GW_EMBED_URL`, `GW_QDRANT_*`, `GW_EXTRACT_URL` and `GW_NEO4J_*` settings, check them with
+`uv run python -m scripts.check_providers`, then set `GW_PIPELINE_ENABLED=true`. The admin Pipeline
+page shows progress and queues older files. See [docs/INGESTION.md](docs/INGESTION.md).
+
 ## AI and transcription
 
 | Setting | Values |
 |---|---|
 | `GW_AI_PROVIDER` | `none`, `openai` (OpenAI with `GW_OPENAI_API_KEY` and `GW_OPENAI_MODEL`, or any OpenAI-compatible endpoint), `ollama` (local, point `GW_OLLAMA_URL` at the inference box), `anthropic` |
 | `GW_DECISION_PROVIDER` | `none`, `openrouter` (TypeSafe Jev through OpenRouter's System One API, with `GW_OPENROUTER_API_KEY`), `jev` (TypeSafe directly, or a Laya or OpenJev server via `GW_DECISION_URL`) |
-| `GW_TRANSCRIPTION_PROVIDER` | `none`, `faster_whisper` (build with `WITH_WHISPER=true`, or `uv sync --extra whisper` locally), `openai_compatible` (a Whisper server URL) |
+| `GW_TRANSCRIPTION_PROVIDER` | `none`, `parakeet` (rdb420/parakeet-transcription-app, `GW_PARAKEET_URL`), `faster_whisper` (build with `WITH_WHISPER=true`, or `uv sync --extra whisper` locally), `openai_compatible` (a Whisper server URL) |
 
 The default set-up runs live mapping on Jev through OpenRouter and drafting and review on OpenAI.
 Put both keys in `.env`, then check they answer:
@@ -122,11 +132,18 @@ backend/app/
   retention.py         purge withdrawn files and old session audio
   housekeeping.py      hourly upkeep: expired sessions and links, recordings nobody stopped
   backup.py            snapshot, archive, restore check
+  storage.py, s3.py    local or S3 (self-hosted Supabase Storage) file storage
+  access.py            who may open a map
+  ingest/              pipeline stages: convert, chunk, embed, Qdrant, extract, graph, topics, purge
+                       (see docs/INGESTION.md)
+backend/ontology/      pinned property ontology snapshots (scripts/vendor_ontology.py)
   seed.py              starter process catalogue (confirm with the business)
 frontend/src/
-  pages/               Login, Verify, Home, Share, Library, Boards, BoardPage, Coverage, ProcessList, People, Retention
+  pages/               Login, Verify, Home, Share, Library, Boards, BoardPage, Coverage, ProcessList, Terms,
+                       Pipeline, People, Retention
   canvas/              BPMN and context nodes, palette, op engine, live, recording, document and AI panels
-backend/scripts/       live_eval.py, labelled sample sentences, fake_models.py (stand-ins for testing)
-deploy/                Dockerfile, Caddyfile, backup script
+backend/scripts/       check_providers.py, live_eval.py, extract_eval.py, vendor_ontology.py, fake_models.py
+deploy/                Dockerfile, Caddyfile, backup script, inference-compose.yml (GPU services),
+                       extraction-sidecar/, qdrant/, supabase/
 docs/ARCHITECTURE.md
 ```

@@ -66,6 +66,17 @@ services:
       - ./deploy/qdrant/tls:/qdrant/tls:ro
     restart: unless-stopped
 
+  # The knowledge graph. Browser on this host only (http://127.0.0.1:7474); set NEO4J_PASSWORD.
+  neo4j:
+    profiles: [ "pipeline" ]
+    image: neo4j:5
+    environment:
+      NEO4J_AUTH: "neo4j/${NEO4J_PASSWORD:?set NEO4J_PASSWORD in .env}"
+      NEO4J_server_memory_heap_max__size: 1G
+    ports: [ "127.0.0.1:7474:7474" ]
+    volumes: [ "neo4j_data:/data" ]
+    restart: unless-stopped
+
   # Transcription on its own, so a large workbook never delays a live session's transcript.
   transcriber:
     build: { context: ., dockerfile: deploy/Dockerfile, args: { WITH_WHISPER: "${WITH_WHISPER:-false}" } }
@@ -100,6 +111,7 @@ services:
     ports: [ "8025:8025" ]
 
 volumes:
+  neo4j_data:
   qdrant_storage:
   clamav_db:
   caddy_data:

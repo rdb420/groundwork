@@ -174,6 +174,8 @@ def withdraw(aid: str, request: Request, user: User = Depends(current_user), db:
     if a.status == "purged":
         raise HTTPException(409, "This file has already been deleted.")
     a.status, a.withdrawn_at = "withdrawn", utcnow()
+    from ..ingest import cascade
+    cascade.schedule(db, a.id)  # out of search and the graph at once; SQL and files go at the retention purge
     audit.record(db, "artifact.withdrawn", "artifact", a.id, actor_id=user.id, request=request)
     db.commit()
     return {"ok": True}

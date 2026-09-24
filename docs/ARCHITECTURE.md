@@ -54,22 +54,28 @@ official story and the real one diverge.
                          |  /api/admin      coverage, retention, audit  |
                          +---------------------------------------------+
                                 |                 |
-                     SQLite (WAL)          /data on host disk
-                     users, sessions,      artifacts/YYYY/MM/<id>/
-                     artifacts, boards,        original.<ext>
-                     jobs, drafts,             metadata.json  (sidecar)
-                     audit_events              extracted.txt
-                                |          recordings/<id>/00000.webm
-                                v          backups/
+                     SQLite (WAL)          object storage: local /data, or self-hosted
+                     users, sessions,      Supabase Storage (S3)
+                     artifacts, boards,      artifacts/<id>/original.<ext>, metadata.json,
+                     jobs, drafts,              extracted.txt, v<n>/document.md, blocks.json, images/
+                     documents, chunks,      recordings/<id>/00000.webm, transcript/v<n>/...
+                     entities, relations,
+                     proposals, audit_events
+                                |
+                                v
                          +-------------+
                          | worker      |  polls the jobs table
                          |  scan       |  ClamAV (clamd) before anything reads a file
-                         |  profile    |  spreadsheets, PDFs, Word
-                         |  transcribe |  faster-whisper or Whisper server
+                         |  profile    |  first read: spreadsheets, PDFs, Word
+                         |  transcribe |  Parakeet, faster-whisper or a Whisper server
+                         |  converter  |  ingestion: MinerU, Gotenberg, native readers
+                         |  indexer    |  chunk, embed, Qdrant; extract; Neo4j; purges
                          |  retention  |  daily purge when GW_RETENTION_AUTO=true
                          +-------------+
                                 |
-             optional:  Jev through OpenRouter (live mapping decisions, hosted)
+             ingestion (on-prem, docs/INGESTION.md): MinerU, Parakeet, embedding and extraction
+                        sidecars on the inference box (RTX 3090); Qdrant, Neo4j, Gotenberg on the host
+             optional:  Jev through OpenRouter (live mapping and extraction decisions, hosted)
                         OpenAI (drafting and session review, hosted)
                         Ollama on the inference box (local AI, the choice for personal info)
                         Anthropic API (cloud AI, blocked for personal info by default)
@@ -81,7 +87,10 @@ official story and the real one diverge.
 |---|---|---|
 | API | FastAPI, Python 3.12 | The processing work (openpyxl, PDF text, Whisper) is Python. One language for API and worker. |
 | Database | SQLite in WAL mode | One office, one host, tens of users. No database server to run. SQLAlchemy keeps Postgres a config change away. |
-| Files | Host disk with a JSON sidecar per file | Files stay on premises. Each folder describes itself if the database is ever lost. |
+| Files | Local disk or self-hosted Supabase Storage (S3), a JSON sidecar per file | Files stay on premises. Each folder describes itself if the database is ever lost. The S3 client is ~100 lines of SigV4, no SDK. |
+| Ingestion | Job stages on the same queue; SQL as the source of truth | Each stage is idempotent and can be rerun. Qdrant and Neo4j are projections rebuilt from SQL. See [INGESTION.md](INGESTION.md). |
+| Vectors | Qdrant: dense (MiniLM), sparse (SPLADE), ColBERT rerank | Hybrid search that works for exact terms (SPLADE) and paraphrase (dense), reranked token by token. |
+| Graph | Neo4j, typed by the pinned property ontology | Entities and relationships closed to the ontology; new terms are proposals a person decides. |
 | Queue | `jobs` table polled by two workers | No broker to install. A single UPDATE claims a job. One worker reads files, one transcribes, so a large workbook never delays a live transcript. Failed jobs back off; jobs a crashed worker left running are picked up again. |
 | Frontend | React, Vite, React Flow (MIT) | React Flow gives typed nodes and edges, so the server reads the map as a process. |
 | Canvas model | Typed BPMN nodes in JSON | Chosen over a freehand whiteboard (Excalidraw) because AI and later BPMN export need semantics. Chosen over bpmn-js because staff need sticky notes and photos beside the notation. |
@@ -109,7 +118,10 @@ boards ──< live_utterances   (sentence, decisions, proposed changes, model, 
 boards: document_markdown, document_kind   (living SOP or work instruction)
 boards: session_pass, perspective, rules    (overview | detail; whose view; rule tables)
 boards ──< parking_items     (problems, exceptions, workarounds, rules held for the detail pass)
-jobs          (profile_artifact | transcribe_segment)
+artifacts | recordings ──< documents ──< chunks ──< entity_mentions, relation_assertions, chunk_tags
+ontology_candidates  (proposed classes, relationships and category values, with evidence chunks)
+topics ──< chunk_topics
+jobs          (profile_artifact | transcribe_segment | convert_artifact | index_chunks | ...)
 audit_events  (who, what, which record, when, from where)
 magic_tokens  (hashed, single use, 15 minutes)
 ```
@@ -256,14 +268,17 @@ with at least one map, drafts accepted versus discarded, and the open `[TO CONFI
 Ordered by value to the discovery work.
 
 Done: the coverage view (processes by evidence layer, contributor and map status), the process
-list (rename, merge, confirm, retire, assign owner), retention and purge, and malware scanning.
+list (rename, merge, confirm, retire, assign owner), retention and purge, malware scanning, and
+the ingestion pipeline (Markdown with OCR for scans and photos, hybrid index, ontology-typed
+knowledge graph, term proposals).
 
-1. Evidence ledger view per process, combining artifacts, map elements and transcript quotes.
-2. BPMN 2.0 XML export, so maps open in other tools.
-3. Deeper workbook review: formula-pattern anomalies, hard-coded values inside formula ranges,
+1. Use the index: retrieval for AI drafts and reviews in place of the first 4,000 characters of
+   each file, and a search page.
+2. A graph view per process: entities, relationships and the chunks behind them.
+3. Evidence ledger view per process, combining artifacts, map elements and transcript quotes.
+4. BPMN 2.0 XML export, so maps open in other tools.
+5. Deeper workbook review: formula-pattern anomalies, hard-coded values inside formula ranges,
    lookup chains across files.
-4. OCR for scanned PDFs and photos of paper forms.
-5. Search across extracted text and transcripts.
 6. Real-time co-editing (Yjs) if facilitated sessions outgrow autosave with conflict detection.
 7. Speaker labels in transcripts.
 8. Local streaming speech recognition for live mapping, replacing the browser's cloud service.

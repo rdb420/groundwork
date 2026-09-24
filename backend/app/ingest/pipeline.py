@@ -25,7 +25,7 @@ from ..models import Artifact, ArtifactProcess, Board, Chunk, Document, Recordin
 from ..storage import get_storage, prefix_of
 from ..transcription import transcribe
 from . import blocks as B
-from . import chunker, embed, extract, graph, qdrant
+from . import cascade, chunker, embed, extract, graph, qdrant
 from .convert import AUDIO_VIDEO, Converted, convert
 
 log = logging.getLogger("groundwork.pipeline")
@@ -221,7 +221,7 @@ def source_context(db: DB, doc: Document) -> tuple[str, dict]:
     """The title to use in breadcrumbs and the payload every chunk of this source carries."""
     if doc.source_type == "artifact":
         a = db.get(Artifact, doc.source_id)
-        if a is None:
+        if a is None or a.status in IDLE:
             return "", {}
         return a.title, {"artifact_id": a.id, "uploaded_by": a.uploaded_by, "layer": a.layer, "file_kind": a.kind,
                          "process_ids": [p.id for p in a.processes], "title": a.title}
@@ -292,9 +292,18 @@ def after_extract(db: DB, doc: Document) -> str:
     return "partial" if doc.status == "partial" else "done"
 
 
+def live(db: DB, doc: Document) -> bool:
+    """Withdrawn, blocked and deleted files are never processed again."""
+    if doc.source_type != "artifact":
+        return True
+    a = db.get(Artifact, doc.source_id)
+    return a is not None and a.status not in IDLE
+
+
 def extract_entities(db: DB, doc_id: str) -> None:
     doc = db.get(Document, doc_id)
-    if not doc or not doc.is_current or doc.status not in ("ok", "partial") or doc.stage == "converted":
+    if not doc or not doc.is_current or doc.status not in ("ok", "partial") or doc.stage == "converted" \
+            or not live(db, doc):
         return
     extract.run(db, doc)
     _set_status(db, doc, after_extract(db, doc))
@@ -302,7 +311,8 @@ def extract_entities(db: DB, doc_id: str) -> None:
 
 def project_graph(db: DB, doc_id: str) -> None:
     doc = db.get(Document, doc_id)
-    if not doc or not doc.is_current or doc.status not in ("ok", "partial") or doc.stage not in ("extracted", "graphed"):
+    if not doc or not doc.is_current or doc.status not in ("ok", "partial") or doc.stage not in ("extracted", "graphed") \
+            or not live(db, doc):
         return
     counts = graph.project(db, doc)
     doc.stage = "graphed"
@@ -333,4 +343,4 @@ def failed(db: DB, kind: str, ref_id: str) -> None:
 
 STAGES = {"convert_artifact": convert_artifact, "transcribe_artifact": transcribe_artifact,
           "ingest_recording": ingest_recording, "index_chunks": index_chunks, "extract_entities": extract_entities,
-          "project_graph": project_graph, "topics_batch": topics_batch}
+          "project_graph": project_graph, "topics_batch": topics_batch, "purge_external": cascade.purge_external}
