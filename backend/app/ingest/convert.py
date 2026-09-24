@@ -75,9 +75,11 @@ def convert(path: Path, depth: int = 0) -> Converted:
     if ext in PLAIN:
         with path.open(encoding="utf-8", errors="replace") as f:
             text = f.read(MAX_PLAIN)
+            truncated = bool(f.read(1))
         blocks = B.from_markdown(text)
         return Converted(blocks=blocks, markdown=text if ext == ".md" else B.to_markdown(blocks),
-                         converter="native:text")
+                         converter="native:text",
+                         note="Text was truncated at the maximum supported size." if truncated else "")
     if ext == ".eml":
         blocks, attachments = mail.read_eml(path)
         notes = []
