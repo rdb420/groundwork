@@ -16,14 +16,15 @@ import hashlib
 import json
 import logging
 
-from sqlalchemy import func, select, update
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.orm import Session as DB
 
 from .. import jobs
 from ..config import get_settings
-from ..models import Artifact, Document
+from ..models import Artifact, Board, Chunk, Document, Recording
 from ..storage import get_storage, prefix_of
 from . import blocks as B
+from . import chunker, embed, qdrant
 from .convert import AUDIO_VIDEO, Converted, convert
 
 log = logging.getLogger("groundwork.pipeline")
@@ -125,6 +126,77 @@ def after_segment(db: DB, seg) -> None:
     """Called when a recording part has been transcribed. Recordings join the pipeline in phase 3."""
 
 
+CHUNKER_VERSION = "1"
+
+
+def source_context(db: DB, doc: Document) -> tuple[str, dict]:
+    """The title to use in breadcrumbs and the payload every chunk of this source carries."""
+    if doc.source_type == "artifact":
+        a = db.get(Artifact, doc.source_id)
+        if a is None:
+            return "", {}
+        return a.title, {"artifact_id": a.id, "uploaded_by": a.uploaded_by, "layer": a.layer, "file_kind": a.kind,
+                         "process_ids": [p.id for p in a.processes], "title": a.title}
+    rec = db.get(Recording, doc.source_id)
+    board = db.get(Board, rec.board_id) if rec else None
+    if rec is None or board is None:
+        return "", {}
+    return f"Session: {board.title}", {"recording_id": rec.id, "board_id": board.id, "uploaded_by": rec.started_by,
+                                       "process_ids": [board.process_id] if board.process_id else [],
+                                       "title": board.title, "file_kind": "recording", "layer": "actual"}
+
+
+def _set_status(db: DB, doc: Document, status: str) -> None:
+    if doc.source_type == "artifact":
+        a = db.get(Artifact, doc.source_id)
+        if a:
+            a.pipeline_status = status
+
+
+def after_index(db: DB, doc: Document) -> str:
+    if get_settings().extract_url:
+        jobs.enqueue(db, "extract_entities", doc.id)
+        return "extracting"
+    return "done"
+
+
+def index_chunks(db: DB, doc_id: str) -> None:
+    doc = db.get(Document, doc_id)
+    if not doc or not doc.is_current or doc.status != "ok":
+        return
+    s = get_settings()
+    key = hashlib.sha256(f"{doc.markdown_sha256}:{CHUNKER_VERSION}:{s.chunk_tokens}:{qdrant.LAYOUT_VERSION}"
+                         .encode()).hexdigest()
+    if doc.index_key == key and doc.stage != "converted":
+        _set_status(db, doc, after_index(db, doc))  # nothing changed since the last index
+        return
+    title, payload = source_context(db, doc)
+    if not payload:
+        return
+    pieces = chunker.chunk(load_blocks(doc), title, s.chunk_tokens)
+    # Embed before touching the database: embedding is slow, and SQLite allows one writer at a time.
+    vectors = embed.embed_documents([p.embed_text for p in pieces]) if pieces else []
+    db.execute(delete(Chunk).where(Chunk.source_type == doc.source_type, Chunk.source_id == doc.source_id))
+    rows = [Chunk(id=qdrant.point_id(doc.source_type, doc.source_id, i), document_id=doc.id,
+                  source_type=doc.source_type, source_id=doc.source_id, idx=i, text=p.text,
+                  heading_path=p.heading_path, page=p.page, page_end=p.page_end, start_s=p.start_s, end_s=p.end_s,
+                  kind=p.kind, tokens=p.tokens) for i, p in enumerate(pieces)]
+    db.add_all(rows)
+    if pieces:
+        qdrant.ensure_collection(len(vectors[0].dense))
+        base = payload | {"source_type": doc.source_type, "source_id": doc.source_id, "document_id": doc.id,
+                          "personal_info": doc.personal_info}
+        qdrant.upsert([{"id": r.id, "vector": {"dense": v.dense, "splade": v.sparse, "colbert": v.colbert},
+                        "payload": base | {"chunk_index": r.idx, "chunk_kind": r.kind, "text": r.text,
+                                           "heading_path": r.heading_path or [], "page": r.page, "page_end": r.page_end,
+                                           "start_s": r.start_s, "end_s": r.end_s}}
+                       for r, v in zip(rows, vectors, strict=True)])
+    qdrant.delete_from(doc.source_type, doc.source_id, len(pieces))
+    doc.chunk_count, doc.index_key, doc.stage = len(pieces), key, "indexed"
+    _set_status(db, doc, after_index(db, doc))
+    log.info("indexed %s %s: %d chunks", doc.source_type, doc.source_id, len(pieces))
+
+
 def failed(db: DB, kind: str, ref_id: str) -> None:
     """The worker calls this when a stage has used up its tries."""
     if kind in ("convert_artifact", "transcribe_artifact"):
@@ -141,4 +213,4 @@ def failed(db: DB, kind: str, ref_id: str) -> None:
                     a.pipeline_status = "failed"
 
 
-STAGES = {"convert_artifact": convert_artifact}
+STAGES = {"convert_artifact": convert_artifact, "index_chunks": index_chunks}

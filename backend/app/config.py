@@ -52,6 +52,12 @@ class Settings(BaseSettings):
     mineru_timeout_s: int = 1800
     gotenberg_url: str = ""  # converts doc, ppt, odt, rtf to PDF
     embed_url: str = ""  # the embedding sidecar; empty stops the pipeline after conversion
+    chunk_tokens: int = 128  # the smallest window of the three embedding models
+    qdrant_url: str = ""  # e.g. https://inference:6333
+    qdrant_api_key: str = ""
+    qdrant_ca_file: str = ""  # the CA for Qdrant's own TLS certificate
+    qdrant_collection: str = "gw_chunks"  # an alias; the physical collection is <alias>_v<layout>
+    extract_url: str = ""  # the extraction sidecar (GLiNER2); empty stops the pipeline after indexing
 
     # Malware scanning of uploads with ClamAV (clamd over TCP). Empty host switches scanning off.
     clamav_host: str = ""

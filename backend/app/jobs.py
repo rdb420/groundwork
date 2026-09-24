@@ -1,7 +1,8 @@
 """Helpers for the job queue shared by the worker and the pipeline stages."""
 from contextvars import ContextVar
 
-from sqlalchemy import select, update
+from sqlalchemy import select, text, update
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session as DB
 
 from .db import SessionLocal
@@ -25,5 +26,14 @@ def heartbeat() -> None:
     if not job_id:
         return
     with SessionLocal() as db:
-        db.execute(update(Job).where(Job.id == job_id).values(updated_at=utcnow()))
-        db.commit()
+        sqlite = db.get_bind().dialect.name == "sqlite"
+        if sqlite:  # don't wait on a busy database; the next heartbeat will do
+            db.execute(text("PRAGMA busy_timeout = 200"))
+        try:
+            db.execute(update(Job).where(Job.id == job_id).values(updated_at=utcnow()))
+            db.commit()
+        except OperationalError:
+            db.rollback()
+        finally:
+            if sqlite:  # the connection goes back to the pool; restore the usual 30-second wait
+                db.execute(text("PRAGMA busy_timeout = 30000"))
