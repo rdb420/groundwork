@@ -48,8 +48,11 @@ def purge_artifact(db: DB, a: Artifact, *, actor_id: str | None, reason: str) ->
 
 
 def purge_audio(db: DB, r: Recording, *, actor_id: str | None, reason: str) -> None:
-    get_storage().delete_prefix(f"recordings/{r.id}/")
+    # Only the audio goes; the transcript document under recordings/<id>/transcript/ stays with the map.
+    storage = get_storage()
     for seg in db.scalars(select(TranscriptSegment).where(TranscriptSegment.recording_id == r.id)).all():
+        if seg.audio_path:
+            storage.delete_prefix(seg.audio_path)
         seg.audio_path = ""
     r.audio_purged_at = utcnow()
     audit.record(db, "recording.audio_purged", "recording", r.id, actor_id=actor_id,

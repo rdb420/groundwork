@@ -188,6 +188,9 @@ def end_recording(rid: str, request: Request, user: User = Depends(current_user)
     if r.status == "ended":
         return {"ok": True}
     r.status, r.ended_at = "ended", utcnow()
+    if get_settings().pipeline_enabled:
+        from ..ingest import pipeline
+        pipeline.recording_ready(db, rid)
     audit.record(db, "recording.ended", "recording", rid, actor_id=user.id, request=request)
     db.commit()
     return {"ok": True}

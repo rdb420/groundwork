@@ -108,7 +108,9 @@ class Settings(BaseSettings):
     review_minutes: int = 5
 
     # Transcription
-    transcription_provider: str = "none"  # none | faster_whisper | openai_compatible
+    transcription_provider: str = "none"  # none | parakeet | faster_whisper | openai_compatible
+    parakeet_url: str = ""  # rdb420/parakeet-transcription-app, e.g. http://inference:7861
+    recording_chunk_seconds: int = 30  # length of each recorded part (SessionPanel CHUNK_MS)
     whisper_model: str = "small.en"
     transcription_url: str = ""  # openai_compatible endpoint, e.g. http://inference:8000/v1/audio/transcriptions
     transcription_api_key: str = ""

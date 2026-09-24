@@ -21,8 +21,9 @@ from sqlalchemy.orm import Session as DB
 
 from .. import jobs
 from ..config import get_settings
-from ..models import Artifact, Board, Chunk, Document, Recording
+from ..models import Artifact, ArtifactProcess, Board, Chunk, Document, Recording, TranscriptSegment
 from ..storage import get_storage, prefix_of
+from ..transcription import transcribe
 from . import blocks as B
 from . import chunker, embed, qdrant
 from .convert import AUDIO_VIDEO, Converted, convert
@@ -122,8 +123,95 @@ def convert_artifact(db: DB, aid: str) -> None:
     log.info("converted artifact %s with %s: %d blocks", a.id, result.converter, len(result.blocks))
 
 
-def after_segment(db: DB, seg) -> None:
-    """Called when a recording part has been transcribed. Recordings join the pipeline in phase 3."""
+def board_personal(db: DB, board: Board) -> bool:
+    """A map counts as personal if it is ticked, or if any file on its process isn't marked "no"
+    (the same rule as AI drafts, app/ai/generate.py)."""
+    if board.personal_info:
+        return True
+    if not board.process_id:
+        return False
+    return (db.scalar(select(func.count()).select_from(Artifact).join(ArtifactProcess)
+                      .where(ArtifactProcess.process_id == board.process_id, Artifact.personal_info != "no",
+                             Artifact.status.not_in(("withdrawn", "purged")))) or 0) > 0
+
+
+def recording_ready(db: DB, rid: str) -> None:
+    """Queue a recording's transcript once it has ended and no part is still waiting to be transcribed."""
+    rec = db.get(Recording, rid)
+    if rec is None or rec.status != "ended":
+        return
+    waiting = db.scalar(select(func.count()).select_from(TranscriptSegment)
+                        .where(TranscriptSegment.recording_id == rid, TranscriptSegment.status == "queued"))
+    if not waiting:
+        jobs.enqueue(db, "ingest_recording", rid)
+
+
+def after_segment(db: DB, seg: TranscriptSegment) -> None:
+    """Called when a recording part has been transcribed (or has failed for good)."""
+    recording_ready(db, seg.recording_id)
+
+
+def transcript_blocks(rows: list[list], offset: float = 0.0, fallback: str = "", length: float = 0.0) -> list[dict]:
+    if rows:
+        return [{"type": "transcript", "text": r[2], "start_s": round(offset + r[0], 2), "end_s": round(offset + r[1], 2)}
+                for r in rows if r[2]]
+    if fallback.strip():
+        return [{"type": "transcript", "text": fallback.strip(), "start_s": offset, "end_s": offset + length}]
+    return []
+
+
+def ingest_recording(db: DB, rid: str) -> None:
+    rec = db.get(Recording, rid)
+    board = db.get(Board, rec.board_id) if rec else None
+    if rec is None or board is None:
+        return
+    s = get_settings()
+    segs = db.scalars(select(TranscriptSegment).where(TranscriptSegment.recording_id == rid,
+                                                      TranscriptSegment.status == "done")
+                      .order_by(TranscriptSegment.seq)).all()
+    blocks: list[dict] = []
+    for seg in segs:  # times are approximate: each part is placed at seq x the part length
+        blocks += transcript_blocks(seg.timings or [], seg.seq * s.recording_chunk_seconds, seg.text,
+                                    s.recording_chunk_seconds)
+    if not blocks:
+        return
+    sha = hashlib.sha256(json.dumps(blocks).encode()).hexdigest()
+    existing = current_document(db, "recording", rid)
+    if existing and existing.source_sha256 == sha and existing.status == "ok":
+        after_convert(db, existing)
+        return
+    result = Converted(blocks=[{"type": "heading", "text": f"Session recording: {board.title}", "level": 1}] + blocks,
+                       converter=f"transcript:{s.transcription_provider}")
+    doc = save_document(db, source_type="recording", source_id=rid, prefix=f"recordings/{rid}/transcript/",
+                        sha256=sha, result=result, personal_info=board_personal(db, board))
+    after_convert(db, doc)
+
+
+def transcribe_artifact(db: DB, aid: str) -> None:
+    """An uploaded audio or video file: transcribe it, then treat the transcript like any document."""
+    a = db.get(Artifact, aid)
+    if not a or a.status in IDLE or a.scan == "infected" or not a.storage_key:
+        return
+    existing = current_document(db, "artifact", a.id)
+    if existing and existing.source_sha256 == a.sha256 and existing.status == "ok":
+        a.pipeline_status = after_convert(db, existing)
+        return
+    if get_settings().transcription_provider == "none":
+        a.pipeline_status = "skipped"
+        return
+    a.pipeline_status = "converting"
+    db.commit()
+    with get_storage().local_copy(a.storage_key) as path:
+        t = transcribe(path)
+    blocks = transcript_blocks(t.rows, 0.0, t.text)
+    if not blocks:
+        a.pipeline_status = "skipped"
+        return
+    result = Converted(blocks=[{"type": "heading", "text": a.title, "level": 1}] + blocks,
+                       converter=f"transcript:{get_settings().transcription_provider}")
+    doc = save_document(db, source_type="artifact", source_id=a.id, prefix=prefix_of(a.storage_key),
+                        sha256=a.sha256, result=result, personal_info=personal(a))
+    a.pipeline_status = after_convert(db, doc)
 
 
 CHUNKER_VERSION = "1"
@@ -213,4 +301,5 @@ def failed(db: DB, kind: str, ref_id: str) -> None:
                     a.pipeline_status = "failed"
 
 
-STAGES = {"convert_artifact": convert_artifact, "index_chunks": index_chunks}
+STAGES = {"convert_artifact": convert_artifact, "transcribe_artifact": transcribe_artifact,
+          "ingest_recording": ingest_recording, "index_chunks": index_chunks}

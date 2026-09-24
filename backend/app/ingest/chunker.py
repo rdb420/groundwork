@@ -142,6 +142,7 @@ def chunk(blocks: list[dict], title: str = "", budget: int = 128) -> list[Piece]
     packer = _Packer(budget)
     stack: list[tuple[int, str]] = []
     pending: list[Unit] = []
+    pending_kind = "text"
 
     def path() -> list[str]:
         return [h for _, h in stack]
@@ -152,8 +153,15 @@ def chunk(blocks: list[dict], title: str = "", budget: int = 128) -> list[Piece]
     def flush_section():
         nonlocal pending
         if pending:
-            packer.emit(pending, crumb(), path(), "text")
+            packer.emit(pending, crumb(), path(), pending_kind)
             pending = []
+
+    def switch(kind: str):
+        """Text and transcript lines don't share a chunk."""
+        nonlocal pending_kind
+        if kind != pending_kind:
+            flush_section()
+            pending_kind = kind
 
     for b in blocks:
         t = b.get("type")
@@ -167,11 +175,14 @@ def chunk(blocks: list[dict], title: str = "", budget: int = 128) -> list[Piece]
             continue
         limit = budget - tokens.count(crumb())
         if t in ("text", None):
+            switch("text")
             pending += _units(b.get("text", ""), limit, page=page)
         elif t == "list":
+            switch("text")
             for item in b.get("items", []):
                 pending += _units(f"- {item}", limit, page=page)
         elif t == "transcript":
+            switch("transcript")
             pending += _units(b.get("text", ""), limit, start_s=b.get("start_s"), end_s=b.get("end_s"))
         elif t == "image":
             flush_section()

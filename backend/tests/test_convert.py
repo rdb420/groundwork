@@ -25,7 +25,7 @@ H = {"x-requested-with": "groundwork"}
 
 
 @pytest.fixture
-def services(monkeypatch):
+def services(client, monkeypatch):
     fake_mineru, fake_gotenberg = FakeMinerU(), FakeGotenberg()
     monkeypatch.setitem(httpclient.TRANSPORTS, "mineru", httpx.MockTransport(fake_mineru))
     monkeypatch.setitem(httpclient.TRANSPORTS, "gotenberg", httpx.MockTransport(fake_gotenberg))

@@ -140,7 +140,7 @@ def test_retention_purges_withdrawn_files_and_old_audio(client, monkeypatch):
     due = client.get("/api/admin/retention").json()
     assert [f["id"] for f in due["files"]] == [old["id"]] and [a["id"] for a in due["audio"]] == [rec["id"]]
     assert client.post("/api/admin/retention/run", headers=H).json() == {"files": 1, "audio": 1}
-    assert not old_path.exists() and not old_path.parent.exists() and not audio_dir.exists()
+    assert not old_path.exists() and not old_path.parent.exists() and not any(audio_dir.rglob("*.webm"))
     assert audited("artifact.purged", old["id"]) == 1 and audited("recording.audio_purged", rec["id"]) == 1
     with SessionLocal() as db:
         a = db.get(Artifact, old["id"])

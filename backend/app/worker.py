@@ -124,6 +124,8 @@ def run_once(kinds: list[str] | None = None) -> bool:
                 seg = db.get(TranscriptSegment, job.ref_id)
                 if seg:
                     seg.status = "failed"
+                    if get_settings().pipeline_enabled:
+                        pipeline.after_segment(db, seg)
             if job.kind in pipeline.STAGES and job.status == "failed":
                 pipeline.failed(db, job.kind, job.ref_id)
         finally:

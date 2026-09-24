@@ -6,6 +6,7 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session as DB
 
 from . import audit
+from .config import get_settings
 from .models import MagicToken, Recording, Session, TranscriptSegment
 from .security import aware, utcnow
 from .util import deleted
@@ -22,6 +23,9 @@ def end_abandoned_recordings(db: DB) -> int:
         last = last_part.get(r.id) or r.started_at
         if now - aware(last) > ABANDONED_AFTER:
             r.status, r.ended_at = "ended", aware(last)
+            if get_settings().pipeline_enabled:
+                from .ingest import pipeline
+                pipeline.recording_ready(db, r.id)
             audit.record(db, "recording.ended", "recording", r.id, actor_type="system",
                          detail={"reason": "no audio for 15 minutes"})
             ended += 1

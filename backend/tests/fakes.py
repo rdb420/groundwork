@@ -263,3 +263,36 @@ class FakeQdrant:
                 return json_response({"result": {"points": [
                     {"id": pid, "score": s, "payload": self.points[pid]["payload"]} for s, pid in ranked]}})
         return httpx.Response(400)
+
+
+class FakeParakeet:
+    """The Gradio HTTP API of parakeet-transcription-app: upload, call transcribe_file, then an
+    event stream ending in `complete` with the dataframe rows as strings (or `error`)."""
+
+    def __init__(self, fail: bool = False):
+        self.fail = fail
+        self.uploads: list[str] = []
+        self.calls: list[dict] = []
+
+    def __call__(self, request: httpx.Request) -> httpx.Response:
+        path = request.url.path
+        if path == "/gradio_api/upload":
+            name = f"/tmp/gradio/{len(self.uploads)}/audio.webm"
+            self.uploads.append(name)
+            return json_response([name])
+        if path == "/gradio_api/call/transcribe_file" and request.method == "POST":
+            body = json.loads(request.read())
+            self.calls.append(body)
+            return json_response({"event_id": f"e{len(self.calls)}"})
+        if path.startswith("/gradio_api/call/transcribe_file/"):
+            if self.fail:
+                stream = "event: error\ndata: null\n\n"
+            else:
+                n = len(self.calls)
+                rows = [["N/A", "N/A", "Processing failed"]] if n == 99 else [
+                    ["0.00", "4.50", f"Part {n}: I check the bank feed."], ["5.00", "9.00", "Then I send a reminder."]]
+                table = {"headers": ["Start (s)", "End (s)", "Segment"], "data": rows, "metadata": None}
+                stream = ("event: generating\ndata: null\n\nevent: heartbeat\ndata: null\n\n"
+                          f"event: complete\ndata: {json.dumps([table, None, None, None, None])}\n\n")
+            return httpx.Response(200, content=stream.encode(), headers={"content-type": "text/event-stream"})
+        return httpx.Response(404)
