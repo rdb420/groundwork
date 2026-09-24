@@ -15,6 +15,8 @@ import ssl
 import time
 from email.message import EmailMessage
 
+import httpx
+
 from . import httpclient
 from .config import get_settings
 
@@ -34,17 +36,25 @@ def access_token() -> str:
     if not (s.smtp_oauth_client_id and s.smtp_oauth_client_secret and s.smtp_oauth_refresh_token):
         raise MailError("GW_SMTP_AUTH=xoauth2 needs GW_SMTP_OAUTH_CLIENT_ID, _CLIENT_SECRET and _REFRESH_TOKEN. "
                         "Run scripts/gmail_oauth.py.")
-    with httpclient.client("oauth", timeout=15) as http:
-        r = http.post(s.smtp_oauth_token_url, data={
-            "client_id": s.smtp_oauth_client_id, "client_secret": s.smtp_oauth_client_secret,
-            "refresh_token": s.smtp_oauth_refresh_token, "grant_type": "refresh_token"})
-    if r.status_code != 200:
-        reason = (r.json().get("error") if r.headers.get("content-type", "").startswith("application/json") else "")
-        raise MailError(f"The mail account's OAuth token couldn't be refreshed ({r.status_code} {reason}). "
-                        "Run scripts/gmail_oauth.py again.")
-    body = r.json()
-    _token["value"], _token["expires"] = body["access_token"], time.time() + float(body.get("expires_in", 3600))
-    return str(_token["value"])
+    try:
+        with httpclient.client("oauth", timeout=15) as http:
+            r = http.post(s.smtp_oauth_token_url, data={
+                "client_id": s.smtp_oauth_client_id, "client_secret": s.smtp_oauth_client_secret,
+                "refresh_token": s.smtp_oauth_refresh_token, "grant_type": "refresh_token"})
+        if r.status_code != 200:
+            reason = (r.json().get("error") if r.headers.get("content-type", "").startswith("application/json") else "")
+            raise MailError(f"The mail account's OAuth token couldn't be refreshed ({r.status_code} {reason}). "
+                            "Run scripts/gmail_oauth.py again.")
+        body = r.json()
+        _token["value"], _token["expires"] = body["access_token"], time.time() + float(body.get("expires_in", 3600))
+        return str(_token["value"])
+    except MailError:
+        raise
+    except httpx.HTTPError as e:
+        raise MailError(f"Couldn't refresh the mail account's OAuth token ({type(e).__name__}).") from e
+    except (KeyError, TypeError, ValueError) as e:
+        raise MailError("The mail account's OAuth token response was in an unexpected shape. "
+                        "Run scripts/gmail_oauth.py again.") from e
 
 
 def xoauth2_string(user: str, token: str) -> str:
