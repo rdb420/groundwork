@@ -93,7 +93,12 @@ class Settings(BaseSettings):
     smtp_port: int = 587
     smtp_user: str = ""
     smtp_password: str = ""
-    smtp_starttls: bool = True
+    smtp_starttls: bool = True  # port 587; port 465 uses TLS from the start
+    smtp_auth: str = "password"  # password | xoauth2 (OAuth 2.0, recommended for Gmail and Google Workspace)
+    smtp_oauth_client_id: str = ""
+    smtp_oauth_client_secret: str = ""
+    smtp_oauth_refresh_token: str = ""  # from scripts/gmail_oauth.py
+    smtp_oauth_token_url: str = "https://oauth2.googleapis.com/token"
     mail_from: str = "groundwork@localhost"
 
     # AI

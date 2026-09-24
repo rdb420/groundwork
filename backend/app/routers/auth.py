@@ -4,6 +4,7 @@ The emailed link opens a page in the web app; that page POSTs the token. Mail sc
 (Microsoft Safe Links, Mimecast) fetch GET links to check them, which would burn a
 single-use token if a GET consumed it.
 """
+import logging
 import time
 from collections import defaultdict, deque
 from datetime import timedelta
@@ -17,11 +18,12 @@ from sqlalchemy.orm import Session as DB
 from .. import audit
 from ..config import get_settings
 from ..db import get_db
-from ..mailer import send_magic_link
+from ..mailer import MailError, send_magic_link
 from ..models import MagicToken, Session, User
 from ..security import COOKIE, aware, create_session, current_user, digest, email_allowed, new_secret, role_for, utcnow
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
+log = logging.getLogger("groundwork.auth")
 _hits: dict[str, deque] = defaultdict(deque)
 
 
@@ -67,7 +69,15 @@ def request_link(body: LinkRequest, request: Request, db: DB = Depends(get_db)):
                       expires_at=utcnow() + timedelta(minutes=s.magic_link_minutes)))
     audit.record(db, "auth.link_requested", "user", detail={"email": email}, actor_type="system", request=request)
     db.commit()
-    send_magic_link(email, f"{s.public_base_url.rstrip('/')}/auth/verify?token={quote(secret)}")
+    try:
+        send_magic_link(email, f"{s.public_base_url.rstrip('/')}/auth/verify?token={quote(secret)}")
+    except MailError as e:
+        log.warning("sign-in email to %s not sent: %s", email, e)
+        audit.record(db, "auth.link_not_sent", "user", detail={"email": email, "reason": str(e)[:200]},
+                     actor_type="system", request=request)
+        db.commit()
+        raise HTTPException(503, "We couldn't send the sign-in email just now. Try again in a few minutes, "
+                                 "or tell the AI lead if it keeps happening.") from None
     return GENERIC
 
 

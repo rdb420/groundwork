@@ -240,8 +240,12 @@ links will fail. Three options, set in `deploy/Caddyfile`:
 For a small team with some remote work, C is the safest start. Move to B when the portal
 opens to everyone.
 
-**Email.** Any SMTP service works. For Microsoft 365, check current Microsoft guidance on SMTP
-authentication before relying on it; a transactional email service is often simpler.
+**Email.** Any SMTP service works. For Gmail and Google Workspace, Groundwork signs in with OAuth
+2.0 (SASL XOAUTH2, `GW_SMTP_AUTH=xoauth2`): `backend/scripts/gmail_oauth.py` gets the refresh token
+once, and the API exchanges it for short-lived access tokens. An app password also works
+(`GW_SMTP_AUTH=password`) where the Workspace allows them. TLS is verified in both cases. If a
+sign-in email can't be sent, the person is told to try again and the failure is audited. For
+Microsoft 365, check current Microsoft guidance on SMTP authentication before relying on it.
 
 **Backups.** `deploy/backup.sh` runs a consistent SQLite snapshot and archives all files, then
 opens the archive to confirm it reads. With `GW_BACKUP_AGE_RECIPIENTS` set, the archive is
