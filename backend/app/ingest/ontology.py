@@ -36,7 +36,7 @@ class OntologyError(RuntimeError):
 class Option:
     """One answer a relation question can have."""
     key: str  # short id used in the Jev question
-    label: str  # what the decision model reads
+    label: str  # what the decision model reads, short: A and B are the two mentions named in the question
     property_iri: str = ""  # a direct relation, subject -> object
     role_iri: str = ""  # or a role the party holds in the context, through Participation
     reverse: bool = False  # True when the property runs from the second mention to the first
@@ -107,15 +107,15 @@ class Ontology:
                 continue
             dom, rng = p.get("domain"), p.get("range")
             if self.is_a(a, dom) and self.is_a(b, rng):
-                out.append(Option(f"p{len(out)}", f"{self.label(a)} {p['label']} {self.label(b)}", property_iri=iri))
+                out.append(Option(f"p{len(out)}", f"A {p['label']} B", property_iri=iri))
             if a != b and self.is_a(b, dom) and self.is_a(a, rng):
-                out.append(Option(f"p{len(out)}", f"{self.label(b)} {p['label']} {self.label(a)}", property_iri=iri,
-                                  reverse=True))
+                out.append(Option(f"p{len(out)}", f"B {p['label']} A", property_iri=iri, reverse=True))
         for party, context, reverse in ((a, b, False), (b, a, True)):
             if self.is_a(party, PARTY) and any(self.is_a(context, c) for c in PARTICIPATION_CONTEXTS):
+                who, where = ("A", "B") if not reverse else ("B", "A")
                 for r_iri, role in sorted(self.roles.items()):
-                    out.append(Option(f"p{len(out)}", f"{self.label(party)} is {role['label']} for this "
-                                                      f"{self.label(context).lower()}", role_iri=r_iri, reverse=reverse))
+                    out.append(Option(f"p{len(out)}", f"{who} is {role['label']} in {where}", role_iri=r_iri,
+                                      reverse=reverse))
         return out
 
     def tag_schemes(self) -> dict[str, list[str]]:

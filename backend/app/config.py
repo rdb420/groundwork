@@ -67,6 +67,8 @@ class Settings(BaseSettings):
     extract_decision_url: str = ""
     extract_decision_api_key: str = ""
     extract_decision_is_local: bool = False
+    extract_decision_model: str = ""  # empty uses decision_model; Laya: english or typed-decisions
+    extract_decision_flavour: str = ""  # empty: laya if extraction has its own URL and says so, else jev
     topics_min_chunks: int = 500  # BERTopic needs enough text to find stable themes
     neo4j_url: str = ""  # e.g. http://neo4j:7474 (the Query API); empty stops the pipeline after extraction
     neo4j_user: str = "neo4j"
@@ -115,7 +117,9 @@ class Settings(BaseSettings):
     decision_api_key: str = ""  # used by the jev provider
     openrouter_url: str = "https://openrouter.ai/api/v1/systemone"
     openrouter_api_key: str = ""
-    decision_model: str = "jev-latest"  # OpenRouter routes this to ~typesafe/jev-latest
+    decision_model: str = "jev-latest"  # OpenRouter routes this to ~typesafe/jev-latest; Laya: english
+    decision_flavour: str = "jev"  # jev | laya: how questions are phrased for the model behind decision_url
+    decision_timeout_s: float = 15  # a local model on CPU needs longer
     decision_is_local: bool = False  # true when decision_url is a server you run
     decision_max_options: int = 20  # keep Choice questions portable to Laya and OpenJev
     live_auto_threshold: float = 0.75  # at or above this confidence, changes apply without a click

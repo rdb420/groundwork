@@ -131,12 +131,41 @@ Recording tab still keeps a local recording. Local streaming speech recognition 
 when you want answers to stay stable between sessions. Requests are billed per input token to the
 OpenRouter account.
 
-Laya and OpenJev accept the same request and return the same answers as Jev. Set
-`GW_DECISION_PROVIDER=jev`, point `GW_DECISION_URL` at your server, set `GW_DECISION_MODEL` to a
-name it accepts, and set `GW_DECISION_IS_LOCAL=true`. OpenJev caps a
-Choice at 128 options and rejects pinned Jev version names; Laya's accuracy falls as options grow.
-Groundwork keeps every Choice at or under `GW_DECISION_MAX_OPTIONS` (20). Both are new community
-projects; measure them with `scripts/live_eval.py` on your own sentences first.
+### Laya, the local decision model
+
+[Laya](https://github.com/NandhaKishorM/laya) ([weights](https://huggingface.co/convaiinnovations/laya),
+Apache 2.0) is an open System One model with Jev's API. It runs on the inference box
+(`laya` in `deploy/inference-compose.yml`) in tens of milliseconds per request on a GPU, so nothing
+leaves the building and maps and files with personal information can use it.
+
+```
+GW_DECISION_PROVIDER=jev
+GW_DECISION_URL=http://<box>:8011/v1/systemone
+GW_DECISION_API_KEY=<LAYA_API_KEY>
+GW_DECISION_MODEL=english            # or typed-decisions
+GW_DECISION_FLAVOUR=laya
+GW_DECISION_IS_LOCAL=true
+GW_DECISION_MAX_OPTIONS=12
+```
+
+For extraction only (keeping hosted Jev for live mapping), set the same values on the
+`GW_EXTRACT_DECISION_*` settings instead.
+
+Differences Groundwork allows for when the flavour is `laya`:
+
+- Laya fits the question and every option into a 192-token budget, so relation questions split
+  into groups of at most 8, labelled by what they hold, and options are short ("A is Tenant / lessee
+  in B"). Its confidence is uncalibrated above 10 options, which this also avoids.
+- Its English checkpoint leans towards "no" on yes/no questions labelled true/false, so those go
+  out with neutral labels, as its README advises.
+- Its `confidence` for a choice is an entropy measure; Groundwork reads its calibrated
+  `answer_confidence` instead, so `GW_LIVE_AUTO_THRESHOLD` and the extraction thresholds mean the
+  same as with Jev.
+- The base checkpoints are general. Laya's own results show specialist decisions improve most with
+  fine-tuning, so measure it on YSH's sentences before relying on it (below).
+
+OpenJev also accepts the same request; it caps a Choice at 128 options and rejects pinned Jev
+version names. Groundwork keeps every Choice at or under `GW_DECISION_MAX_OPTIONS`.
 
 ## Measuring it
 

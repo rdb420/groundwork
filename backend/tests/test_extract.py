@@ -27,7 +27,7 @@ LEASE = ("# Residential tenancy agreement\n\nSam Nguyen signed the residential t
 class FakeJev:
     """Picks the option whose label contains a keyword; otherwise 'none'. Records every question."""
 
-    def __init__(self, prefer: tuple[str, ...] = ("Tenant / lessee",), other_for: str = ""):
+    def __init__(self, prefer: tuple[str, ...] = ("is Tenant / lessee",), other_for: str = ""):
         self.prefer = prefer
         self.other_for = other_for
         self.calls: list[dict] = []
@@ -42,11 +42,11 @@ class FakeJev:
                 pick = "other"
             else:
                 pick = next((k for k, label in opts.items() if any(p in label for p in self.prefer)), None)
-                pick = pick or next((k for k, label in opts.items() if label.startswith("One of:")
-                                     and any(p in label for p in self.prefer)), None)
+                pick = pick or next((k for k in opts if k.startswith("g")), None)
                 pick = pick or next((k for k in opts if k.startswith("c")), "none")
             answers[key] = {"type": "choice", "choice": pick, "confidence": 0.9}
         return answers, "jev-test", 5
+
 
 
 @pytest.fixture
@@ -61,7 +61,7 @@ def extraction(index, monkeypatch):  # noqa: F811
     monkeypatch.setattr(jev, "system_one", fake_jev)
     s = get_settings()
     for k, v in {"extract_url": "http://inference:7870", "neo4j_url": "http://neo4j:7474", "neo4j_password": "pw",
-                 "decision_provider": "openrouter", "decision_is_local": False,
+                 "decision_provider": "openrouter", "openrouter_api_key": "or-key", "decision_is_local": False,
                  "ai_allow_cloud_for_personal_info": False, "extract_decision_url": ""}.items():
         monkeypatch.setattr(s, k, v)
     graph._loaded.clear()
@@ -82,9 +82,12 @@ def test_every_relation_question_fits_the_option_limit():
     for a in classes:
         for b in classes:
             options = o.relation_options(a, b)
-            groups = [options[i:i + extract.MAX_GROUP] for i in range(0, len(options), extract.MAX_GROUP)]
-            assert len(groups) + 2 <= limit  # first step: groups plus "none" and "another"
-            assert all(len(g) + 2 <= limit for g in groups)  # second step
+            for flavour in ("jev", "laya"):
+                size = extract.group_size(flavour)
+                groups = [g for _, g in extract.group_options(options, size)]
+                assert sum(len(g) for g in groups) == len(options)  # nothing dropped
+                assert len(groups) + 2 <= min(limit, size + 2)  # first step: groups plus "none" and "another"
+                assert all(len(g) + 2 <= limit for g in groups)  # second step
 
 
 def test_a_lease_becomes_entities_roles_and_a_graph(client, extraction):
@@ -161,7 +164,7 @@ def test_personal_files_wait_for_a_local_decision_model(client, extraction, monk
         from app.ingest import pipeline
         pipeline.extract_entities(db, doc.id)
         db.commit()
-        assert fake_jev.calls and fake_jev.calls[0]["target"][0] == "http://laya:8080/v1/systemone"
+        assert fake_jev.calls and fake_jev.calls[0]["target"].url == "http://laya:8080/v1/systemone"
         assert db.get(Document, doc.id).status == "ok"
 
 

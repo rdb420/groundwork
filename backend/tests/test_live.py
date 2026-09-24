@@ -294,3 +294,38 @@ def test_openrouter_route_and_privacy(client, monkeypatch):
     b = new_board(client, personal_info=True)
     assert say(client, b, "The tenant pays").status_code == 409
     assert client.get("/api/auth/me").json()["live_local"] is False
+
+
+def test_laya_targets_get_neutral_yes_no_labels_and_their_own_model(client, monkeypatch):
+    from app.ingest import extract
+    from app.live import jev
+    qs = {"n": jev.noul("Is this a step?"), "c": jev.choice("Which?", {"a": "x", "b": "y"})}
+    assert jev.for_flavour(qs, "jev") is qs
+    laya = jev.for_flavour(qs, "laya")
+    assert laya["n"]["labels"] == {"true": "A", "false": "B"} and set(laya["n"]["criteria"]) == {"true", "false"}
+    assert laya["c"] == qs["c"] and "labels" not in qs["n"]  # choices unchanged, input untouched
+
+    s = get_settings()
+    for k, v in {"extract_decision_url": "http://inference:8011/v1/systemone", "extract_decision_is_local": True,
+                 "extract_decision_model": "english", "extract_decision_flavour": "laya",
+                 "extract_decision_api_key": "laya-key"}.items():
+        monkeypatch.setattr(s, k, v)
+    t = extract.extraction_target()
+    assert (t.url, t.model, t.flavour, t.local) == ("http://inference:8011/v1/systemone", "english", "laya", True)
+    assert t.headers == {"Authorization": "Bearer laya-key"}
+    assert extract.group_size("laya") + 2 <= 10 < extract.group_size("jev") + 2 <= s.decision_max_options
+
+    sent = {}
+
+    class Resp:
+        status_code = 200
+
+        def json(self):
+            return {"model": "english", "answers": {}}
+
+    monkeypatch.setattr(jev.httpx, "post", lambda url, json, headers, timeout: sent.update(url=url, body=json) or Resp())
+    jev.system_one({"text": "x"}, qs, target=t)
+    # Laya's `confidence` for a choice is entropy-based; its calibrated probability is answer_confidence.
+    assert jev.picked({"c": {"choice": "a", "confidence": 0.42, "answer_confidence": 0.8}}, "c") == ("a", 0.8)
+    assert jev.picked({"c": {"choice": "a", "confidence": 0.9}}, "c") == ("a", 0.9)
+    assert sent["body"]["model"] == "english" and sent["body"]["questions"]["n"]["labels"] == {"true": "A", "false": "B"}

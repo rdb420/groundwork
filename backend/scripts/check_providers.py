@@ -42,6 +42,16 @@ def main() -> int:
             ok &= line("Decision model", OK, f"{model} answered {answers.get('step')} in {ms} ms")
         except jev.DecisionError as e:
             ok &= line("Decision model", FAIL, str(e))
+    if s.extract_decision_url:
+        from app.ingest.extract import extraction_target
+        t = extraction_target()
+        try:
+            answers, model, ms = jev.system_one({"text": "Sam is the tenant."},
+                                                {"role": jev.noul("Does `text` name a tenant?")}, target=t)
+            ok &= line("Extraction decision", OK, f"{model} ({t.flavour}, {'local' if t.local else 'hosted'}) "
+                                                  f"answered {answers.get('role')} in {ms} ms")
+        except jev.DecisionError as e:
+            ok &= line("Extraction decision", FAIL, str(e))
     if s.ai_provider != "none":
         t0 = time.perf_counter()
         try:

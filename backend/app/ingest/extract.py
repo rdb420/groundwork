@@ -34,7 +34,13 @@ CATCH_ALL = "other named thing"
 CATCH_ALL_DESCRIPTION = ("A named organisation, system, programme, document, place or kind of thing that matters to "
                          "the work but fits none of the other labels")
 CLASS_MARGIN = 0.1  # two classes this close for one span go to Jev
-MAX_GROUP = 18  # options per question before it splits in two (plus "none" and "another")
+# Options per question before it splits in two (plus "none" and "another"). Laya's options share a
+# 192-token budget, so it gets fewer, shorter ones.
+GROUP_SIZE = {"jev": 18, "laya": 8}
+
+
+def group_size(flavour: str) -> int:
+    return GROUP_SIZE.get(flavour, 18)
 
 
 @dataclass
@@ -50,18 +56,30 @@ class Mention:
     id: str = ""
 
 
-def decision_target(doc: Document) -> tuple[tuple[str, dict] | None, str]:
-    """(endpoint override or None for the live one, reason it can't be used or "")."""
+def extraction_target() -> jev.Target | None:
+    """Extraction's own decision model (for example a local Laya), or the live-mapping one."""
     s = get_settings()
     if s.extract_decision_url:
         headers = {"Authorization": f"Bearer {s.extract_decision_api_key}"} if s.extract_decision_api_key else {}
-        target: tuple[str, dict] | None = (s.extract_decision_url, headers)
-        local = s.extract_decision_is_local
-    elif s.decision_provider != "none":
-        target, local = None, s.decision_local
-    else:
+        return jev.Target(s.extract_decision_url, headers, s.extract_decision_model or s.decision_model,
+                          s.extract_decision_flavour or "jev", s.extract_decision_is_local)
+    if s.decision_provider != "none":
+        try:
+            live = jev.live_target()
+        except jev.DecisionError:  # set up but missing its key: treat as not set up
+            return None
+        return jev.Target(live.url, live.headers, s.extract_decision_model or live.model,
+                          s.extract_decision_flavour or live.flavour, live.local)
+    return None
+
+
+def decision_target(doc: Document) -> tuple[jev.Target | None, str]:
+    """(where relationship questions go, reason they can't go anywhere or "")."""
+    s = get_settings()
+    target = extraction_target()
+    if target is None:
         return None, "No decision model is set up, so relationships weren't extracted."
-    if doc.personal_info and not local and not s.ai_allow_cloud_for_personal_info:
+    if doc.personal_info and not target.local and not s.ai_allow_cloud_for_personal_info:
         return None, ("This file holds personal information (or nobody was sure), so relationships wait for a "
                       "local decision model. Entities were kept.")
     return target, ""
@@ -99,7 +117,7 @@ def _ask(state: dict, questions: dict, target) -> dict:
     return answers
 
 
-def confirm_classes(o: Ontology, mentions: list[Mention], texts: list[str], target) -> None:
+def confirm_classes(o: Ontology, mentions: list[Mention], texts: list[str], target: jev.Target | None) -> None:
     """Jev picks between close classes for a span. Its options are only the classes GLiNER2 offered."""
     by_chunk: dict[int, list[Mention]] = {}
     for m in mentions:
@@ -109,7 +127,8 @@ def confirm_classes(o: Ontology, mentions: list[Mention], texts: list[str], targ
         questions, options = {}, {}
         for n, m in enumerate(ms):
             classes = [m.class_iri] + [c for c, _ in sorted(m.alternatives, key=lambda x: -x[1])][:4]
-            opts = {f"c{i}": f"{o.label(c)}: {(o.classes[c].get('definition') or '')[:160]}" for i, c in enumerate(classes)}
+            room = 50 if target is not None and target.flavour == "laya" else 160
+            opts = {f"c{i}": f"{o.label(c)}: {(o.classes[c].get('definition') or '')[:room]}" for i, c in enumerate(classes)}
             opts["none"] = "None of these fits"
             questions[f"q{n}"] = jev.choice(f"In `text`, what is \"{m.text}\"?", opts)
             options[f"q{n}"] = classes
@@ -128,17 +147,35 @@ def _pairs(ms: list[Mention], limit: int) -> list[tuple[Mention, Mention]]:
     return sorted(pairs, key=lambda p: abs(p[0].start - p[1].start))[:limit]
 
 
+def group_options(options: list[Option], size: int) -> list[tuple[str, list[Option]]]:
+    """Groups for the first of two questions: direct relationships and roles apart, at most size
+    each, labelled with what they hold so the model can find the right one."""
+    direct = [x for x in options if x.property_iri]
+    roles = [x for x in options if x.role_iri]
+    out: list[tuple[str, list[Option]]] = []
+    for i in range(0, len(direct), size):
+        g = direct[i:i + size]
+        names = ", ".join(dict.fromkeys(x.label.split(" ", 1)[1].rsplit(" ", 1)[0] for x in g))
+        out.append((f"a direct link: {names}", g))
+    for i in range(0, len(roles), size):
+        g = roles[i:i + size]
+        who = g[0].label.split(" ", 1)[0]
+        names = ", ".join(x.label.split(" is ", 1)[1].rsplit(" in ", 1)[0] for x in g)
+        out.append((f"{who}'s role: {names}", g))
+    return out
+
+
 def _question(o: Ontology, a: Mention, b: Mention, opts: dict[str, str]) -> dict:
-    opts = opts | {"none": "`text` doesn't say how these two are related",
-                   "other": "`text` states a relationship that none of these describe"}
-    return jev.choice(f"According to `text`, how is \"{a.text}\" ({o.label(a.class_iri)}) related to \"{b.text}\" "
-                      f"({o.label(b.class_iri)})?", opts)
+    opts = opts | {"none": "text doesn't say", "other": "a relationship not listed"}
+    return jev.choice(f"In `text`, A is \"{a.text}\" ({o.label(a.class_iri)}) and B is \"{b.text}\" "
+                      f"({o.label(b.class_iri)}). How is A related to B?", opts)
 
 
-def find_relations(o: Ontology, mentions: list[Mention], texts: list[str], target, max_pairs: int,
+def find_relations(o: Ontology, mentions: list[Mention], texts: list[str], target: jev.Target | None, max_pairs: int,
                    min_conf: float) -> tuple[list[tuple[Mention, Mention, Option, float]], list[tuple[Mention, Mention]]]:
     """(relations found, pairs where the text states a relationship the ontology lacks)."""
     found, other = [], []
+    size = group_size(target.flavour if target is not None else get_settings().decision_flavour)
     by_chunk: dict[int, list[Mention]] = {}
     for m in mentions:
         by_chunk.setdefault(m.chunk, []).append(m)
@@ -149,13 +186,13 @@ def find_relations(o: Ontology, mentions: list[Mention], texts: list[str], targe
             options = o.relation_options(a.class_iri, b.class_iri)
             if not options:
                 continue
-            if len(options) <= MAX_GROUP:
+            if len(options) <= size:
                 questions[f"r{n}"] = _question(o, a, b, {x.key: x.label for x in options})
                 pending.append((f"r{n}", a, b, options, None))
             else:  # two steps: which group of options, then which option
-                groups = [options[i:i + MAX_GROUP] for i in range(0, len(options), MAX_GROUP)]
-                questions[f"r{n}"] = _question(o, a, b, {f"g{i}": "One of: " + "; ".join(x.label for x in g)
-                                                         for i, g in enumerate(groups)})
+                labelled = group_options(options, size)
+                groups = [g for _, g in labelled]
+                questions[f"r{n}"] = _question(o, a, b, {f"g{i}": label for i, (label, _) in enumerate(labelled)})
                 pending.append((f"r{n}", a, b, options, groups))
         if not questions:
             continue
