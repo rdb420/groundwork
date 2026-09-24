@@ -24,6 +24,20 @@ services:
     restart: unless-stopped
     depends_on: [ app ]
 
+  # Ingestion: converting files to Markdown waits on MinerU, so it has its own worker.
+  converter:
+    build: { context: ., dockerfile: deploy/Dockerfile, args: { WITH_WHISPER: "${WITH_WHISPER:-false}" } }
+    env_file: .env
+    command: ["python", "-m", "app.worker", "--kinds", "convert_artifact"]
+    volumes: [ "./data:/data" ]
+    restart: unless-stopped
+    depends_on: [ app ]
+
+  # Opens doc, ppt, odt, rtf, xls and ods files (LibreOffice) and returns PDF. Internal only.
+  gotenberg:
+    image: gotenberg/gotenberg:8
+    restart: unless-stopped
+
   # Transcription on its own, so a large workbook never delays a live session's transcript.
   transcriber:
     build: { context: ., dockerfile: deploy/Dockerfile, args: { WITH_WHISPER: "${WITH_WHISPER:-false}" } }

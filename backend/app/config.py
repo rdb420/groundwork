@@ -51,6 +51,7 @@ class Settings(BaseSettings):
     mineru_page_batch: int = 50  # pages per MinerU task for long PDFs
     mineru_timeout_s: int = 1800
     gotenberg_url: str = ""  # converts doc, ppt, odt, rtf to PDF
+    embed_url: str = ""  # the embedding sidecar; empty stops the pipeline after conversion
 
     # Malware scanning of uploads with ClamAV (clamd over TCP). Empty host switches scanning off.
     clamav_host: str = ""

@@ -47,3 +47,65 @@ class FakeS3:
 
 def json_response(data, status: int = 200) -> httpx.Response:
     return httpx.Response(status, content=json.dumps(data).encode(), headers={"content-type": "application/json"})
+
+
+class FakeMinerU:
+    """mineru-api's async task flow: POST /tasks (202), GET /tasks/{id}/result (202 while
+    pending, then 200 with md_content, content_list as a JSON string, and images as data URIs)."""
+
+    def __init__(self, pending_polls: int = 1, fail: bool = False):
+        self.pending_polls = pending_polls
+        self.fail = fail
+        self.tasks: dict[str, dict] = {}
+        self.received: list[dict] = []
+
+    def __call__(self, request: httpx.Request) -> httpx.Response:
+        path = request.url.path
+        if request.method == "POST" and path == "/tasks":
+            body = request.read()
+            form = {}
+            for part in body.split(b"\r\n--"):
+                head, _, value = part.partition(b"\r\n\r\n")
+                if b'name="' in head and b"filename=" not in head:
+                    name = head.split(b'name="', 1)[1].split(b'"', 1)[0].decode()
+                    form[name] = value.rstrip(b"\r\n-").decode(errors="replace")
+            self.received.append({"form": form, "file_bytes": body})
+            tid = f"t{len(self.tasks) + 1}"
+            self.tasks[tid] = {"polls": 0, "form": form}
+            return json_response({"task_id": tid, "status": "pending"}, 202)
+        if request.method == "GET" and path.startswith("/tasks/") and path.endswith("/result"):
+            task = self.tasks.get(path.split("/")[2])
+            if task is None:
+                return json_response({"detail": "Task not found"}, 404)
+            if self.fail:
+                return json_response({"status": "failed"}, 409)
+            task["polls"] += 1
+            if task["polls"] <= self.pending_polls:
+                return json_response({"status": "processing"}, 202)
+            start = int(task["form"].get("start_page_id", 0) or 0)
+            content = [
+                {"type": "text", "text": "Residential tenancy agreement", "text_level": 1, "page_idx": 0},
+                {"type": "text", "text": f"Rent is due every Monday. Window starting {start}.", "page_idx": 0},
+                {"type": "header", "text": "Page header to skip", "page_idx": 0},
+                {"type": "table", "table_body": "<table><tr><th>Room</th><th>Rent</th></tr><tr><td>3</td><td>$220</td></tr></table>",
+                 "table_caption": ["Rooms and rent"], "page_idx": 1},
+                {"type": "image", "img_path": "images/a.jpg", "image_caption": ["Floor plan"], "page_idx": 1},
+            ]
+            png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+            return json_response({"results": {"doc": {
+                "md_content": "# Residential tenancy agreement\n\nRent is due every Monday.\n",
+                "content_list": json.dumps(content), "images": {"a.jpg": f"data:image/png;base64,{png}"}}}})
+        if path == "/health":
+            return json_response({"status": "healthy"})
+        return httpx.Response(404)
+
+
+class FakeGotenberg:
+    def __init__(self):
+        self.calls = 0
+
+    def __call__(self, request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/forms/libreoffice/convert":
+            self.calls += 1
+            return httpx.Response(200, content=b"%PDF-1.4 fake converted document")
+        return httpx.Response(404)

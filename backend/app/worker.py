@@ -15,9 +15,10 @@ from datetime import timedelta
 
 from sqlalchemy import case, or_, select, update
 
-from . import audit, housekeeping, retention, scan
+from . import audit, housekeeping, jobs, retention, scan
 from .config import get_settings
 from .db import SessionLocal, init_db
+from .ingest import pipeline
 from .models import Artifact, Job, TranscriptSegment
 from .processing.text_extract import profile_document
 from .processing.xlsx_profile import profile_workbook
@@ -60,7 +61,6 @@ def profile_artifact(db, aid: str):
     a.profile, a.status = prof, "processed"
     audit.record(db, "artifact.processed", "artifact", aid, actor_type="system", detail={"summary": prof.get("summary")})
     if get_settings().pipeline_enabled and not a.board_id:
-        from .ingest import pipeline
         pipeline.start(db, a)
 
 
@@ -72,12 +72,13 @@ def transcribe_segment(db, sid: str):
         result = transcribe(path)
     seg.text, seg.timings, seg.status = result.text, result.rows, "done"
     if get_settings().pipeline_enabled:
-        from .ingest import pipeline
         pipeline.after_segment(db, seg)
 
 
-HANDLERS = {"profile_artifact": profile_artifact, "transcribe_segment": transcribe_segment}
-PRIORITY = ["transcribe_segment", "profile_artifact"]  # a live session's transcript comes first
+HANDLERS = {"profile_artifact": profile_artifact, "transcribe_segment": transcribe_segment, **pipeline.STAGES}
+# A live session's transcript comes first, then purges, then files in pipeline order.
+PRIORITY = ["transcribe_segment", "purge_external", "profile_artifact", "convert_artifact", "transcribe_artifact",
+            "ingest_recording", "index_chunks", "extract_entities", "project_graph"]
 MAX_ATTEMPTS = 3
 BACKOFF = [timedelta(seconds=30), timedelta(minutes=2)]
 STALE_AFTER = timedelta(minutes=30)  # longer than any job should run
@@ -104,6 +105,7 @@ def run_once(kinds: list[str] | None = None) -> bool:
         job = claim(db, kinds)
         if not job:
             return False
+        token = jobs.current_job_id.set(job.id)
         try:
             HANDLERS[job.kind](db, job.ref_id)
             job.status = "done"
@@ -122,6 +124,10 @@ def run_once(kinds: list[str] | None = None) -> bool:
                 seg = db.get(TranscriptSegment, job.ref_id)
                 if seg:
                     seg.status = "failed"
+            if job.kind in pipeline.STAGES and job.status == "failed":
+                pipeline.failed(db, job.kind, job.ref_id)
+        finally:
+            jobs.current_job_id.reset(token)
         job.updated_at = utcnow()
         db.commit()
         return True
