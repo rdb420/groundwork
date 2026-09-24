@@ -146,6 +146,17 @@ def run_retention() -> dict:
     return done
 
 
+def _final_failure(db, job: Job) -> None:
+    if job.kind == "transcribe_segment":
+        seg = db.get(TranscriptSegment, job.ref_id)
+        if seg:
+            seg.status = "failed"
+            if get_settings().pipeline_enabled:
+                pipeline.after_segment(db, seg)
+    if job.kind in pipeline.STAGES:
+        pipeline.failed(db, job.kind, job.ref_id)
+
+
 def reclaim(kinds: list[str] | None = None, older_than: timedelta = STALE_AFTER) -> int:
     """Put jobs left running by a crashed worker back in the queue."""
     with SessionLocal() as db:
@@ -156,6 +167,8 @@ def reclaim(kinds: list[str] | None = None, older_than: timedelta = STALE_AFTER)
         for job in stale:
             job.status = "queued" if job.attempts < MAX_ATTEMPTS else "failed"
             job.error = (job.error + "\nThe worker stopped while running this job.").strip()
+            if job.status == "failed":
+                _final_failure(db, job)
             job.updated_at = utcnow()
         db.commit()
     if stale:
