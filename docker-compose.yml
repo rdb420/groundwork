@@ -40,7 +40,7 @@ services:
     profiles: [ "pipeline" ]
     build: { context: ., dockerfile: deploy/Dockerfile, args: { WITH_WHISPER: "${WITH_WHISPER:-false}" } }
     env_file: .env
-    command: ["python", "-m", "app.worker", "--kinds", "ingest_recording,index_chunks,extract_entities,project_graph,purge_external"]
+    command: ["python", "-m", "app.worker", "--kinds", "ingest_recording,index_chunks,extract_entities,project_graph,purge_external,topics_batch"]
     volumes: [ "./data:/data" ]
     restart: unless-stopped
     depends_on: [ app ]

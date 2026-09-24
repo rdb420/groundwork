@@ -344,3 +344,21 @@ class OntologyCandidate(Base):
     decided_by: Mapped[str | None] = mapped_column(String(32), nullable=True)
     decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     ontology_version: Mapped[str] = mapped_column(String(20), default="")
+
+
+class Topic(Base):
+    """A theme BERTopic found across the chunks, fitted on YSH's own text and seeded from the
+    ontology's SKOS concepts. Replaced as a whole each time topics are fitted."""
+    __tablename__ = "topics"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=uid)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    number: Mapped[int] = mapped_column(Integer)
+    words: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    size: Mapped[int] = mapped_column(Integer, default=0)
+    concept_iri: Mapped[str] = mapped_column(String(120), default="")  # the SKOS concept it matches, if any
+
+
+class ChunkTopic(Base):
+    __tablename__ = "chunk_topics"
+    chunk_id: Mapped[str] = mapped_column(ForeignKey("chunks.id", ondelete="CASCADE"), primary_key=True)
+    topic_id: Mapped[str] = mapped_column(ForeignKey("topics.id", ondelete="CASCADE"), index=True)

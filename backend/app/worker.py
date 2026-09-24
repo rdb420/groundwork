@@ -78,7 +78,7 @@ def transcribe_segment(db, sid: str):
 HANDLERS = {"profile_artifact": profile_artifact, "transcribe_segment": transcribe_segment, **pipeline.STAGES}
 # A live session's transcript comes first, then purges, then files in pipeline order.
 PRIORITY = ["transcribe_segment", "purge_external", "profile_artifact", "convert_artifact", "transcribe_artifact",
-            "ingest_recording", "index_chunks", "extract_entities", "project_graph"]
+            "ingest_recording", "index_chunks", "extract_entities", "project_graph", "topics_batch"]
 MAX_ATTEMPTS = 3
 BACKOFF = [timedelta(seconds=30), timedelta(minutes=2)]
 STALE_AFTER = timedelta(minutes=30)  # longer than any job should run

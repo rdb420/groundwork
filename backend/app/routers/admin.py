@@ -327,3 +327,15 @@ def backfill(request: Request, user: User = Depends(require("admin")), db: DB = 
     audit.record(db, "pipeline.backfill", "system", actor_id=user.id, request=request, detail={"queued": len(rows)})
     db.commit()
     return {"queued": len(rows)}
+
+
+@router.post("/pipeline/topics")
+def fit_topics(request: Request, user: User = Depends(require("admin")), db: DB = Depends(get_db)):
+    """Fit themes across everything indexed (BERTopic in the extraction sidecar). Runs in the background."""
+    from .. import jobs
+    if not get_settings().extract_url:
+        raise HTTPException(409, "The extraction service isn't set up (GW_EXTRACT_URL).")
+    jobs.enqueue(db, "topics_batch", "all")
+    audit.record(db, "pipeline.topics", "system", actor_id=user.id, request=request)
+    db.commit()
+    return {"ok": True}

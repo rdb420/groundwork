@@ -310,6 +310,11 @@ def project_graph(db: DB, doc_id: str) -> None:
     log.info("graphed %s %s: %s", doc.source_type, doc.source_id, counts)
 
 
+def topics_batch(db: DB, _ref: str) -> None:
+    from . import topics
+    log.info("topics: %s", topics.run(db))
+
+
 def failed(db: DB, kind: str, ref_id: str) -> None:
     """The worker calls this when a stage has used up its tries."""
     if kind in ("convert_artifact", "transcribe_artifact"):
@@ -328,4 +333,4 @@ def failed(db: DB, kind: str, ref_id: str) -> None:
 
 STAGES = {"convert_artifact": convert_artifact, "transcribe_artifact": transcribe_artifact,
           "ingest_recording": ingest_recording, "index_chunks": index_chunks, "extract_entities": extract_entities,
-          "project_graph": project_graph}
+          "project_graph": project_graph, "topics_batch": topics_batch}

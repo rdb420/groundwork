@@ -67,6 +67,7 @@ class Settings(BaseSettings):
     extract_decision_url: str = ""
     extract_decision_api_key: str = ""
     extract_decision_is_local: bool = False
+    topics_min_chunks: int = 500  # BERTopic needs enough text to find stable themes
     neo4j_url: str = ""  # e.g. http://neo4j:7474 (the Query API); empty stops the pipeline after extraction
     neo4j_user: str = "neo4j"
     neo4j_password: str = ""

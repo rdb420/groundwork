@@ -81,3 +81,22 @@ def test_backfill_queues_files_shared_before_the_pipeline(client, extraction, mo
     drain()
     with SessionLocal() as db:
         assert db.get(Artifact, aid).pipeline_status == "done"
+
+
+def test_topics_link_to_concepts_or_become_proposals(client, extraction, monkeypatch):  # noqa: F811
+    from app.models import ChunkTopic, Topic
+    monkeypatch.setattr(get_settings(), "topics_min_chunks", 3)
+    sign_in(client, "staff@example.com.au")
+    for i, text in enumerate(["Gross lease terms for the shop.", "Gross lease renewal notes.",
+                              "Laundry roster for residents.", "Laundry machine repairs."]):
+        share(client, f"t{i}.md", f"# Note {i}\n\n{text}\n")
+    drain()
+    sign_in(client, "boss@example.com.au")
+    assert client.post("/api/admin/pipeline/topics", headers=H).status_code == 200
+    drain()
+    with SessionLocal() as db:
+        topics = db.scalars(select(Topic)).all()
+        assert topics and db.scalars(select(ChunkTopic)).all()
+        proposals = db.scalars(select(OntologyCandidate).where(OntologyCandidate.kind == "concept")).all()
+        assert proposals  # "laundry" is no ontology concept, so it waits for an analyst
+    assert audited("pipeline.topics") == 1
