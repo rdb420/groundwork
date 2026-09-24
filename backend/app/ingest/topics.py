@@ -4,11 +4,11 @@ words from the ontology's SKOS concepts. A topic that matches a concept is linke
 matches nothing becomes a proposed category value for an analyst to review."""
 import re
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, or_, select
 from sqlalchemy.orm import Session as DB
 
 from ..config import get_settings
-from ..models import Chunk, ChunkTopic, Document, Topic
+from ..models import Artifact, Chunk, ChunkTopic, Document, Topic
 from . import extract, extractor
 from .ontology import load
 
@@ -23,7 +23,10 @@ def run(db: DB) -> dict:
     s = get_settings()
     o = load()
     chunks = db.scalars(select(Chunk).join(Document, Document.id == Chunk.document_id)
-                        .where(Document.is_current.is_(True), Chunk.kind != "image")).all()
+                        .where(Document.is_current.is_(True), Chunk.kind != "image",
+                               or_(Document.source_type != "artifact",
+                                   Document.source_id.in_(select(Artifact.id).where(
+                                       Artifact.status.not_in(("withdrawn", "purged", "quarantined"))))))).all()
     if len(chunks) < s.topics_min_chunks:
         return {"skipped": f"Topics need at least {s.topics_min_chunks} chunks; there are {len(chunks)}."}
     concepts = [c for scheme, cs in o.concepts.items() if scheme != "pbo:RoleScheme" for c in cs]
