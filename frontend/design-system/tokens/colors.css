@@ -1,0 +1,66 @@
+/* YSH internal apps colour tokens.
+   Brand pair sampled from the ysh.com.au favicon/logo (navy field, gold "PROPERTY").
+   Working palette copied verbatim from groundwork/frontend/src/styles.css:
+   "survey blue linework on cool paper, marker-yellow notes, boundary red for anything touching personal information." */
+:root{
+  /* Brand (ysh.com.au) */
+  --ysh-navy:#1a2c3a;
+  --ysh-navy-2:#1e303d;
+  --ysh-gold:#af9360;
+  --ysh-gold-deep:#948059;
+  --ysh-white:#ffffff;
+
+  /* Groundwork base palette */
+  --ink:#1c2b36;
+  --paper:#f6f8f7;
+  --panel:#ffffff;
+  --survey:#2c5f8a;
+  --survey-hover:#234d71;
+  --survey-soft:#e3ecf4;
+  --marker:#f2cf3e;
+  --marker-edge:#c9a92a;
+  --boundary:#b3412e;
+  --ok:#3f7d5a;
+  --grid:#dce3e8;
+  --muted:#5b6b77;
+  --line:#c9d3da;
+
+  /* Tints used by states and canvas context elements (all from source) */
+  --ok-soft:#e3f0e8;
+  --ok-soft-2:#e9f3ed;
+  --boundary-soft:#f6e3df;
+  --issue-soft:#fbe9e5;
+  --workaround-soft:#fdf3cf;
+  --workaround-edge:#b8931d;
+  --workaround-ink:#8a6d12;
+  --proposal-soft:#fdf7df;
+  --confirm:#fbe9a6;
+  --change-ink:#6b5510;
+  --hatch:#f1f4f6;
+  --pool-a:#eef2f5;
+  --pool-b:#e7ecf0;
+  --scrim:rgba(28,43,54,.45);
+
+  /* Semantic aliases */
+  --text-body:var(--ink);
+  --text-muted:var(--muted);
+  --text-link:var(--survey);
+  --text-error:var(--boundary);
+  --text-on-accent:#ffffff;
+  --surface-page:var(--paper);
+  --surface-card:var(--panel);
+  --surface-selected:var(--survey-soft);
+  --surface-brand:var(--ysh-navy);
+  --border-default:var(--line);
+  --border-strong:var(--ink);
+  --border-focus:var(--survey);
+  --accent:var(--survey);
+  --accent-hover:var(--survey-hover);
+  --accent-brand:var(--ysh-gold);
+  --status-info-bg:var(--survey-soft);--status-info-fg:var(--survey);
+  --status-ok-bg:var(--ok-soft);--status-ok-fg:var(--ok);
+  --status-error-bg:var(--boundary-soft);--status-error-fg:var(--boundary);
+  --status-warn-bg:var(--workaround-soft);--status-warn-fg:var(--workaround-ink);
+  --personal-info:var(--boundary);
+  color-scheme:light;
+}

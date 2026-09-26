@@ -18,6 +18,7 @@ def test_security_headers_on_every_response(client):
     r = client.get("/api/health")
     csp = r.headers["content-security-policy"]
     assert "script-src 'self'" in csp and "frame-ancestors 'none'" in csp and "object-src 'none'" in csp
+    assert "font-src 'self';" in csp and "googleapis" not in csp  # fonts are self-hosted
     assert r.headers["x-content-type-options"] == "nosniff"
     assert r.headers["x-frame-options"] == "DENY"
 

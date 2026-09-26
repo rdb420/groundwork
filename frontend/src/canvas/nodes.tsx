@@ -3,12 +3,16 @@
 import { createContext, useContext, useState } from "react";
 import { Handle, NodeResizer, Position, useReactFlow, type NodeProps } from "@xyflow/react";
 import { POOL_HANDLES } from "./ops";
+import { Input, SuggestBar, Tag, TextArea, cx } from "../ui";
 
 type Pending = { opId: string; source?: string; reason?: string; remove?: boolean; changes?: { label?: string; kind?: string; lane_id?: string; new_lane?: string } };
 type D = {
   label?: string; gatewayType?: string; taskKind?: string; dataKind?: string; artifactId?: string; system?: string;
   suggested?: boolean; opId?: string; source?: string; reason?: string; pending?: Pending; tags?: string[];
 };
+
+// Selection and proposal state, on the element that carries the border.
+const state = (d: D, selected?: boolean) => cx(d.suggested && "gw-suggested", d.pending && "gw-pending", selected && "gw-sel");
 
 // Accept and reject go through the op engine so connected edges follow their element.
 export const ProposalContext = createContext<{ accept: (opId: string) => void; reject: (opId: string) => void } | null>(null);
@@ -29,7 +33,7 @@ function Label({ id, value, placeholder, multiline }: { id: string; value?: stri
   const [editing, setEditing] = useState(false);
   if (editing) {
     const common = {
-      className: "nodrag node-input",
+      className: "nodrag gw-node-input",
       autoFocus: true,
       defaultValue: value || "",
       onBlur: (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => { updateNodeData(id, { label: e.target.value }); setEditing(false); },
@@ -37,10 +41,10 @@ function Label({ id, value, placeholder, multiline }: { id: string; value?: stri
         if (e.key === "Escape" || (e.key === "Enter" && !multiline)) (e.target as HTMLElement).blur();
       },
     };
-    return multiline ? <textarea {...common} /> : <input {...common} />;
+    return multiline ? <TextArea {...common} /> : <Input {...common} />;
   }
   return (
-    <span className={`node-label ${value ? "" : "empty"}`} onDoubleClick={() => setEditing(true)} title="Double-click to edit">
+    <span className={cx("gw-node-label", !value && "empty")} onDoubleClick={() => setEditing(true)} title="Double-click to edit">
       {value || placeholder}
     </span>
   );
@@ -59,40 +63,29 @@ function Suggested({ id, data }: { id: string; data: D }) {
   const who = (src?: string) => (src === "review" ? "Reviewer" : src === "jev" ? "Heard" : "Suggested");
   if (data.pending) {
     const p = data.pending;
-    return (
-      <div className="suggest-bar change nodrag" title={p.reason}>
-        <span>{who(p.source)}: {describeChange(p)}</span>
-        <button onClick={() => ops?.accept(p.opId)}>Accept</button>
-        <button onClick={() => ops?.reject(p.opId)}>Reject</button>
-      </div>
-    );
+    return <SuggestBar className="nodrag" who={who(p.source)} change={describeChange(p)} title={p.reason}
+      onKeep={() => ops?.accept(p.opId)} onDrop={() => ops?.reject(p.opId)} />;
   }
   if (!data.suggested) return null;
   const keep = () => (data.opId && ops ? ops.accept(data.opId) : updateNodeData(id, { suggested: false }));
   const drop = () => (data.opId && ops ? ops.reject(data.opId) : deleteElements({ nodes: [{ id }] }));
-  return (
-    <div className="suggest-bar nodrag" title={data.reason}>
-      <span>{who(data.source)}</span>
-      <button onClick={keep}>Keep</button>
-      <button onClick={drop}>Drop</button>
-    </div>
-  );
+  return <SuggestBar className="nodrag" who={who(data.source)} title={data.reason} onKeep={keep} onDrop={drop} />;
 }
 
 function Tags({ tags }: { tags?: string[] }) {
   if (!tags?.length) return null;
-  return <div className="tags">{tags.map((t) => <span key={t} className={`tag t-${t}`}>{t}</span>)}</div>;
+  return <div className="gw-tags">{tags.map((t) => <Tag key={t} kind={t === "workaround" || t === "issue" ? t : "plain"}>{t}</Tag>)}</div>;
 }
 
 export function EventNode({ id, data, type, selected }: NodeProps) {
   const d = data as D;
   const cls = type === "bpmnStart" ? "start" : type === "bpmnEnd" ? "end" : "intermediate";
   return (
-    <div className={`bpmn-event ${cls} ${d.suggested ? "suggested" : ""} ${d.pending ? "pending" : ""} ${selected ? "sel" : ""}`}>
+    <div className={cx("gw-bpmn-event", cls)}>
       <Suggested id={id} data={d} />
-      <div className="ring" />
+      <div className={cx("ring", state(d, selected))} />
       <Handles />
-      <div className="under"><Label id={id} value={d.label} placeholder={cls === "start" ? "What starts it?" : cls === "end" ? "Outcome" : "Event"} /></div>
+      <div className="gw-under"><Label id={id} value={d.label} placeholder={cls === "start" ? "What starts it?" : cls === "end" ? "Outcome" : "Event"} /></div>
     </div>
   );
 }
@@ -108,10 +101,10 @@ const TASK_ICON: Record<string, React.ReactNode> = {
 export function TaskNode({ id, data, type, selected }: NodeProps) {
   const d = data as D;
   return (
-    <div className={`bpmn-task ${type === "bpmnSubprocess" ? "sub" : ""} ${d.taskKind === "manual" ? "manual" : ""} ${d.suggested ? "suggested" : ""} ${d.pending ? "pending" : ""} ${selected ? "sel" : ""}`}>
+    <div className={cx("gw-bpmn-task", d.taskKind === "manual" && "manual", !!d.taskKind && d.taskKind in TASK_ICON && "has-icon", state(d, selected))}>
       <NodeResizer isVisible={!!selected} minWidth={110} minHeight={54} />
       <Suggested id={id} data={d} />
-      {d.taskKind && TASK_ICON[d.taskKind] && <span className="task-icon" aria-hidden="true">{TASK_ICON[d.taskKind]}</span>}
+      {d.taskKind && TASK_ICON[d.taskKind] && <span className="gw-task-icon" aria-hidden="true">{TASK_ICON[d.taskKind]}</span>}
       <Label id={id} value={d.label} placeholder="What happens?" multiline />
       {type === "bpmnSubprocess" && <span className="plus" aria-hidden="true">+</span>}
       <Tags tags={d.tags} />
@@ -124,20 +117,20 @@ export function GatewayNode({ id, data, selected }: NodeProps) {
   const d = data as D;
   const mark = d.gatewayType === "parallel" ? "+" : d.gatewayType === "inclusive" ? "○" : "×";
   return (
-    <div className={`bpmn-gateway ${d.suggested ? "suggested" : ""} ${d.pending ? "pending" : ""} ${selected ? "sel" : ""}`}>
+    <div className="gw-bpmn-gateway">
       <Suggested id={id} data={d} />
-      <div className="diamond"><span>{mark}</span></div>
+      <div className={cx("diamond", state(d, selected))}><span>{mark}</span></div>
       <Handles />
-      <div className="under"><Label id={id} value={d.label} placeholder="Decision?" /></div>
+      <div className="gw-under"><Label id={id} value={d.label} placeholder="Decision?" /></div>
     </div>
   );
 }
 
-export function DataNode({ id, data, selected }: NodeProps) {
+export function DataNode({ id, data }: NodeProps) {
   const d = data as D;
   const store = d.dataKind === "store";
   return (
-    <div className={`bpmn-data ${d.suggested ? "suggested" : ""} ${d.pending ? "pending" : ""} ${selected ? "sel" : ""}`}>
+    <div className="gw-bpmn-data">
       <Suggested id={id} data={d} />
       <svg width="44" height="52" viewBox="0 0 44 52" aria-hidden="true">
         {store ? (
@@ -150,7 +143,7 @@ export function DataNode({ id, data, selected }: NodeProps) {
         )}
       </svg>
       <Handles />
-      <div className="under"><Label id={id} value={d.label} placeholder={store ? "Where is it kept?" : "Which document?"} /></div>
+      <div className="gw-under"><Label id={id} value={d.label} placeholder={store ? "Where is it kept?" : "Which document?"} /></div>
     </div>
   );
 }
@@ -158,9 +151,9 @@ export function DataNode({ id, data, selected }: NodeProps) {
 export function LaneNode({ id, data, selected }: NodeProps) {
   const d = data as D;
   return (
-    <div className={`lane ${selected ? "sel" : ""}`}>
+    <div className={cx("gw-lane", selected && "sel")}>
       <NodeResizer isVisible={!!selected} minWidth={300} minHeight={120} />
-      <div className="lane-head"><Label id={id} value={d.label} placeholder="Who does this?" /></div>
+      <div className="gw-lane-head"><Label id={id} value={d.label} placeholder="Who does this?" /></div>
     </div>
   );
 }
@@ -168,7 +161,7 @@ export function LaneNode({ id, data, selected }: NodeProps) {
 export function StickyNode({ id, data, selected }: NodeProps) {
   const d = data as D;
   return (
-    <div className={`sticky ${d.suggested ? "suggested" : ""} ${d.pending ? "pending" : ""}`}>
+    <div className={cx("gw-sticky", state(d))}>
       <NodeResizer isVisible={!!selected} minWidth={120} minHeight={90} />
       <Suggested id={id} data={d} />
       <Label id={id} value={d.label} placeholder="Double-click to write a note" multiline />
@@ -180,7 +173,7 @@ export function StickyNode({ id, data, selected }: NodeProps) {
 export function TextNode({ id, data, selected }: NodeProps) {
   const d = data as D;
   return (
-    <div className={`freetext ${selected ? "sel" : ""}`}>
+    <div className={cx("gw-freetext", selected && "sel")}>
       <Label id={id} value={d.label} placeholder="Text" multiline />
     </div>
   );
@@ -189,7 +182,7 @@ export function TextNode({ id, data, selected }: NodeProps) {
 export function ImageNode({ data, selected }: NodeProps) {
   const d = data as D;
   return (
-    <div className={`imagenode ${selected ? "sel" : ""}`}>
+    <div className={cx("gw-imagenode", selected && "sel")}>
       <NodeResizer isVisible={!!selected} minWidth={80} minHeight={60} keepAspectRatio />
       {d.artifactId ? <img src={`/api/artifacts/${d.artifactId}/file`} alt={d.label || "Uploaded image"} draggable={false} /> : <span>Uploading…</span>}
       <Handles />
@@ -215,10 +208,10 @@ const CONTEXT_META: Record<string, { mark: string; placeholder: string }> = {
 export function PoolNode({ id, data, selected }: NodeProps) {
   const d = data as D;
   return (
-    <div className={`pool ${d.suggested ? "suggested" : ""} ${selected ? "sel" : ""}`}>
+    <div className={cx("gw-pool", d.suggested && "gw-suggested", selected && "sel")}>
       <NodeResizer isVisible={!!selected} minWidth={300} minHeight={40} />
       <Suggested id={id} data={d} />
-      <span className="pool-mark">Outside party</span>
+      <span className="gw-pool-mark">Outside party</span>
       <Label id={id} value={d.label} placeholder="Who, outside the business?" />
       {Array.from({ length: POOL_HANDLES }, (_, i) => (
         <Handle key={i} type="source" position={Position.Bottom} id={`b${i}`} style={{ left: `${((i + 0.5) / POOL_HANDLES) * 100}%` }} />
@@ -232,10 +225,10 @@ export function PoolNode({ id, data, selected }: NodeProps) {
 export function AdhocNode({ id, data, selected }: NodeProps) {
   const d = data as D;
   return (
-    <div className={`adhoc ${d.suggested ? "suggested" : ""} ${d.pending ? "pending" : ""} ${selected ? "sel" : ""}`}>
+    <div className={cx("gw-adhoc", state(d, selected))}>
       <NodeResizer isVisible={!!selected} minWidth={160} minHeight={80} />
       <Suggested id={id} data={d} />
-      <span className="ctx-mark">Unclear</span>
+      <span className="gw-ctx-mark">Unclear</span>
       <Label id={id} value={d.label} placeholder="What part of the work is unclear?" multiline />
       <span className="tilde" aria-hidden="true">~</span>
       <Handles />
@@ -247,10 +240,10 @@ export function ContextNode({ id, data, type, selected }: NodeProps) {
   const d = data as D;
   const meta = CONTEXT_META[type as string] ?? { mark: "", placeholder: "" };
   return (
-    <div className={`ctx ctx-${type} ${d.suggested ? "suggested" : ""} ${d.pending ? "pending" : ""} ${selected ? "sel" : ""}`}>
+    <div className={cx("gw-ctx", type, state(d, selected))}>
       <NodeResizer isVisible={!!selected} minWidth={110} minHeight={40} />
       <Suggested id={id} data={d} />
-      <span className="ctx-mark">{meta.mark}</span>
+      <span className="gw-ctx-mark">{meta.mark}</span>
       <Label id={id} value={d.label} placeholder={meta.placeholder} multiline />
       <Handles />
     </div>

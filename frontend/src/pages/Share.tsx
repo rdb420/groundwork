@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { api, type ProcessRow } from "../lib/api";
 import { FREQ, KINDS, LAYERS, size } from "../lib/labels";
 import ProcessPicker from "../components/ProcessPicker";
+import { Button, Check, DropZone, Field, FileCard, OptionGroup, Segmented } from "../ui";
 
 type Pending = { file: File; title: string; description: string; kind: string; state: "ready" | "sending" | "done" | "error"; note?: string };
 
@@ -29,15 +30,11 @@ export default function Share() {
   const [maintainedBy, setMaintainedBy] = useState("");
   const [ifGone, setIfGone] = useState("");
   const [isCurrent, setIsCurrent] = useState(true);
-  const [drag, setDrag] = useState(false);
   const [error, setError] = useState("");
-  const input = useRef<HTMLInputElement>(null);
 
   useEffect(() => { api.get<ProcessRow[]>("/api/processes").then(setProcesses); }, []);
 
-  const add = (list: FileList | null) => {
-    if (!list) return;
-    const picked = Array.from(list); // copy now: resetting the input empties the live FileList
+  const add = (picked: File[]) => {
     setFiles((f) => [...f, ...picked.map((file) => ({
       file, title: file.name.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " "), description: "", kind: guessKind(file.name), state: "ready" as const,
     }))]);
@@ -74,98 +71,66 @@ export default function Share() {
   const allDone = files.length > 0 && files.every((f) => f.state === "done");
 
   return (
-    <form className="share" onSubmit={send}>
+    <form className="gw-share" onSubmit={send}>
       <h1>Share files</h1>
       <p className="lede">Anything you use to get the work done counts. Rough is fine. Unofficial is especially welcome.</p>
 
-      <div className={`drop ${drag ? "over" : ""}`} onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
-        onDragLeave={() => setDrag(false)} onDrop={(e) => { e.preventDefault(); setDrag(false); add(e.dataTransfer.files); }}>
-        <p>Drop files here, or</p>
-        <button type="button" onClick={() => input.current?.click()}>Choose files</button>
-        <input ref={input} type="file" multiple hidden onChange={(e) => { add(e.target.files); e.target.value = ""; }} />
-      </div>
+      <DropZone onFiles={add} />
 
       {files.length > 0 && (
         <>
-          <section className="step">
+          <section className="gw-step">
             <h2>Each file</h2>
             {files.map((f, i) => (
-              <div key={i} className={`filecard f-${f.state}`}>
-                <div className="filehead">
-                  <span className="fname">{f.file.name}</span>
-                  <span className="quiet">{size(f.file.size)}</span>
-                  {f.state === "ready" && <button type="button" className="link" onClick={() => setFiles((x) => x.filter((_, j) => j !== i))}>Remove</button>}
-                  {f.state === "done" && <span className="status s-processed">Shared</span>}
-                  {f.state === "sending" && <span className="status">Sending…</span>}
-                </div>
-                <label>What is it?<input required value={f.title} disabled={f.state === "done"} onChange={(e) => patch(i, { title: e.target.value })} /></label>
-                <label>Kind of file
-                  <select value={f.kind} disabled={f.state === "done"} onChange={(e) => patch(i, { kind: e.target.value })}>
-                    {KINDS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-                  </select>
-                </label>
-                <label>What do you use it for? <span className="quiet">Optional</span>
-                  <textarea rows={2} value={f.description} disabled={f.state === "done"} onChange={(e) => patch(i, { description: e.target.value })}
-                    placeholder="For example: I update this every Monday from the bank statement, then email it to Dean." />
-                </label>
-                {f.note && <p className={f.state === "error" ? "error" : "quiet"}>{f.note}</p>}
-              </div>
+              <FileCard key={i} name={f.file.name} size={size(f.file.size)} state={f.state} note={f.note}
+                onRemove={() => setFiles((x) => x.filter((_, j) => j !== i))}>
+                <Field label="What is it?" required value={f.title} disabled={f.state === "done"} onChange={(e) => patch(i, { title: e.target.value })} />
+                <Field label="Kind of file" as="select" options={KINDS} value={f.kind} disabled={f.state === "done"} onChange={(e) => patch(i, { kind: e.target.value })} />
+                <Field label="What do you use it for?" hint="Optional" as="textarea" value={f.description} disabled={f.state === "done"}
+                  onChange={(e) => patch(i, { description: e.target.value })}
+                  placeholder="For example: I update this every Monday from the bank statement, then email it to Dean." />
+              </FileCard>
             ))}
           </section>
 
-          <section className="step">
+          <section className="gw-step">
             <h2>Which part of the work do these belong to?</h2>
             <ProcessPicker processes={processes} selected={pids} newNames={newNames} onChange={(s, n) => { setPids(s); setNewNames(n); }} />
-            <label>Where in that work are they used? <span className="quiet">Optional</span>
-              <input value={stepNote} onChange={(e) => setStepNote(e.target.value)} placeholder="For example: after the tenant signs, before keys are handed over" />
-            </label>
+            <Field label="Where in that work are they used?" hint="Optional" value={stepNote} onChange={(e) => setStepNote(e.target.value)}
+              placeholder="For example: after the tenant signs, before keys are handed over" />
           </section>
 
-          <section className="step">
-            <h2>What do they show?</h2>
-            <div className="options">
-              {LAYERS.map(([v, l, hint]) => (
-                <label key={v} className={`option ${layer === v ? "on" : ""}`}>
-                  <input type="radio" name="layer" value={v} checked={layer === v} onChange={() => setLayer(v)} />
-                  <strong>{l}</strong><span>{hint}</span>
-                </label>
-              ))}
-            </div>
+          <section className="gw-step">
+            <h2 id="layer-q">What do they show?</h2>
+            <OptionGroup name="layer" ariaLabelledBy="layer-q" options={LAYERS.map(([value, label, hint]) => ({ value, label, hint }))}
+              value={layer} onChange={setLayer} />
           </section>
 
-          <section className="step">
-            <h2>Do they contain personal information about tenants, borrowers or staff?</h2>
+          <section className="gw-step">
+            <h2 id="pi-q">Do they contain personal information about tenants, borrowers or staff?</h2>
             <p className="quiet">Names, contact details, bank details, ID, rent or loan history. We store these files on the office server and keep them out of cloud AI. If you're not sure, we treat them as personal.</p>
-            <div className="segmented" role="radiogroup">
-              {[["yes", "Yes"], ["no", "No"], ["unsure", "Not sure"]].map(([v, l]) => (
-                <label key={v} className={personal === v ? "on" : ""}>
-                  <input type="radio" name="pi" value={v} checked={personal === v} onChange={() => setPersonal(v)} />{l}
-                </label>
-              ))}
-            </div>
+            <Segmented name="pi" ariaLabel="Personal information" value={personal} onChange={setPersonal}
+              options={[["yes", "Yes"], ["no", "No"], ["unsure", "Not sure"]]} />
           </section>
 
-          <details className="step">
+          <details className="gw-step">
             <summary>Add more detail <span className="quiet">Optional, and very helpful</span></summary>
-            <label>How often is it used?
-              <select value={frequency} onChange={(e) => setFrequency(e.target.value)}>{FREQ.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select>
-            </label>
-            <label>Which system does the information come from?<input value={sourceSystem} onChange={(e) => setSourceSystem(e.target.value)} placeholder="For example: Xero, bank portal, property software, typed in by hand" /></label>
-            <label>Who keeps it up to date?<input value={maintainedBy} onChange={(e) => setMaintainedBy(e.target.value)} /></label>
-            <label className="check"><input type="checkbox" checked={isCurrent} onChange={(e) => setIsCurrent(e.target.checked)} /> This is the version in use today</label>
-            <label>What would break if this disappeared tomorrow?
-              <textarea rows={2} value={ifGone} onChange={(e) => setIfGone(e.target.value)} />
-            </label>
+            <Field label="How often is it used?" as="select" options={FREQ} value={frequency} onChange={(e) => setFrequency(e.target.value)} />
+            <Field label="Which system does the information come from?" value={sourceSystem} onChange={(e) => setSourceSystem(e.target.value)}
+              placeholder="For example: Xero, bank portal, property software, typed in by hand" />
+            <Field label="Who keeps it up to date?" value={maintainedBy} onChange={(e) => setMaintainedBy(e.target.value)} />
+            <Check checked={isCurrent} onChange={(e) => setIsCurrent(e.target.checked)}> This is the version in use today</Check>
+            <Field label="What would break if this disappeared tomorrow?" as="textarea" value={ifGone} onChange={(e) => setIfGone(e.target.value)} />
           </details>
 
           {error && <p className="error" role="alert">{error}</p>}
-          <div className="actions">
+          <div className="gw-actions">
             {allDone ? (
-              <button type="button" className="primary" onClick={() => setFiles([])}>Share more files</button>
+              <Button variant="primary" onClick={() => setFiles([])}>Share more files</Button>
             ) : (
-              <button className="primary" type="submit" disabled={files.some((f) => f.state === "sending")}>
+              <Button variant="primary" type="submit" disabled={files.some((f) => f.state === "sending")}>
                 Share {files.filter((f) => f.state !== "done").length} file{files.length === 1 ? "" : "s"}
-              </button>
+              </Button>
             )}
           </div>
         </>

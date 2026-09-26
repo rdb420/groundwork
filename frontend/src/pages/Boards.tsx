@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api, type BoardRow, type ProcessRow } from "../lib/api";
+import { Button, Card, Check, Field, OptionGroup, Rows } from "../ui";
 
 // Maps follow the two-pass method: an overview of the whole process first (standard path only),
 // then one detail map per person, each showing what they do and what they wait for. Combine the
@@ -49,48 +50,35 @@ export default function Boards() {
   };
 
   return (
-    <div className="boards">
+    <div>
       <h1>Process maps</h1>
-      <form className="newboard" onSubmit={create}>
+      <Card variant="form" as="form" onSubmit={create}>
         <h2>Start a map</h2>
-        <label>What are you mapping?<input required value={title} onChange={(e) => setTitle(e.target.value)} placeholder="For example: chasing late rent" /></label>
-        <label>Process
-          <select value={pid} onChange={(e) => setPid(e.target.value)}>
-            <option value="">Not linked yet</option>
-            {processes.filter((p) => p.parent_id).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-          </select>
-        </label>
-        <fieldset className="options">
-          <legend>What kind of map?</legend>
-          <label className={`option ${kind === "overview" ? "on" : ""}`}>
-            <input type="radio" name="kind" checked={kind === "overview"} onChange={() => setKind("overview")} />
-            <strong>Overview of the whole process</strong><span>Start to end in about eight steps. Start here.</span>
-          </label>
-          <label className={`option ${kind === "person" ? "on" : ""}`}>
-            <input type="radio" name="kind" checked={kind === "person"} onChange={() => setKind("person")} />
-            <strong>One person's view, in detail</strong><span>What they do, what they wait for, what goes wrong.</span>
-          </label>
-        </fieldset>
+        <Field label="What are you mapping?" required value={title} onChange={(e) => setTitle(e.target.value)} placeholder="For example: chasing late rent" />
+        <Field label="Process" as="select" value={pid} onChange={(e) => setPid(e.target.value)}>
+          <option value="">Not linked yet</option>
+          {processes.filter((p) => p.parent_id).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+        </Field>
+        <OptionGroup name="kind" legend="What kind of map?" value={kind} onChange={setKind} options={[
+          { value: "overview", label: "Overview of the whole process", hint: "Start to end in about eight steps. Start here." },
+          { value: "person", label: "One person's view, in detail", hint: "What they do, what they wait for, what goes wrong." },
+        ]} />
         {kind === "person" && (
-          <label>Whose view?<input required value={perspective} onChange={(e) => setPerspective(e.target.value)} placeholder="For example: Sam, property manager" /></label>
+          <Field label="Whose view?" required value={perspective} onChange={(e) => setPerspective(e.target.value)} placeholder="For example: Sam, property manager" />
         )}
-        <label className="check"><input type="checkbox" checked={pi} onChange={(e) => setPi(e.target.checked)} /> We'll talk about real tenants, borrowers or staff</label>
-        <button className="primary" type="submit">Open the canvas</button>
-      </form>
+        <Check checked={pi} onChange={(e) => setPi(e.target.checked)}> We'll talk about real tenants, borrowers or staff</Check>
+        <Button variant="primary" type="submit">Open the canvas</Button>
+      </Card>
 
       {combinable.length > 0 && (
         <section>
           <h2>Combine views</h2>
           <p className="quiet">These processes have two or more one-person maps. Combining builds one map with a lane per person and joins their hand-offs.</p>
-          <ul className="rows">
-            {combinable.map(([processId, bs]) => (
-              <li key={processId}>
-                <strong>{bs[0].process_name}</strong>
-                <span className="quiet">{bs.map((b) => b.perspective).join(", ")}</span>
-                <button onClick={() => combine(processId)} disabled={!!combining}>{combining === processId ? "Combining…" : "Combine"}</button>
-              </li>
-            ))}
-          </ul>
+          <Rows items={combinable.map(([processId, bs]) => [
+            <strong>{bs[0].process_name}</strong>,
+            bs.map((b) => b.perspective).join(", "),
+            <Button onClick={() => combine(processId)} disabled={!!combining}>{combining === processId ? "Combining…" : "Combine"}</Button>,
+          ])} />
           {error && <p className="error" role="alert">{error}</p>}
         </section>
       )}
@@ -98,7 +86,7 @@ export default function Boards() {
       <section>
         <h2>Maps</h2>
         {boards === null ? <p className="quiet">Loading…</p> : boards.length === 0 ? <p className="quiet">No maps yet.</p> : (
-          <ul className="rows">
+          <Rows>
             {boards.map((b) => (
               <li key={b.id}>
                 <Link to={`/maps/${b.id}`}>{b.title}</Link>
@@ -106,7 +94,7 @@ export default function Boards() {
                 <span className="quiet">{b.node_count} elements · {new Date(b.updated_at).toLocaleDateString("en-AU")}</span>
               </li>
             ))}
-          </ul>
+          </Rows>
         )}
       </section>
     </div>

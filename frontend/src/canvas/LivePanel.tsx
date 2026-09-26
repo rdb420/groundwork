@@ -11,6 +11,7 @@ import { api, type Draft, type Me } from "../lib/api";
 import { KIND_LABEL, kindOf, type Kind } from "./kinds";
 import { acceptOp, applyOp, isOpen, rejectOp, type Op } from "./ops";
 import type { RuleTable } from "./RulesPanel";
+import { Button, Check, CheckItem, Heard, Input, OpLine, PARKING_LABEL, ParkingItem, Passbar, Recording, ReviewCard, ReviewOp, Segmented } from "../ui";
 
 type Graph = { nodes: Node[]; edges: Edge[] };
 type Line = { id: string; text: string; ops: Op[]; parked?: string[]; ms?: number; error?: string };
@@ -36,14 +37,8 @@ type Props = {
 
 const SpeechRecognition: any = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
-const CATEGORY: Record<string, { label: string; kind: Kind }> = {
-  issue: { label: "Problem", kind: "issue" },
-  workaround: { label: "Workaround", kind: "workaround" },
-  exception: { label: "Exception or rework", kind: "note" },
-  rule: { label: "Rule or condition", kind: "control" },
-  question: { label: "Question", kind: "question" },
-  detail: { label: "Detail", kind: "note" },
-};
+// What a parked item becomes when it goes on the map.
+const PARKED_KIND: Record<string, Kind> = { issue: "issue", workaround: "workaround", exception: "note", rule: "control", question: "question", detail: "note" };
 
 const DETAIL_PROMPTS = [
   "Where does work get sent back or redone? Of every ten, how many go through first time?",
@@ -195,7 +190,7 @@ export default function LivePanel(props: Props) {
   };
   // Put a parked item on the map as context beside the element it was said about.
   const place = (p: Parking) => {
-    const kind = CATEGORY[p.category]?.kind ?? "note";
+    const kind = PARKED_KIND[p.category] ?? "note";
     const op: Op = { id: `park-${p.id}`, op: "add", source: "jev", auto: true, confidence: null, ref: `n${p.id.slice(0, 8)}`, kind, label: p.text.length > 90 ? p.text.slice(0, 87) + "..." : p.text, after: p.near_element || lastTouched.current };
     setGraph(applyOp(getGraph(), op));
     reveal([op.ref!]);
@@ -215,8 +210,8 @@ export default function LivePanel(props: Props) {
     setSessionPass(p);
   };
 
-  if (!me.live_enabled) return <div className="panel-body"><p className="quiet">Live mapping is switched off on the server. Set GW_DECISION_PROVIDER to turn it on.</p></div>;
-  if (blocked) return <div className="panel-body"><p className="error">This map is marked as holding personal information, and live mapping uses a hosted decision model. Run a local Jev-compatible model, or untick personal information for this map.</p></div>;
+  if (!me.live_enabled) return <div className="gw-panel-body"><p className="quiet">Live mapping is switched off on the server. Set GW_DECISION_PROVIDER to turn it on.</p></div>;
+  if (blocked) return <div className="gw-panel-body"><p className="error">This map is marked as holding personal information, and live mapping uses a hosted decision model. Run a local Jev-compatible model, or untick personal information for this map.</p></div>;
 
   const g = getGraph();
   const steps = g.nodes.filter((n) => ["task", "subprocess", "manual_task", "system_task", "rule_task"].includes(kindOf(n))).length;
@@ -225,135 +220,118 @@ export default function LivePanel(props: Props) {
   const asks = checks.filter((c) => c.level !== "fix");
 
   return (
-    <div className="panel-body live">
-      <div className={`passbar pass-${sessionPass}`}>
+    <div className="gw-panel-body gw-live">
+      <Passbar pass={sessionPass}>
         {sessionPass === "overview" ? (
           <>
             <p><strong>Overview pass.</strong> Start to end, standard path only, usual responsibilities. Problems and exceptions go to the parking lot.</p>
             <p className="small">{steps} step{steps === 1 ? "" : "s"} of about 8{steps > 8 ? ". Consider grouping some into sub-processes." : "."}</p>
-            <button onClick={() => switchPass("detail")}>Start the detail pass</button>
+            <Button onClick={() => switchPass("detail")}>Start the detail pass</Button>
           </>
         ) : (
           <>
             <p><strong>Detail pass{perspective ? `: ${perspective}'s view` : ""}.</strong> Exceptions, rework, systems, outside parties, rules and problems all go on the map.</p>
-            <button className="link" onClick={() => switchPass("overview")}>Back to the overview pass</button>
+            <Button variant="link" onClick={() => switchPass("overview")}>Back to the overview pass</Button>
           </>
         )}
-      </div>
+      </Passbar>
 
-      <div className="segmented small" role="radiogroup" aria-label="What to listen for">
-        <label className={mode === "listen" ? "on" : ""}><input type="radio" checked={mode === "listen"} onChange={() => setMode("listen")} />Map the conversation</label>
-        <label className={mode === "command" ? "on" : ""}><input type="radio" checked={mode === "command"} onChange={() => setMode("command")} />Only my instructions</label>
-      </div>
+      <Segmented name="live-mode" small ariaLabel="What to listen for" value={mode} onChange={setMode}
+        options={[["listen", "Map the conversation"], ["command", "Only my instructions"]]} />
       {speechOff ? (
         <p className="quiet small">Listening is off because this map holds personal information: browser speech recognition sends audio to Google or Microsoft. Type the key sentences below instead.</p>
       ) : (
         <>
           {!listening ? (
-            <button className="primary" onClick={start}>Start listening</button>
+            <Button variant="primary" onClick={start}>Start listening</Button>
           ) : (
-            <div className="recording" role="status"><span className="dot" aria-hidden="true" /> Listening<button onClick={stop}>Stop</button></div>
+            <Recording label="Listening" onStop={stop} />
           )}
           <p className="quiet small">Browser speech recognition sends audio to the browser maker's service (Google for Chrome, Microsoft for Edge). Use the Recording tab for the kept record.</p>
         </>
       )}
-      {interim && <p className="interim">{interim}</p>}
-      <form className="typed" onSubmit={(e) => { e.preventDefault(); send(typed, "typed"); setTyped(""); }}>
-        <input value={typed} onChange={(e) => setTyped(e.target.value)} placeholder="Or type what was said" aria-label="Type what was said" />
-        <button type="submit" disabled={!typed.trim()}>Add</button>
+      {interim && <p className="gw-interim">{interim}</p>}
+      <form className="gw-typed" onSubmit={(e) => { e.preventDefault(); send(typed, "typed"); setTyped(""); }}>
+        <Input value={typed} onChange={(e) => setTyped(e.target.value)} placeholder="Or type what was said" aria-label="Type what was said" />
+        <Button type="submit" disabled={!typed.trim()}>Add</Button>
       </form>
       {error && <p className="error" role="alert">{error}</p>}
 
       {sessionPass === "detail" && (
-        <details className="prompts">
+        <details className="gw-prompts">
           <summary>Questions for the detail pass</summary>
           <ul>{DETAIL_PROMPTS.map((q) => <li key={q}>{q}</li>)}</ul>
         </details>
       )}
 
-      <section className="parking">
+      <section className="gw-parking">
         <h3>{sessionPass === "overview" ? "Parking lot" : "Agenda from the parking lot"} <span className="quiet">({open.length})</span></h3>
         {open.length === 0 ? <p className="quiet small">{sessionPass === "overview" ? "Problems, exceptions, workarounds and rules raised now will wait here." : "Nothing waiting."}</p> : (
           <ul>
             {open.map((p) => (
-              <li key={p.id} className={`pk pk-${p.category}`}>
-                <span className="pk-cat">{CATEGORY[p.category]?.label ?? p.category}</span>
-                <span>{p.text}</span>
-                <span className="opbtns">
-                  {sessionPass === "detail" && <button onClick={() => place(p)}>Put on map</button>}
-                  <button className="link" onClick={() => setStatus(p.id, sessionPass === "detail" ? "placed" : "dismissed")}>{sessionPass === "detail" ? "Covered" : "Drop"}</button>
-                </span>
-              </li>
+              <ParkingItem key={p.id} category={p.category} actions={<>
+                {sessionPass === "detail" && <Button size="small" onClick={() => place(p)}>Put on map</Button>}
+                <Button variant="link" size="small" onClick={() => setStatus(p.id, sessionPass === "detail" ? "placed" : "dismissed")}>{sessionPass === "detail" ? "Covered" : "Drop"}</Button>
+              </>}>{p.text}</ParkingItem>
             ))}
           </ul>
         )}
-        <form className="typed" onSubmit={(e) => { e.preventDefault(); addParking(); }}>
-          <input value={newPark} onChange={(e) => setNewPark(e.target.value)} placeholder="Park something for later" aria-label="Park something for later" />
-          <button type="submit" disabled={!newPark.trim()}>Park</button>
+        <form className="gw-typed" onSubmit={(e) => { e.preventDefault(); addParking(); }}>
+          <Input value={newPark} onChange={(e) => setNewPark(e.target.value)} placeholder="Park something for later" aria-label="Park something for later" />
+          <Button type="submit" disabled={!newPark.trim()}>Park</Button>
         </form>
       </section>
 
       {checks.length > 0 && (
-        <section className="checks">
+        <section className="gw-checks">
           <h3>Map checks</h3>
           <ul>
             {[...fixes, ...asks].map((c, i) => (
-              <li key={i} className={`chk chk-${c.level}`}>
-                <span>{c.text}</span>
-                {c.ids.length > 0 && <button className="link" onClick={() => focus(c.ids)}>Show</button>}
-              </li>
+              <CheckItem key={i} level={c.level} onShow={c.ids.length > 0 ? () => focus(c.ids) : undefined}>{c.text}</CheckItem>
             ))}
           </ul>
         </section>
       )}
 
-      <div className="reviewbar">
-        <label className="check"><input type="checkbox" checked={reviewOn} onChange={(e) => setReviewOn(e.target.checked)} /> Review the session every {me.review_minutes} minutes</label>
-        <button onClick={review} disabled={reviewing || !me.ai_enabled}>{reviewing ? "Reviewing…" : "Review now"}</button>
+      <div className="gw-reviewbar">
+        <Check checked={reviewOn} onChange={(e) => setReviewOn(e.target.checked)}> Review the session every {me.review_minutes} minutes</Check>
+        <Button onClick={review} disabled={reviewing || !me.ai_enabled}>{reviewing ? "Reviewing…" : "Review now"}</Button>
       </div>
 
       {reviews.slice(0, 3).map((d) => {
         const changes = (d.proposal?.changes ?? []) as Op[];
         const openOps = changes.filter((op) => isOpen(g, op.id));
         return (
-          <article key={d.id} className="review">
-            <header><strong>Review at {new Date(d.created_at).toLocaleTimeString("en-AU", { hour: "numeric", minute: "2-digit" })}</strong><span className="quiet">{d.model}</span></header>
-            {d.proposal?.summary && <p>{d.proposal.summary}</p>}
-            {openOps.length > 0 && <button className="primary" onClick={() => acceptAll(d)}>Accept all {openOps.length} map changes</button>}
-            {!!d.proposal?.rules?.length && <p className="small">Drafted {d.proposal.rules.length} rule table{d.proposal.rules.length === 1 ? "" : "s"}. See the Rules tab.</p>}
-            <ul className="oplist">
-              {changes.map((op) => (
-                <li key={op.id} className={isOpen(g, op.id) ? "open" : "done"}>
-                  <span>{describe(op, g)}</span>
-                  {op.reason && <span className="quiet">{op.reason}{op.evidence ? ` ("${op.evidence}")` : ""}</span>}
-                  {isOpen(g, op.id) && <span className="opbtns"><button onClick={() => decide(op.id, true)}>Accept</button><button className="link" onClick={() => decide(op.id, false)}>Reject</button></span>}
-                </li>
-              ))}
-            </ul>
-            {!!d.proposal?.open_questions?.length && (
-              <><h4>Still to confirm</h4><ul>{d.proposal.open_questions.map((q, i) => <li key={i}>{q}</li>)}</ul></>
-            )}
-          </article>
+          <ReviewCard key={d.id} time={new Date(d.created_at).toLocaleTimeString("en-AU", { hour: "numeric", minute: "2-digit" })} model={d.model}
+            summary={d.proposal?.summary}
+            actions={openOps.length > 0 && <Button variant="primary" onClick={() => acceptAll(d)}>Accept all {openOps.length} map changes</Button>}
+            note={!!d.proposal?.rules?.length && <p className="small">Drafted {d.proposal.rules.length} rule table{d.proposal.rules.length === 1 ? "" : "s"}. See the Rules tab.</p>}
+            extra={!!d.proposal?.open_questions?.length && <><h4>Still to confirm</h4><ul>{d.proposal.open_questions.map((q, i) => <li key={i}>{q}</li>)}</ul></>}>
+            {changes.map((op) => (
+              <ReviewOp key={op.id} done={!isOpen(g, op.id)} reason={op.reason && <>{op.reason}{op.evidence ? ` ("${op.evidence}")` : ""}</>}
+                actions={<><Button size="small" onClick={() => decide(op.id, true)}>Accept</Button><Button variant="link" size="small" onClick={() => decide(op.id, false)}>Reject</Button></>}>
+                {describe(op, g)}
+              </ReviewOp>
+            ))}
+          </ReviewCard>
         );
       })}
 
       <h3>Heard</h3>
       {lines.length === 0 ? <p className="quiet">Nothing yet. Start listening or type a sentence.</p> : (
-        <ol className="feed">
+        <ol className="gw-feed">
           {[...lines].reverse().slice(0, 60).map((l) => (
-            <li key={l.id}>
-              <p className="said">{l.text}</p>
+            <Heard key={l.id} said={l.text}>
               {l.error && <p className="error">{l.error}</p>}
               {l.ops.map((op) => (
-                <div key={op.id} className={`opline ${op.auto ? "auto" : ""}`}>
-                  <span>{describe(op, g)}</span>
-                  <span className="conf">{op.auto ? "added" : "waiting"}{op.confidence !== null ? ` · ${Math.round(op.confidence * 100)}%` : ""}</span>
-                  {isOpen(g, op.id) && <span className="opbtns"><button onClick={() => decide(op.id, true)}>Accept</button><button className="link" onClick={() => decide(op.id, false)}>Reject</button></span>}
-                </div>
+                <OpLine key={op.id} auto={op.auto} confidence={op.confidence}
+                  actions={isOpen(g, op.id) && <><Button size="small" onClick={() => decide(op.id, true)}>Accept</Button><Button variant="link" size="small" onClick={() => decide(op.id, false)}>Reject</Button></>}>
+                  {describe(op, g)}
+                </OpLine>
               ))}
-              {!!l.parked?.length && <p className="quiet small">Parked: {l.parked.map((c) => CATEGORY[c]?.label.toLowerCase() ?? c).join(", ")}</p>}
+              {!!l.parked?.length && <p className="quiet small">Parked: {l.parked.map((c) => PARKING_LABEL[c]?.toLowerCase() ?? c).join(", ")}</p>}
               {!l.error && !l.ops.length && !l.parked?.length && !l.id.startsWith("tmp") && <p className="quiet small">No change</p>}
-            </li>
+            </Heard>
           ))}
         </ol>
       )}

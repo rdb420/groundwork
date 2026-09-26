@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { api, type Artifact, type ProcessRow } from "../lib/api";
 import { KINDS, LAYERS, PIPELINE, STATUS, label, size } from "../lib/labels";
 import { useSession } from "../lib/session";
+import { Button, DataTable, DetailList, Drawer, Field, LinkButton, Status, Tag, artifactTone } from "../ui";
 
 export default function Library() {
   const [rows, setRows] = useState<Artifact[] | null>(null);
@@ -32,49 +33,38 @@ export default function Library() {
   };
 
   return (
-    <div className="library">
-      <div className="bar">
+    <div>
+      <div className="gw-bar">
         <h1>Files</h1>
-        <label className="inline">Process
-          <select value={pid} onChange={(e) => setPid(e.target.value)}>
-            <option value="">All</option>
-            {processes.map((p) => <option key={p.id} value={p.id}>{p.name} ({p.artifact_count})</option>)}
-          </select>
-        </label>
+        <Field label="Process" as="select" className="gw-inline" value={pid} onChange={(e) => setPid(e.target.value)}>
+          <option value="">All</option>
+          {processes.map((p) => <option key={p.id} value={p.id}>{p.name} ({p.artifact_count})</option>)}
+        </Field>
       </div>
       {rows === null ? <p className="quiet">Loading…</p> : rows.length === 0 ? <p className="quiet">No files here yet.</p> : (
-        <div className="tablewrap">
-          <table>
-            <thead><tr><th>File</th><th>Shows</th><th>Process</th><th>Shared by</th><th>Status</th></tr></thead>
-            <tbody>
-              {rows.map((a) => (
-                <tr key={a.id} onClick={() => setOpen(a)} tabIndex={0} onKeyDown={(e) => e.key === "Enter" && setOpen(a)}>
-                  <td><strong>{a.title}</strong><div className="quiet">{a.original_filename} · {size(a.size_bytes)}</div></td>
-                  <td>{label(LAYERS, a.layer)}{a.personal_info === "yes" && <span className="pi">Personal info</span>}</td>
-                  <td>{a.processes.map((p) => p.name).join(", ")}</td>
-                  <td>{a.uploaded_by}</td>
-                  <td><span className={`status s-${a.status}`}>{STATUS[a.status] ?? a.status}</span>
-                    {a.pipeline_status && PIPELINE[a.pipeline_status] && <div className="quiet small">{PIPELINE[a.pipeline_status]}</div>}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <DataTable rows={rows} onRowClick={setOpen} columns={[
+          { key: "title", label: "File", render: (a) => <><strong>{a.title}</strong><div className="quiet">{a.original_filename} · {size(a.size_bytes)}</div></> },
+          { key: "layer", label: "Shows", render: (a) => <>{label(LAYERS, a.layer)}{a.personal_info === "yes" && <Tag kind="pi" />}</> },
+          { key: "processes", label: "Process", render: (a) => a.processes.map((p) => p.name).join(", ") },
+          { key: "uploaded_by", label: "Shared by" },
+          { key: "status", label: "Status", render: (a) => <>
+            <Status tone={artifactTone(a.status)}>{STATUS[a.status] ?? a.status}</Status>
+            {a.pipeline_status && PIPELINE[a.pipeline_status] && <div className="quiet small">{PIPELINE[a.pipeline_status]}</div>}
+          </> },
+        ]} />
       )}
       {open && (
-        <aside className="drawer" aria-label="File detail">
-          <button className="link close" onClick={() => { setOpen(null); setError(""); }}>Close</button>
-          <h2>{open.title}</h2>
+        <Drawer label="File detail" title={open.title} onClose={() => { setOpen(null); setError(""); }}>
           <p>{open.description || <span className="quiet">No description given.</span>}</p>
-          <dl>
-            <dt>Kind</dt><dd>{label(KINDS, open.kind)}</dd>
-            <dt>Shows</dt><dd>{label(LAYERS, open.layer)}</dd>
-            <dt>Used</dt><dd>{open.frequency || "Not said"}</dd>
-            <dt>Comes from</dt><dd>{open.source_system || "Not said"}</dd>
-            <dt>Kept by</dt><dd>{open.maintained_by || "Not said"}</dd>
-          </dl>
+          <DetailList items={[
+            ["Kind", label(KINDS, open.kind)],
+            ["Shows", label(LAYERS, open.layer)],
+            ["Used", open.frequency || "Not said"],
+            ["Comes from", open.source_system || "Not said"],
+            ["Kept by", open.maintained_by || "Not said"],
+          ]} />
           {open.profile && (
-            <section className="profile">
+            <section className="gw-profile">
               <h3>First read</h3>
               <p>{open.profile.summary}</p>
               {open.profile.sheets && (
@@ -83,22 +73,22 @@ export default function Library() {
               {open.profile.preview && <pre>{open.profile.preview.slice(0, 600)}</pre>}
             </section>
           )}
-          <div className="actions">
+          <div className="gw-actions">
             {open.status === "quarantined"
               ? <p className="error">The malware check flagged this file, so it can't be downloaded.</p>
-              : <a className="button" href={`/api/artifacts/${open.id}/file`}>Download</a>}
-            {(open.uploaded_by === me?.email || me?.role === "admin") && <button onClick={() => withdraw(open)}>Withdraw</button>}
+              : <LinkButton href={`/api/artifacts/${open.id}/file`}>Download</LinkButton>}
+            {(open.uploaded_by === me?.email || me?.role === "admin") && <Button onClick={() => withdraw(open)}>Withdraw</Button>}
           </div>
           {me?.role === "admin" && (
             <section>
               <h3>Delete now</h3>
               <p className="quiet">Removes the file from the server straight away. The record that it was shared stays in the audit log.</p>
-              <label>Why<input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="For example: holds a tenant's licence" /></label>
+              <Field label="Why" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="For example: holds a tenant's licence" />
               {error && <p className="error" role="alert">{error}</p>}
-              <button onClick={() => purge(open)} disabled={reason.trim().length < 3}>Delete the file</button>
+              <Button onClick={() => purge(open)} disabled={reason.trim().length < 3}>Delete the file</Button>
             </section>
           )}
-        </aside>
+        </Drawer>
       )}
     </div>
   );

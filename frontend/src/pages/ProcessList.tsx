@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { api, type ProcessRow } from "../lib/api";
+import { Button, Check, Drawer, Field, Rows, Status } from "../ui";
 
 const STATUS_LABEL: Record<string, string> = { proposed: "Proposed", confirmed: "Confirmed", retired: "Retired" };
 
@@ -20,21 +21,21 @@ export default function ProcessList() {
 
   if (!rows) return <p className="quiet">Loading…</p>;
   const item = (p: ProcessRow, child: boolean) => (
-    <li key={p.id} className={child ? "indent" : ""}>
-      <button className="link" onClick={() => setOpen(p)}>{p.name}</button>
+    <li key={p.id} className={child ? "indent" : undefined}>
+      <Button variant="link" onClick={() => setOpen(p)}>{p.name}</Button>
       <span className="quiet">{p.artifact_count} file{p.artifact_count === 1 ? "" : "s"} · {p.board_count} map{p.board_count === 1 ? "" : "s"}{p.owner_email ? ` · ${p.owner_email}` : ""}</span>
-      <span className={`status ${p.status === "confirmed" ? "s-processed" : p.status === "retired" ? "s-failed" : ""}`}>{STATUS_LABEL[p.status] ?? p.status}</span>
+      <Status tone={p.status === "confirmed" ? "ok" : p.status === "retired" ? "error" : "info"}>{STATUS_LABEL[p.status] ?? p.status}</Status>
     </li>
   );
 
   return (
-    <div className="processes">
-      <div className="bar">
+    <div className="gw-processes">
+      <div className="gw-bar">
         <h1>Process list</h1>
-        <label className="check"><input type="checkbox" checked={showRetired} onChange={(e) => setShowRetired(e.target.checked)} /> Show retired</label>
+        <Check checked={showRetired} onChange={(e) => setShowRetired(e.target.checked)}> Show retired</Check>
       </div>
       <p className="lede">Staff add names in their own words. Confirm the ones that are real processes, merge duplicates, and give each an owner to check its map.</p>
-      <ul className="rows">{groups.flatMap(({ top, kids }) => [item(top, false), ...kids.map((k) => item(k, true))])}</ul>
+      <Rows>{groups.flatMap(({ top, kids }) => [item(top, false), ...kids.map((k) => item(k, true))])}</Rows>
       {open && <Editor key={open.id} p={open} all={rows} onClose={() => setOpen(null)} onSaved={() => { setOpen(null); load(); }} />}
     </div>
   );
@@ -84,41 +85,31 @@ function Editor({ p, all, onClose, onSaved }: { p: ProcessRow; all: ProcessRow[]
   };
 
   return (
-    <aside className="drawer" aria-label="Edit process">
-      <button className="link close" onClick={onClose}>Close</button>
-      <h2>{p.name}</h2>
-      <form onSubmit={save} className="stack">
-        <label>Name<input required value={name} onChange={(e) => setName(e.target.value)} /></label>
-        <label>What it covers<textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} /></label>
-        <label>Owner's email <span className="quiet">Who checks this process's map</span>
-          <input type="email" value={owner} onChange={(e) => setOwner(e.target.value)} placeholder="name@yshproperty.com.au" /></label>
-        <label>Sits under
-          <select value={parent} onChange={(e) => setParent(e.target.value)}>
-            <option value="">Nothing (a top-level area)</option>
-            {live.filter((q) => !below.has(q.id)).map((q) => <option key={q.id} value={q.id}>{q.name}</option>)}
-          </select>
-        </label>
-        <label>Status
-          <select value={status} onChange={(e) => setStatus(e.target.value)}>
-            {Object.entries(STATUS_LABEL).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-          </select>
-        </label>
+    <Drawer label="Edit process" title={p.name} onClose={onClose}>
+      <form onSubmit={save} className="gw-stack">
+        <Field label="Name" required value={name} onChange={(e) => setName(e.target.value)} />
+        <Field label="What it covers" as="textarea" rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
+        <Field label="Owner's email" hint="Who checks this process's map" type="email" value={owner} onChange={(e) => setOwner(e.target.value)}
+          placeholder="name@yshproperty.com.au" />
+        <Field label="Sits under" as="select" value={parent} onChange={(e) => setParent(e.target.value)}>
+          <option value="">Nothing (a top-level area)</option>
+          {live.filter((q) => !below.has(q.id)).map((q) => <option key={q.id} value={q.id}>{q.name}</option>)}
+        </Field>
+        <Field label="Status" as="select" options={Object.entries(STATUS_LABEL)} value={status} onChange={(e) => setStatus(e.target.value)} />
         {error && <p className="error" role="alert">{error}</p>}
-        <button className="primary" type="submit">Save</button>
+        <Button variant="primary" type="submit">Save</Button>
       </form>
       {p.status !== "retired" && (
         <section>
           <h3>Merge a duplicate</h3>
           <p className="quiet">Its files and maps move to the process you choose, its sub-processes move under it, and this one is retired.</p>
-          <label>Merge into
-            <select value={into} onChange={(e) => setInto(e.target.value)}>
-              <option value="">Choose a process</option>
-              {live.filter((q) => !below.has(q.id)).map((q) => <option key={q.id} value={q.id}>{q.name}</option>)}
-            </select>
-          </label>
-          <button onClick={merge} disabled={!into}>Merge</button>
+          <Field label="Merge into" as="select" value={into} onChange={(e) => setInto(e.target.value)}>
+            <option value="">Choose a process</option>
+            {live.filter((q) => !below.has(q.id)).map((q) => <option key={q.id} value={q.id}>{q.name}</option>)}
+          </Field>
+          <Button onClick={merge} disabled={!into}>Merge</Button>
         </section>
       )}
-    </aside>
+    </Drawer>
   );
 }

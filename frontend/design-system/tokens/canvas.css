@@ -1,0 +1,89 @@
+/* BPMN and context canvas elements. Ported from groundwork/frontend/src/styles.css (Canvas nodes, Context elements, pools, palette glyphs). */
+.gw-canvas{position:relative;background:var(--paper);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:40px 40px;color:var(--ink)}
+.gw-under{position:absolute;top:100%;left:50%;transform:translateX(-50%);width:150px;text-align:center;font-size:.82rem;margin-top:4px}
+.gw-bpmn-event{position:relative;width:40px;height:40px}
+.gw-bpmn-event .ring{width:100%;height:100%;border-radius:50%;border:2px solid var(--ink);background:var(--panel)}
+.gw-bpmn-event.end .ring{border-width:5px}
+.gw-bpmn-event.intermediate .ring{box-shadow:inset 0 0 0 3px var(--panel),inset 0 0 0 5px var(--ink)}
+.gw-bpmn-event.start .ring{border-color:var(--ok)}
+.gw-bpmn-task{position:relative;width:100%;height:100%;min-width:110px;min-height:54px;display:flex;align-items:center;justify-content:center;text-align:center;padding:.4rem .7rem;background:var(--panel);border:2px solid var(--ink);border-radius:10px;font-size:.9rem;line-height:1.3}
+.gw-bpmn-task.manual{border-style:dashed}
+.gw-bpmn-task.has-icon{padding-left:1.6rem}
+.gw-bpmn-task .plus{position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:14px;height:14px;line-height:11px;font-size:13px;border:1.5px solid var(--ink);text-align:center}
+.gw-task-icon{position:absolute;top:4px;left:6px;color:var(--survey);font-size:.75rem;font-weight:700;line-height:1}
+.gw-bpmn-gateway{position:relative;width:50px;height:50px}
+.gw-bpmn-gateway .diamond{width:36px;height:36px;margin:7px;transform:rotate(45deg);border:2px solid var(--ink);background:var(--panel);display:grid;place-items:center}
+.gw-bpmn-gateway .diamond span{transform:rotate(-45deg);font-size:22px;line-height:1;font-weight:700}
+.gw-bpmn-data{position:relative;width:44px;height:52px;color:var(--ink)}
+.gw-lane{width:100%;height:100%;border:1.5px solid var(--line);background:rgba(227,236,244,.35);display:flex}
+.gw-lane-head{writing-mode:vertical-rl;transform:rotate(180deg);width:34px;display:flex;align-items:center;justify-content:center;border-left:1.5px solid var(--line);font-weight:700;font-size:.88rem;padding:.5rem 0;background:var(--survey-soft)}
+.gw-pool{width:100%;height:100%;display:flex;align-items:center;gap:.8rem;padding:0 1rem;background:repeating-linear-gradient(90deg,#eef2f5 0 14px,#e7ecf0 14px 28px);border:2px solid var(--ink);font-weight:700}
+.gw-pool-mark{font-size:.7rem;color:var(--muted);font-weight:700}
+.gw-adhoc{position:relative;width:100%;height:100%;border:2px dashed var(--muted);border-radius:12px;background:rgba(241,244,246,.7);padding:.4rem .7rem;font-size:.88rem}
+.gw-adhoc .tilde{position:absolute;bottom:2px;left:50%;transform:translateX(-50%);font-size:1.4rem;line-height:1;color:var(--muted)}
+.gw-sticky{width:100%;height:100%;background:var(--marker);padding:.7rem;font-size:.9rem;box-shadow:0 2px 0 rgba(28,43,54,.15);overflow:hidden}
+.gw-ctx{position:relative;width:100%;height:100%;min-height:40px;padding:.35rem .6rem .4rem;background:var(--panel);border:1.8px solid var(--ink);border-radius:6px;font-size:.86rem;display:flex;flex-direction:column;justify-content:center;line-height:1.3}
+.gw-ctx-mark{font-size:.7rem;font-weight:700;color:var(--muted)}
+.gw-ctx.stakeholder{border-radius:999px;padding-left:1rem;padding-right:1rem;border-color:var(--survey)}
+.gw-ctx.stakeholder .gw-ctx-mark{color:var(--survey)}
+.gw-ctx.application{border-left-width:7px;border-color:var(--survey);border-radius:2px}
+.gw-ctx.workaround{background:#fdf3cf;border-color:#b8931d;border-style:dashed}
+.gw-ctx.workaround .gw-ctx-mark{color:#8a6d12}
+.gw-ctx.issue{background:#fbe9e5;border-color:var(--boundary)}
+.gw-ctx.issue .gw-ctx-mark{color:var(--boundary)}
+.gw-ctx.risk{border-color:var(--boundary);border-width:2px 2px 2px 7px}
+.gw-ctx.risk .gw-ctx-mark{color:var(--boundary)}
+.gw-ctx.control{border-color:var(--ok);border-width:2px 2px 2px 7px}
+.gw-ctx.control .gw-ctx-mark{color:var(--ok)}
+.gw-ctx.metric{border-style:dotted}
+.gw-ctx.question{border-style:dashed;border-color:var(--muted);background:repeating-linear-gradient(135deg,var(--panel) 0 10px,#f1f4f6 10px 20px)}
+.gw-tags{position:absolute;bottom:-10px;right:6px;display:flex;gap:3px}
+.gw-sel{box-shadow:0 0 0 3px var(--survey-soft)!important}
+.gw-suggested,.gw-suggested .ring,.gw-suggested .diamond{border-style:dashed!important;border-color:var(--survey)!important}
+.gw-pending,.gw-pending .ring,.gw-pending .diamond{box-shadow:0 0 0 3px #fbe9a6}
+.gw-suggest-bar{position:absolute;bottom:calc(100% + 6px);left:0;display:flex;gap:.3rem;align-items:center;font-size:.75rem;white-space:nowrap;background:var(--survey);color:#fff;padding:.15rem .3rem;border-radius:var(--radius-s);z-index:2}
+.gw-suggest-bar.change{background:#6b5510}
+.gw-suggest-bar .gw-btn{font-size:.72rem;padding:.05rem .4rem}
+.gw-suggest-bar span{max-width:240px;overflow:hidden;text-overflow:ellipsis}
+/* Palette */
+.gw-palette{background:var(--panel);border-right:1.5px solid var(--line);overflow-y:auto;padding:.6rem}
+.gw-pgroup h4{font-size:.8rem;color:var(--muted);margin:.8rem .2rem .3rem;font-weight:700}
+.gw-pitem{display:flex;align-items:center;gap:.55rem;width:100%;text-align:left;border:1px solid transparent;padding:.35rem .4rem;font:inherit;font-size:.88rem;cursor:grab;background:none;color:var(--ink);border-radius:var(--radius-s)}
+.gw-pitem:hover{background:var(--survey-soft)}
+.gw-glyph{width:20px;height:16px;flex:none;border:1.8px solid var(--ink);border-radius:3px}
+.pi-start .gw-glyph,.pi-end .gw-glyph,.pi-wait .gw-glyph{border-radius:50%;width:16px}
+.pi-end .gw-glyph{border-width:3.5px}
+.pi-wait .gw-glyph{box-shadow:inset 0 0 0 2px var(--panel),inset 0 0 0 3.5px var(--ink)}
+.pi-xor .gw-glyph,.pi-and .gw-glyph{width:13px;height:13px;transform:rotate(45deg);margin:0 3px;border-radius:1px}
+.pi-sub .gw-glyph{border-bottom-width:4px}
+.pi-user .gw-glyph,.pi-system .gw-glyph{border-left-width:5px}
+.pi-manual .gw-glyph{border-style:dashed}
+.pi-rule .gw-glyph,.pi-control .gw-glyph{border-left-width:5px;border-color:var(--ok)}
+.pi-doc .gw-glyph{width:14px;height:18px;border-radius:0 6px 0 0}
+.pi-store .gw-glyph{width:16px;border-radius:50%/30%}
+.pi-lane .gw-glyph{width:24px;border-left-width:6px;border-radius:0}
+.pi-pool .gw-glyph{width:26px;height:10px;border-radius:0;background:#e7ecf0}
+.pi-unclear .gw-glyph{border-style:dashed;border-radius:6px;border-color:var(--muted)}
+.pi-stakeholder .gw-glyph{border-radius:999px;border-color:var(--survey)}
+.pi-application .gw-glyph{border-left-width:5px;border-color:var(--survey)}
+.pi-workaround .gw-glyph{background:#fdf3cf;border-style:dashed;border-color:#b8931d}
+.pi-issue .gw-glyph{background:#fbe9e5;border-color:var(--boundary)}
+.pi-risk .gw-glyph{border-left-width:5px;border-color:var(--boundary)}
+.pi-metric .gw-glyph{border-style:dotted}
+.pi-question .gw-glyph{border-style:dashed;border-color:var(--muted)}
+.pi-sticky .gw-glyph{background:var(--marker);border-color:#c9a92a;border-radius:0}
+.pi-text .gw-glyph{border:0;border-bottom:2px solid var(--ink);border-radius:0;height:10px}
+.pi-image .gw-glyph{background:linear-gradient(135deg,transparent 55%,var(--survey) 55%)}
+.gw-flowpick{display:flex;align-items:center;gap:.5rem;font-weight:400;font-size:.88rem;margin:.2rem 0;padding:.3rem .4rem;border-radius:var(--radius-s);cursor:pointer}
+.gw-flowpick input{position:absolute;opacity:0;width:1px}
+.gw-flowpick.on{background:var(--survey-soft);font-weight:700}
+.gw-flowline{width:26px;height:0;border-top:2px solid var(--ink)}
+.gw-flowline.fl-message{border-top:2px dashed var(--survey)}
+.gw-flowline.fl-association{border-top:2px dotted var(--muted)}
+/* Rule tables */
+.gw-ruletable{border:1.5px solid var(--line);border-radius:var(--radius-s);padding:.5rem .8rem .6rem;margin:.8rem 0}
+.gw-rt-name{font-weight:700;font-size:1rem;margin:0}
+.gw-ruletable table{font-size:.85rem;border-collapse:collapse;width:100%}
+.gw-ruletable th,.gw-ruletable td{padding:.2rem;text-align:left}
+.gw-ruletable th{color:var(--muted);font-size:.8rem}
+.gw-ruletable .out{background:#e9f3ed}

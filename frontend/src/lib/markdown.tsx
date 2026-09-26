@@ -6,7 +6,7 @@ function inline(text: string, key: string): ReactNode[] {
   const parts = text.split(/(\*\*[^*]+\*\*|\[TO CONFIRM[^\]]*\])/g);
   return parts.map((p, i) => {
     if (p.startsWith("**")) return <strong key={`${key}-${i}`}>{p.slice(2, -2)}</strong>;
-    if (p.startsWith("[TO CONFIRM")) return <mark className="confirm" key={`${key}-${i}`}>{p.slice(1, -1)}</mark>;
+    if (p.startsWith("[TO CONFIRM")) return <mark className="gw-confirm" key={`${key}-${i}`}>{p.slice(1, -1)}</mark>;
     return p;
   });
 }
@@ -42,5 +42,5 @@ export function Markdown({ source }: { source: string }) {
     }
   });
   flush();
-  return <div className="md">{out}</div>;
+  return <div className="gw-md">{out}</div>;
 }

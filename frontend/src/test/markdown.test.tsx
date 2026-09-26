@@ -8,7 +8,7 @@ describe("Markdown", () => {
     expect(html).toContain("<h2>SOP</h2>");
     expect(html).toContain("<ol>");
     expect(html).toContain("<strong>feed</strong>");
-    expect(html).toContain('<mark class="confirm">TO CONFIRM: who sends</mark>');
+    expect(html).toContain('<mark class="gw-confirm">TO CONFIRM: who sends</mark>');
   });
 
   it("never passes model output through as HTML", () => {

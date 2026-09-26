@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { api, type Draft } from "../lib/api";
 import { Markdown } from "../lib/markdown";
+import { Button, Check, Field } from "../ui";
 
 const MODES: [Draft["mode"], string, string][] = [
   ["sop", "Draft the SOP", "Writes a procedure from the map, the conversation and the linked files."],
@@ -57,33 +58,32 @@ export default function AIPanel({ boardId, enabled, recording, beforeGenerate, o
     a.click();
   };
 
-  if (!enabled) return <div className="panel-body"><p className="quiet">AI drafting is switched off on the server. The map, files and transcript still save as normal.</p></div>;
+  if (!enabled) return <div className="gw-panel-body"><p className="quiet">AI drafting is switched off on the server. The map, files and transcript still save as normal.</p></div>;
 
   return (
-    <div className="panel-body">
-      <label>Anything to focus on? <span className="quiet">Optional</span>
-        <textarea rows={2} value={guidance} onChange={(e) => setGuidance(e.target.value)} placeholder="For example: concentrate on what happens when a tenant disputes the amount" />
-      </label>
-      <div className="modes">
+    <div className="gw-panel-body">
+      <Field label="Anything to focus on?" hint="Optional" as="textarea" value={guidance} onChange={(e) => setGuidance(e.target.value)}
+        placeholder="For example: concentrate on what happens when a tenant disputes the amount" />
+      <div className="gw-modes">
         {MODES.map(([m, l, hint]) => (
-          <button key={m} onClick={() => run(m)} disabled={!!busy} title={hint}>{busy === m ? "Drafting…" : l}</button>
+          <Button key={m} onClick={() => run(m)} disabled={!!busy} title={hint}>{busy === m ? "Drafting…" : l}</Button>
         ))}
       </div>
-      <label className="check"><input type="checkbox" checked={auto} onChange={(e) => setAuto(e.target.checked)} /> Refresh the SOP every 5 minutes while recording</label>
+      <Check checked={auto} onChange={(e) => setAuto(e.target.checked)}> Refresh the SOP every 5 minutes while recording</Check>
       {error && <p className="error" role="alert">{error}</p>}
       {drafts.map((d) => (
-        <article key={d.id} className={`draft d-${d.status}`}>
+        <article key={d.id} className={`gw-draft d-${d.status}`}>
           <header>
             <strong>{MODES.find((m) => m[0] === d.mode)?.[1]}</strong>
             <span className="quiet">{new Date(d.created_at).toLocaleTimeString("en-AU", { hour: "numeric", minute: "2-digit" })} · map v{d.board_version} · {d.model}</span>
           </header>
           <Markdown source={d.markdown} />
           {d.status === "draft" && (
-            <div className="actions">
-              {d.proposal?.nodes?.length ? <button className="primary" onClick={() => { onApply(d); decide(d, "accept"); }}>Add {d.proposal.nodes.length} suggestions to the map</button>
-                : <button className="primary" onClick={() => decide(d, "accept")}>Keep</button>}
-              <button onClick={() => download(d)}>Download</button>
-              <button className="link" onClick={() => decide(d, "discard")}>Discard</button>
+            <div className="gw-actions">
+              {d.proposal?.nodes?.length ? <Button variant="primary" onClick={() => { onApply(d); decide(d, "accept"); }}>Add {d.proposal.nodes.length} suggestions to the map</Button>
+                : <Button variant="primary" onClick={() => decide(d, "accept")}>Keep</Button>}
+              <Button onClick={() => download(d)}>Download</Button>
+              <Button variant="link" onClick={() => decide(d, "discard")}>Discard</Button>
             </div>
           )}
           {d.status !== "draft" && <p className="quiet">{d.status === "accepted" ? "Kept" : "Discarded"}</p>}
