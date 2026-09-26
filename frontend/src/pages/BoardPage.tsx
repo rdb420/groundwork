@@ -8,13 +8,14 @@ import { api, type BoardRow, type Draft, type Me } from "../lib/api";
 import { useSession } from "../lib/session";
 import { KNOWN_TYPES, ProposalContext, nodeTypes } from "../canvas/nodes";
 import { acceptOp, applyOp, edgeStyle, rejectOp, type Op } from "../canvas/ops";
-import LivePanel, { type Check } from "../canvas/LivePanel";
+import LivePanel, { type Check as MapCheck } from "../canvas/LivePanel";
 import RulesPanel, { type RuleTable } from "../canvas/RulesPanel";
 import { LAYERS, type Layer } from "../canvas/kinds";
 import DocumentPanel from "../canvas/DocumentPanel";
-import { FLOWS, PALETTE, type Flow, type PaletteItem } from "../canvas/palette";
+import { FLOWS, PALETTE, type Flow, type PaletteItem as PaletteEntry } from "../canvas/palette";
 import SessionPanel from "../canvas/SessionPanel";
 import AIPanel from "../canvas/AIPanel";
+import { Button, Card, Check, CombineBar, FlowPick, Input, PaletteGroup, PaletteItem, Popover, SegToggle, Tag } from "../ui";
 
 const newId = () => Math.random().toString(36).slice(2, 10);
 
@@ -38,7 +39,7 @@ function Canvas({ board, me }: { board: BoardRow; me: Me }) {
   const [saveError, setSaveError] = useState("");
   const [panel, setPanel] = useState<"live" | "rules" | "session" | "ai" | "doc" | null>(me.live_enabled ? "live" : "session");
   const [sessionPass, setSessionPass] = useState<"overview" | "detail">((board.session_pass as any) || "detail");
-  const [checks, setChecks] = useState<Check[]>([]);
+  const [checks, setChecks] = useState<MapCheck[]>([]);
   const [rules, setRules] = useState<RuleTable[]>((board.rules as RuleTable[]) || []);
   const [rulesProposal, setRulesProposal] = useState<RuleTable[] | null>(null);
   const [hidden, setHidden] = useState<Set<Layer>>(new Set());
@@ -114,7 +115,7 @@ function Canvas({ board, me }: { board: BoardRow; me: Me }) {
   // Structure checks run on the server so the reviewer and the facilitator see the same findings.
   useEffect(() => {
     const t = setTimeout(() => {
-      api.send<Check[]>("POST", `/api/boards/${board.id}/checks`, { doc: clean(nodes, edges) }).then(setChecks).catch(() => {});
+      api.send<MapCheck[]>("POST", `/api/boards/${board.id}/checks`, { doc: clean(nodes, edges) }).then(setChecks).catch(() => {});
     }, 900);
     return () => clearTimeout(t);
   }, [nodes, edges, sessionPass, rules]);
@@ -156,7 +157,7 @@ function Canvas({ board, me }: { board: BoardRow; me: Me }) {
 
   const onConnect = useCallback((c: Connection) => setEdges((es) => addEdge(styleEdge({ ...c, id: `e${newId()}`, data: { flow } } as Edge), es)), [flow]);
 
-  const place = (item: PaletteItem, pos: { x: number; y: number }) => {
+  const place = (item: PaletteEntry, pos: { x: number; y: number }) => {
     if (item.type === "image") {
       pendingImagePos.current = pos;
       imageInput.current?.click();
@@ -232,63 +233,58 @@ function Canvas({ board, me }: { board: BoardRow; me: Me }) {
   const saveText = { saved: "Saved", saving: "Saving…", pending: "Unsaved changes", conflict: "Someone else changed this map", error: saveError || "Couldn't save. Retrying on your next change." }[save];
 
   return (
-    <div className={`board ${panel ? "with-panel" : ""}`}>
-      <header className="board-bar">
+    <div className={`gw-board ${panel ? "with-panel" : ""}`}>
+      <header className="gw-board-bar">
         <Link to="/maps" className="back">Maps</Link>
-        <input className="board-title" value={title} onChange={(e) => setTitle(e.target.value)} aria-label="Map title" />
-        {board.personal_info && <span className="pi">Personal info</span>}
-        <span className={`passtag pass-${sessionPass}`}>{sessionPass === "overview" ? "Overview" : board.perspective ? `Detail: ${board.perspective}` : "Detail"}</span>
-        <span className={`savestate ${save}`} role="status">{saveText}</span>
-        {save === "conflict" && <button onClick={() => location.reload()}>Reload</button>}
-        <div className="spacer" />
-        <div className="layers">
-          <button className={hidden.size ? "on" : ""} aria-expanded={layersOpen} onClick={() => setLayersOpen((o) => !o)}>Layers{hidden.size ? ` (${hidden.size} hidden)` : ""}</button>
+        <Input className="gw-board-title" value={title} onChange={(e) => setTitle(e.target.value)} aria-label="Map title" />
+        {board.personal_info && <Tag kind="pi" />}
+        <Tag kind={sessionPass}>{sessionPass === "overview" ? "Overview" : board.perspective ? `Detail: ${board.perspective}` : "Detail"}</Tag>
+        <span className={`gw-savestate ${save}`} role="status">{saveText}</span>
+        {save === "conflict" && <Button onClick={() => location.reload()}>Reload</Button>}
+        <div className="gw-spacer" />
+        <div className="gw-layers">
+          <Button on={hidden.size > 0} aria-expanded={layersOpen} onClick={() => setLayersOpen((o) => !o)}>Layers{hidden.size ? ` (${hidden.size} hidden)` : ""}</Button>
           {layersOpen && (
-            <div className="layers-pop" role="group" aria-label="Show on the map">
+            <Popover label="Show on the map" onClose={() => setLayersOpen(false)}>
               {(Object.keys(LAYERS) as Layer[]).map((l) => (
-                <label key={l} className="check"><input type="checkbox" checked={!hidden.has(l)} onChange={() => setHidden((h) => { const n = new Set(h); if (n.has(l)) n.delete(l); else n.add(l); return n; })} />{LAYERS[l].label}</label>
+                <Check key={l} checked={!hidden.has(l)} onChange={() => setHidden((h) => { const n = new Set(h); if (n.has(l)) n.delete(l); else n.add(l); return n; })}>{LAYERS[l].label}</Check>
               ))}
               <p className="quiet small">The standard path always shows. Hidden elements stay on the map.</p>
-            </div>
+            </Popover>
           )}
         </div>
-        <div className="seg-toggle" role="group" aria-label="Panels">
-          {([["live", "Live"], ["rules", `Rules${rulesProposal ? " •" : ""}`], ["doc", `Document${docProposal ? " •" : ""}`], ["session", `Recording${recording ? " ●" : ""}`], ["ai", "AI drafts"]] as const).map(([k, l]) => (
-            <button key={k} className={panel === k ? "on" : ""} onClick={() => setPanel(panel === k ? null : k)}>{l}</button>
-          ))}
-        </div>
+        <SegToggle ariaLabel="Panels" value={panel} onChange={setPanel} items={[
+          ["live", "Live"], ["rules", `Rules${rulesProposal ? " •" : ""}`], ["doc", `Document${docProposal ? " •" : ""}`],
+          ["session", `Recording${recording ? " ●" : ""}`], ["ai", "AI drafts"],
+        ]} />
       </header>
 
       {combined && (
-        <div className="combine-bar" role="region" aria-label="Combined map">
-          <p><strong>Combined from {(combined.proposal as any)?.sources?.length ?? "several"} views.</strong> {combined.proposal?.summary} Check the dashed elements, keep or drop them one by one, or decide for all.</p>
-          <button className="primary" onClick={() => decideCombined(true)}>Keep all</button>
-          <button onClick={() => decideCombined(false)}>Discard all</button>
-        </div>
+        <CombineBar label="Combined map" actions={<>
+          <Button variant="primary" onClick={() => decideCombined(true)}>Keep all</Button>
+          <Button onClick={() => decideCombined(false)}>Discard all</Button>
+        </>}>
+          <strong>Combined from {(combined.proposal as any)?.sources?.length ?? "several"} views.</strong> {combined.proposal?.summary} Check the dashed elements, keep or drop them one by one, or decide for all.
+        </CombineBar>
       )}
 
-      <aside className="palette" aria-label="Elements">
+      <aside className="gw-palette" aria-label="Elements">
         {groups.map((g) => (
-          <div key={g} className="pgroup">
-            <h4>{g}</h4>
+          <PaletteGroup key={g} title={g}>
             {PALETTE.filter((p) => p.group === g).map((p) => (
-              <button key={p.key} draggable className={`pitem pi-${p.key}`} title={`Drag onto the map, or click to add ${p.label.toLowerCase()} in the middle`}
+              <PaletteItem key={p.key} itemKey={p.key} draggable title={`Drag onto the map, or click to add ${p.label.toLowerCase()} in the middle`}
                 onDragStart={(e) => { e.dataTransfer.setData("application/gw-node", p.key); e.dataTransfer.effectAllowed = "move"; }}
                 onClick={() => place(p, center())}>
-                <span className="glyph" aria-hidden="true" />{p.label}
-              </button>
+                {p.label}
+              </PaletteItem>
             ))}
-          </div>
+          </PaletteGroup>
         ))}
-        <div className="pgroup">
-          <h4>Connect with</h4>
+        <PaletteGroup title="Connect with">
           {(Object.keys(FLOWS) as Flow[]).map((f) => (
-            <label key={f} className={`flowpick ${flow === f ? "on" : ""}`}>
-              <input type="radio" name="flow" checked={flow === f} onChange={() => setFlow(f)} />
-              <span className={`flowline fl-${f}`} aria-hidden="true" />{FLOWS[f].label}
-            </label>
+            <FlowPick key={f} flow={f} on={flow === f} onChange={() => setFlow(f)}>{FLOWS[f].label}</FlowPick>
           ))}
-        </div>
+        </PaletteGroup>
         <input ref={imageInput} type="file" accept="image/*" hidden onChange={(e) => {
           const f = e.target.files?.[0];
           if (f) addImage(f, pendingImagePos.current ?? center());
@@ -296,7 +292,7 @@ function Canvas({ board, me }: { board: BoardRow; me: Me }) {
         }} />
       </aside>
 
-      <div className="flow" onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }} onDrop={onDrop}>
+      <div className="gw-flow" onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }} onDrop={onDrop}>
         <ProposalContext.Provider value={proposals}>
         <ReactFlow nodes={displayNodes} edges={edges}
           onNodeClick={(_, n) => { lastTouched.current = n.id; }} onNodeDragStop={(_, n) => { lastTouched.current = n.id; }} nodeTypes={nodeTypes} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange}
@@ -309,7 +305,7 @@ function Canvas({ board, me }: { board: BoardRow; me: Me }) {
         </ReactFlow>
         </ProposalContext.Provider>
         {nodes.length === 0 && (
-          <div className="empty-hint">
+          <div className="gw-empty-hint">
             <p>Start with what kicks the work off. Drag a <strong>Start</strong> onto the map, then add the steps in the order they really happen.</p>
             <p className="quiet">Double-click anything to label it. Drag from the dots on an element's edge to connect it to the next one.</p>
           </div>
@@ -317,7 +313,7 @@ function Canvas({ board, me }: { board: BoardRow; me: Me }) {
       </div>
 
       {/* Panels stay mounted when hidden, so listening and recording carry on while you switch tabs. */}
-      <aside className="sidepanel" hidden={!panel} aria-label="Session tools">
+      <aside className="gw-sidepanel" hidden={!panel} aria-label="Session tools">
         <div hidden={panel !== "live"}>
           <LivePanel boardId={board.id} me={me} personalInfo={board.personal_info} docKind={docKind} getGraph={getGraph} setGraph={setGraph}
             sessionPass={sessionPass} setSessionPass={setSessionPass} perspective={board.perspective || ""} checks={checks}
@@ -346,7 +342,7 @@ export default function BoardPage() {
   const [board, setBoard] = useState<BoardRow | null>(null);
   const [error, setError] = useState("");
   useEffect(() => { api.get<BoardRow>(`/api/boards/${id}`).then(setBoard).catch((e) => setError(e.message)); }, [id]);
-  if (error) return <div className="center-card"><p className="error">{error}</p><Link to="/maps">Back to maps</Link></div>;
-  if (!board || !me) return <div className="loading">Loading map…</div>;
+  if (error) return <Card variant="center"><p className="error">{error}</p><Link to="/maps">Back to maps</Link></Card>;
+  if (!board || !me) return <div className="gw-loading">Loading map…</div>;
   return <ReactFlowProvider><Canvas board={board} me={me} /></ReactFlowProvider>;
 }

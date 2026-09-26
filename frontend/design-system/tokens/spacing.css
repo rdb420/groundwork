@@ -1,0 +1,30 @@
+/* Spacing, radii, borders, elevation, layout. Values are the rem steps Groundwork actually uses. */
+:root{
+  --space-1:0.2rem;--space-2:0.4rem;--space-3:0.6rem;--space-4:0.8rem;--space-5:1rem;
+  --space-6:1.2rem;--space-7:1.5rem;--space-8:2rem;--space-9:2.5rem;--space-10:3rem;
+
+  --radius-s:4px;   /* controls, file cards, doors */
+  --radius-m:10px;  /* cards, dialogs, drop zone, tiles; also BPMN task corners */
+  --radius-pill:999px;
+
+  --border-w:1.5px;      /* every UI hairline */
+  --border-w-node:2px;   /* BPMN linework */
+  --border-accent:6px;   /* door left edge, new-map top edge */
+
+  --shadow-popover:0 6px 18px rgba(28,43,54,.15);
+  --shadow-float:0 6px 24px rgba(28,43,54,.18);
+  --shadow-sticky:0 2px 0 rgba(28,43,54,.15);
+  --ring-focus:3px solid var(--survey);
+  --ring-soft:0 0 0 3px var(--survey-soft);
+  --ring-pending:0 0 0 3px var(--confirm);
+
+  --page-max:1100px;
+  --page-pad:clamp(1rem,4vw,3rem);
+  --grid-size:40px;       /* drafting-grid background */
+  --palette-w:172px;
+  --sidepanel-w:minmax(320px,400px); /* @kind other */
+  --header-height:3.5rem; /* app starter */
+  --desktop-nav-width:15rem;
+  --mobile-nav-height:4rem;
+  --gutter:clamp(1rem,2vw,2rem); /* @kind spacing */
+}

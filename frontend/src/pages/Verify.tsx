@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { api } from "../lib/api";
+import { Button, Card, LinkButton } from "../ui";
 
 // The emailed link lands here. Signing in needs a click so mail scanners that pre-open
 // links can't use up the one-time token.
@@ -20,18 +21,18 @@ export default function Verify() {
     }
   };
   return (
-    <div className="center-card">
+    <Card variant="center">
       <h1>Sign in to Groundwork</h1>
       {error ? (
         <>
           <p className="error" role="alert">{error}</p>
-          <a className="button primary" href="/login">Request a new link</a>
+          <LinkButton variant="primary" href="/login">Request a new link</LinkButton>
         </>
       ) : (
-        <button className="primary" onClick={go} disabled={!token || busy} autoFocus>
+        <Button variant="primary" onClick={go} disabled={!token || busy} autoFocus>
           {busy ? "Signing in…" : "Continue"}
-        </button>
+        </Button>
       )}
-    </div>
+    </Card>
   );
 }

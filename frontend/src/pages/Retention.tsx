@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../lib/api";
+import { Button, Rows } from "../ui";
 
 type Status = {
   withdrawn_days: number; audio_days: number; auto: boolean; backup_keep_days: number;
@@ -32,7 +33,7 @@ export default function Retention() {
   if (!s) return <p className="quiet">Loading…</p>;
   const nothing = s.files.length === 0 && s.audio.length === 0;
   return (
-    <div className="retention">
+    <div>
       <h1>Retention</h1>
       <ul>
         <li>{period(s.withdrawn_days, "Withdrawn files are deleted")}</li>
@@ -44,14 +45,14 @@ export default function Retention() {
 
       <h2>Due now</h2>
       {nothing ? <p className="quiet">Nothing is due.</p> : (
-        <ul className="rows">
+        <Rows>
           {s.files.map((f) => <li key={f.id}><strong>{f.title}</strong><span className="quiet">Withdrawn {day(f.withdrawn_at)}</span><span>File</span></li>)}
           {s.audio.map((a) => <li key={a.id}><a href={`/maps/${a.board_id}`}>Session recording</a><span className="quiet">Ended {day(a.ended_at)}</span><span>Audio</span></li>)}
-        </ul>
+        </Rows>
       )}
       {error && <p className="error" role="alert">{error}</p>}
       {done && <p role="status">{done}</p>}
-      <button className="primary" onClick={run} disabled={busy || nothing}>{busy ? "Deleting…" : "Delete what is due"}</button>
+      <Button variant="primary" onClick={run} disabled={busy || nothing}>{busy ? "Deleting…" : "Delete what is due"}</Button>
     </div>
   );
 }

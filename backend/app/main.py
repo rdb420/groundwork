@@ -25,10 +25,10 @@ app = FastAPI(title="Groundwork", lifespan=lifespan, docs_url="/api/docs", opena
 for r in (auth.router, artifacts.router, processes.router, boards.router, live.router, admin.router, ontology.router):
     app.include_router(r)
 
-# Sent by the app itself so every deployment option has them, with or without Caddy. Scripts run
-# only from this origin; the one outside source is the Google Fonts stylesheet and its font files.
-CSP = ("default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
-       "font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; "
+# Sent by the app itself so every deployment option has them, with or without Caddy. Everything,
+# fonts included, comes from this origin.
+CSP = ("default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; "
+       "font-src 'self'; img-src 'self' data: blob:; media-src 'self' blob:; "
        "connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'")
 SECURITY_HEADERS = {"X-Content-Type-Options": "nosniff", "Referrer-Policy": "no-referrer", "X-Frame-Options": "DENY",
                     "Permissions-Policy": "camera=(), geolocation=(), microphone=(self)"}

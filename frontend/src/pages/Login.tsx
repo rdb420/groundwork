@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { api } from "../lib/api";
-import { Mark } from "../components/Shell";
+import { BrandMark, Button, Field, YshLockup } from "../ui";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -18,9 +18,12 @@ export default function Login() {
     }
   };
   return (
-    <div className="login">
-      <section className="login-story">
-        <div className="brand big"><Mark /> Groundwork</div>
+    <div className="gw-login">
+      <section className="gw-login-story drafting-grid">
+        <div className="gw-login-brands">
+          <BrandMark big />
+          <YshLockup height={36} />
+        </div>
         <h1>Show us how the work really gets done.</h1>
         <p>
           The official procedure is one version. The spreadsheet you keep on the side, the email you forward every
@@ -29,25 +32,22 @@ export default function Login() {
         </p>
         <FlowSketch />
       </section>
-      <section className="login-form">
+      <section className="gw-login-form">
         {state === "sent" ? (
-          <div className="sent" role="status">
+          <div role="status">
             <h2>Check your email</h2>
             <p>We sent a sign-in link to <strong>{email}</strong>. It works once and expires in 15 minutes.</p>
-            <p className="quiet">No email after a few minutes? Check junk, then <button className="link" onClick={() => setState("idle")}>send another</button>.</p>
+            <p className="quiet">No email after a few minutes? Check junk, then <Button variant="link" onClick={() => setState("idle")}>send another</Button>.</p>
           </div>
         ) : (
           <form onSubmit={submit}>
             <h2>Sign in</h2>
             <p className="quiet">Use your work email. We'll send you a link, so there's no password to remember.</p>
-            <label>
-              Work email
-              <input type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} autoFocus />
-            </label>
+            <Field label="Work email" type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} autoFocus />
             {state === "error" && <p className="error" role="alert">{msg}</p>}
-            <button className="primary" disabled={state === "sending"} type="submit">
+            <Button variant="primary" disabled={state === "sending"} type="submit">
               {state === "sending" ? "Sending link…" : "Email me a sign-in link"}
-            </button>
+            </Button>
           </form>
         )}
       </section>
@@ -58,7 +58,7 @@ export default function Login() {
 // The characteristic image: a tidy process line with a hand-written note stuck on it.
 function FlowSketch() {
   return (
-    <svg className="sketch" viewBox="0 0 520 190" role="img" aria-label="A simple process drawing with a sticky note that says: we actually use a spreadsheet for this">
+    <svg className="gw-sketch" viewBox="0 0 520 190" role="img" aria-label="A simple process drawing with a sticky note that says: we actually use a spreadsheet for this">
       <circle cx="30" cy="95" r="16" fill="none" stroke="currentColor" strokeWidth="2" />
       <path d="M46 95h44" stroke="currentColor" strokeWidth="2" markerEnd="url(#a)" />
       <rect x="92" y="70" width="112" height="50" rx="9" fill="none" stroke="currentColor" strokeWidth="2" />

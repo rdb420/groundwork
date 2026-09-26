@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../lib/api";
 import { LAYERS } from "../lib/labels";
+import { Rows, Table, Tiles } from "../ui";
 
 type Row = {
   id: string; name: string; parent_id: string | null; status: string; owner_email: string;
@@ -37,48 +38,41 @@ export default function CoveragePage() {
   const layerName = (k: string) => LAYERS.find((l) => l[0] === k)?.[1] ?? k;
 
   const row = (p: Row, child: boolean) => (
-    <tr key={p.id} className={child ? "" : "grouprow"}>
-      <th scope="row" className={child ? "indent" : ""}>{p.name}{p.status === "proposed" && <span className="quiet"> (proposed)</span>}</th>
+    <tr key={p.id} className={child ? undefined : "grouprow"}>
+      <th scope="row" className={child ? "indent" : undefined}>{p.name}{p.status === "proposed" && <span className="quiet"> (proposed)</span>}</th>
       {SHOWN.map((l) => <td key={l} className={`num ${p.layers[l] ? "" : "zero"}`}>{p.layers[l] || "·"}</td>)}
       <td className="num">{p.contributors || "·"}</td>
       <td>{p.maps.total ? `${p.maps.overview ? "Overview" : "No overview"}${p.maps.views ? `, ${p.maps.views} view${p.maps.views > 1 ? "s" : ""}` : ""}` : <span className="quiet">None</span>}</td>
       <td className="num">{p.maps.to_confirm || "·"}</td>
-      <td className="flags">{p.flags.join(" · ")}</td>
+      <td className="gw-flags">{p.flags.join(" · ")}</td>
     </tr>
   );
 
   return (
-    <div className="coverage">
+    <div>
       <h1>Coverage</h1>
       <p className="lede">Where the evidence is, and where it isn't yet. A process with only the official version, or with workarounds nobody has mapped, is where to look next.</p>
-      <dl className="tiles">
-        <div><dt>Files shared</dt><dd>{t.files}</dd></div>
-        <div><dt>Workarounds</dt><dd>{Math.round(t.workaround_share * 100)}%</dd><span className="quiet">of files</span></div>
-        <div><dt>Processes with files</dt><dd>{t.processes_with_files} of {t.processes}</dd></div>
-        <div><dt>Processes mapped</dt><dd>{t.processes_with_map} of {t.processes}</dd></div>
-        <div><dt>AI drafts kept</dt><dd>{t.drafts.accepted} of {t.drafts.accepted + t.drafts.discarded}</dd><span className="quiet">decided</span></div>
-        <div><dt>Open "to confirm"</dt><dd>{t.to_confirm}</dd></div>
-      </dl>
+      <Tiles items={[
+        { label: "Files shared", value: t.files },
+        { label: "Workarounds", value: `${Math.round(t.workaround_share * 100)}%`, note: "of files" },
+        { label: "Processes with files", value: `${t.processes_with_files} of ${t.processes}` },
+        { label: "Processes mapped", value: `${t.processes_with_map} of ${t.processes}` },
+        { label: "AI drafts kept", value: `${t.drafts.accepted} of ${t.drafts.accepted + t.drafts.discarded}`, note: "decided" },
+        { label: 'Open "to confirm"', value: t.to_confirm },
+      ]} />
 
-      <div className="tablewrap">
-        <table>
-          <caption className="quiet">Files per process by what they show. Withdrawn, blocked and deleted files don't count.</caption>
+      <Table caption="Files per process by what they show. Withdrawn, blocked and deleted files don't count.">
           <thead>
             <tr><th scope="col">Process</th>{SHOWN.map((l) => <th key={l} scope="col" className="num">{layerName(l)}</th>)}
               <th scope="col" className="num">People</th><th scope="col">Maps</th><th scope="col" className="num">To confirm</th><th scope="col">Notes</th></tr>
           </thead>
           <tbody>{groups.flatMap(({ top, kids }) => [row(top, false), ...kids.map((k) => row(k, true))])}</tbody>
-        </table>
-      </div>
+      </Table>
       <p className="quiet"><Link to="/processes">Rename, confirm, merge or retire processes</Link></p>
 
       <h2>Who has shared</h2>
       {data.contributors.length === 0 ? <p className="quiet">Nobody yet.</p> : (
-        <ul className="rows">
-          {data.contributors.map((c) => (
-            <li key={c.email}><strong>{c.name}</strong><span className="quiet">{c.team || c.email}</span><span>{c.files} file{c.files > 1 ? "s" : ""}</span></li>
-          ))}
-        </ul>
+        <Rows items={data.contributors.map((c) => [<strong>{c.name}</strong>, c.team || c.email, `${c.files} file${c.files > 1 ? "s" : ""}`])} />
       )}
     </div>
   );

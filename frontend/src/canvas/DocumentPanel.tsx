@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { api, type Draft } from "../lib/api";
 import { Markdown } from "../lib/markdown";
+import { Button, Segmented, TextArea } from "../ui";
 
 type Props = { boardId: string; docKind: "sop" | "wi"; setDocKind: (k: "sop" | "wi") => void; proposal: Draft | null; clearProposal: () => void };
 
@@ -40,33 +41,31 @@ export default function DocumentPanel({ boardId, docKind, setDocKind, proposal, 
   };
 
   return (
-    <div className="panel-body">
-      <div className="segmented small" role="radiogroup" aria-label="Document type">
-        <label className={docKind === "sop" ? "on" : ""}><input type="radio" checked={docKind === "sop"} onChange={() => setDocKind("sop")} />Procedure (SOP)</label>
-        <label className={docKind === "wi" ? "on" : ""}><input type="radio" checked={docKind === "wi"} onChange={() => setDocKind("wi")} />Work instruction</label>
-      </div>
+    <div className="gw-panel-body">
+      <Segmented name="doc-kind" small ariaLabel="Document type" value={docKind} onChange={setDocKind}
+        options={[["sop", "Procedure (SOP)"], ["wi", "Work instruction"]]} />
       {proposal && proposal.markdown && proposal.markdown !== saved && (
-        <div className="proposal">
+        <div className="gw-proposal">
           <p><strong>The reviewer revised the document.</strong> {proposal.proposal?.summary}</p>
-          <div className="actions">
-            <button className="primary" onClick={() => { save(proposal.markdown); clearProposal(); }}>Use the revision</button>
-            <button onClick={() => { setText(proposal.markdown); setEditing(true); clearProposal(); }}>Edit it first</button>
-            <button className="link" onClick={clearProposal}>Keep mine</button>
+          <div className="gw-actions">
+            <Button variant="primary" onClick={() => { save(proposal.markdown); clearProposal(); }}>Use the revision</Button>
+            <Button onClick={() => { setText(proposal.markdown); setEditing(true); clearProposal(); }}>Edit it first</Button>
+            <Button variant="link" onClick={clearProposal}>Keep mine</Button>
           </div>
         </div>
       )}
       {editing ? (
         <>
-          <textarea className="doc-edit" value={text} onChange={(e) => setText(e.target.value)} rows={24} aria-label="Document text" />
-          <div className="actions"><button className="primary" onClick={() => save(text)}>Save</button><button className="link" onClick={() => { setText(saved); setEditing(false); }}>Cancel</button></div>
+          <TextArea className="gw-doc-edit" value={text} onChange={(e) => setText(e.target.value)} rows={24} aria-label="Document text" />
+          <div className="gw-actions"><Button variant="primary" onClick={() => save(text)}>Save</Button><Button variant="link" onClick={() => { setText(saved); setEditing(false); }}>Cancel</Button></div>
         </>
       ) : (
         <>
           {text ? <Markdown source={text} /> : <p className="quiet">No document yet. Run a review from the Live tab, or write one yourself.</p>}
-          <div className="actions"><button onClick={() => setEditing(true)}>Edit</button>{text && <button onClick={download}>Download</button>}</div>
+          <div className="gw-actions"><Button onClick={() => setEditing(true)}>Edit</Button>{text && <Button onClick={download}>Download</Button>}</div>
         </>
       )}
-      {error && <p className="error" role="alert">{error} {stale && <button className="link" onClick={() => { void navigator.clipboard?.writeText(text); load(); setEditing(false); }}>Copy my text and reload</button>}</p>}
+      {error && <p className="error" role="alert">{error} {stale && <Button variant="link" onClick={() => { void navigator.clipboard?.writeText(text); load(); setEditing(false); }}>Copy my text and reload</Button>}</p>}
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import "@xyflow/react/dist/style.css";
+import "../design-system/styles.css";
 import "./styles.css";
 import { SessionProvider, useSession } from "./lib/session";
 import Shell from "./components/Shell";
@@ -24,7 +25,7 @@ const RANK = { contributor: 0, analyst: 1, admin: 2 } as const;
 // The server enforces every role check; this only keeps people off pages that would refuse them.
 function Protected({ children, role = "contributor" }: { children: React.ReactNode; role?: keyof typeof RANK }) {
   const { me, loading } = useSession();
-  if (loading) return <div className="loading">Loading…</div>;
+  if (loading) return <div className="gw-loading">Loading…</div>;
   if (!me) return <Navigate to="/login" replace />;
   if (RANK[me.role] < RANK[role]) return <Navigate to="/" replace />;
   return <>{children}</>;

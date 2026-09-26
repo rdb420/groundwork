@@ -1,0 +1,19 @@
+/* Element defaults, from Groundwork. */
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;font:var(--text-base)/var(--leading-body) var(--font);color:var(--ink);background:var(--paper)}
+h1{font-size:var(--text-h1);line-height:var(--leading-tight);margin:0 0 .6rem;letter-spacing:var(--tracking-h1);max-width:var(--measure-h1)}
+h2{font-size:var(--text-h2);margin:2rem 0 .6rem}
+h3{font-size:var(--text-h3);margin:1.2rem 0 .4rem}
+p{max-width:var(--measure-body)}
+a{color:var(--survey)}
+a:hover{color:var(--survey-hover)}
+:focus-visible{outline:var(--ring-focus);outline-offset:2px}
+.quiet{color:var(--muted);font-size:var(--text-quiet)}
+.error{color:var(--boundary)}
+.lede{font-size:var(--text-lede);max-width:var(--measure-lede)}
+.small{font-size:var(--text-xs)}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.eyebrow{margin:0 0 .5rem;color:var(--muted);font-size:.8125rem;font-weight:700;letter-spacing:var(--tracking-eyebrow);text-transform:uppercase}
+.drafting-grid{background-color:var(--survey);background-image:linear-gradient(rgba(255,255,255,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.08) 1px,transparent 1px);background-size:var(--grid-size) var(--grid-size)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}

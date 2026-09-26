@@ -25,8 +25,9 @@ start running business processes belong in a later system, built from what this 
 - Personal information: respect `personal_info` on artifacts and boards. Never log file
   contents, transcripts or prompts.
 - Canvas nodes carry meaning in `type` and `data`. If you add a node type, add it to
-  `canvas/nodes.tsx`, `canvas/palette.ts` and `TYPE_NAMES` in `ai/context.py`. If live mapping
-  should use it, add it to `live/vocabulary.py` and `canvas/kinds.ts` as well.
+  `canvas/nodes.tsx`, `canvas/palette.ts` and `TYPE_NAMES` in `ai/context.py`, and give it and its
+  palette glyph (`.pi-<key> .gw-glyph`) `gw-` styles in `src/styles.css`. If live mapping should use
+  it, add it to `live/vocabulary.py` and `canvas/kinds.ts` as well.
 - The decision model only picks from options code provides. Keep every Choice at or under
   `GW_DECISION_MAX_OPTIONS` so questions stay portable to Laya and OpenJev. Arithmetic, dates,
   counting and layout stay in code.
@@ -56,6 +57,18 @@ start running business processes belong in a later system, built from what this 
   hosted decision model.
 - Service clients use `app/httpclient.py` so tests can use the fakes in `tests/fakes.py`. No
   vendor SDKs. Never log file content, chunk text, transcripts or prompts.
+
+## Design system (docs/DESIGN_SYSTEM.md)
+
+- The interface uses the YSH Internal Apps Design System. `frontend/design-system/` is a vendored
+  snapshot: never edit it. Take a new snapshot and record it in `SNAPSHOT.md`.
+- Build screens from `frontend/src/ui` (typed ports of the design-system components). Outside
+  `src/ui`, ESLint refuses raw `button`, `select`, `textarea`, `table`, `label` and text `input`.
+- Colours come from design-system tokens (`var(--survey)` and the rest), never hex values. Classes
+  use the `gw-` namespace. `src/styles.css` holds only what the design system doesn't cover, and
+  `test/styles.test.ts` fails on a hex value there or a `gw-` class nobody defined.
+- Fix a design-system component in `src/ui` or `src/styles.css`, and note it in
+  `docs/DESIGN_SYSTEM.md` so it can go back upstream.
 
 ## Writing in the interface
 

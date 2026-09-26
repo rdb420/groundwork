@@ -4,6 +4,7 @@
 // retry, because the server refuses parts that arrive long after the end.
 import { useEffect, useRef, useState } from "react";
 import { api } from "../lib/api";
+import { Button, Check, Field, Recording } from "../ui";
 
 type Seg = { recording_id: string; seq: number; status: string; text: string };
 const CHUNK_MS = 30_000;
@@ -124,28 +125,24 @@ export default function SessionPanel({ boardId, transcriptionOn, onRecordingChan
 
   const mm = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
   return (
-    <div className="panel-body">
+    <div className="gw-panel-body">
       {!rec ? (
-        <div className="consent">
-          <label>Who is in the session and agreed to be recorded?
-            <input value={consent} onChange={(e) => setConsent(e.target.value)} placeholder="For example: Sam (property manager), Ryan" />
-          </label>
-          <label className="check"><input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} /> Everyone present has agreed to this recording</label>
-          <button className="primary" disabled={!agreed || consent.trim().length < 3} onClick={start}>Start recording</button>
+        <div>
+          <Field label="Who is in the session and agreed to be recorded?" value={consent} onChange={(e) => setConsent(e.target.value)}
+            placeholder="For example: Sam (property manager), Ryan" />
+          <Check checked={agreed} onChange={(e) => setAgreed(e.target.checked)}> Everyone present has agreed to this recording</Check>
+          <Button variant="primary" disabled={!agreed || consent.trim().length < 3} onClick={start}>Start recording</Button>
           {!transcriptionOn && <p className="quiet">Transcription is switched off on the server. Audio is still saved for later.</p>}
         </div>
       ) : (
-        <div className="recording" role="status">
-          <span className="dot" aria-hidden="true" /> {stopping ? "Saving the last part…" : `Recording ${mm}`}
-          <button onClick={stop} disabled={stopping}>Stop</button>
-        </div>
+        <Recording label={stopping ? "Saving the last part…" : `Recording ${mm}`} onStop={stop} stopDisabled={stopping} />
       )}
       {error && <p className="error" role="alert">{error}</p>}
       <h3>Transcript</h3>
       {segs.length === 0 ? <p className="quiet">Nothing recorded on this map yet.</p> : (
-        <div className="transcript">
+        <div className="gw-transcript">
           {segs.map((s) => (
-            <p key={`${s.recording_id}-${s.seq}`} className={`seg s-${s.status}`}>
+            <p key={`${s.recording_id}-${s.seq}`} className="gw-seg">
               {s.status === "done" ? s.text || <em className="quiet">(silence)</em> : s.status === "queued" ? <em className="quiet">Transcribing…</em> : s.status === "skipped" ? <em className="quiet">Audio saved, not transcribed.</em> : <em className="error">Couldn't transcribe this part.</em>}
             </p>
           ))}

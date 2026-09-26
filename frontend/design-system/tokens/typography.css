@@ -1,0 +1,29 @@
+/* One typeface for the interface, chosen for legibility (Groundwork). Montserrat only for brand lockups / tracked caps echoing the YSH Property wordmark. */
+:root{
+  --font:"Atkinson Hyperlegible","Segoe UI",system-ui,-apple-system,sans-serif;
+  --font-brand:"Montserrat","Atkinson Hyperlegible",system-ui,sans-serif;
+  --font-mono:ui-monospace,monospace; /* Groundwork uses the platform mono stack */
+
+  --text-base:17px;          /* body: 17px/1.55 */
+  --leading-body:1.55;
+  --leading-tight:1.15;
+  --text-display:clamp(2.2rem,4.2vw,3.4rem); /* sign-in story headline */
+  --text-h1:2.1rem;
+  --text-h2:1.3rem;
+  --text-h3:1.05rem;
+  --text-lede:1.12rem;
+  --text-control:0.95rem;    /* buttons */
+  --text-quiet:0.92em;
+  --text-sm:0.88rem;
+  --text-xs:0.82rem;         /* status pills, .small */
+  --text-2xs:0.72rem;        /* ctx marks, pk-cat */
+  --text-stat:1.6rem;        /* coverage tile numbers */
+  --tracking-h1:-0.01em;
+  --tracking-eyebrow:0.06em;
+  --tracking-brand:0.18em;
+  --measure-body:68ch;
+  --measure-lede:60ch;
+  --measure-h1:24ch;
+  --weight-regular:400;
+  --weight-bold:700;
+}

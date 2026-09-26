@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import type { ProcessRow } from "../lib/api";
+import { Button, Check, Chip, Input } from "../ui";
 
 type Props = {
   processes: ProcessRow[];
@@ -23,28 +24,22 @@ export default function ProcessPicker({ processes, selected, newNames, onChange 
     setAdding("");
   };
   return (
-    <div className="picker">
+    <div className="gw-picker">
       {groups.map(({ top, kids }) => (
         <fieldset key={top.id}>
           <legend>{top.name}</legend>
           {(kids.length ? kids : [top]).map((p) => (
-            <label key={p.id} className="check">
-              <input type="checkbox" checked={selected.includes(p.id)} onChange={() => toggle(p.id)} />
-              {p.name}
-            </label>
+            <Check key={p.id} checked={selected.includes(p.id)} onChange={() => toggle(p.id)}>{p.name}</Check>
           ))}
         </fieldset>
       ))}
       {newNames.map((n) => (
-        <span key={n} className="chip">
-          {n} (new)
-          <button type="button" aria-label={`Remove ${n}`} onClick={() => onChange(selected, newNames.filter((x) => x !== n))}>×</button>
-        </span>
+        <Chip key={n} removeLabel={`Remove ${n}`} onRemove={() => onChange(selected, newNames.filter((x) => x !== n))}>{n} (new)</Chip>
       ))}
-      <div className="add-row">
-        <input value={adding} onChange={(e) => setAdding(e.target.value)} placeholder="Not listed? Name the work in your own words"
+      <div className="gw-add-row">
+        <Input value={adding} onChange={(e) => setAdding(e.target.value)} placeholder="Not listed? Name the work in your own words"
           onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); add(); } }} />
-        <button type="button" onClick={add} disabled={!adding.trim()}>Add</button>
+        <Button onClick={add} disabled={!adding.trim()}>Add</Button>
       </div>
     </div>
   );
