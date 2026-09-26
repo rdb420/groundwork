@@ -33,13 +33,15 @@ uv run uvicorn app.main:app --reload --port 8000
 cd frontend && pnpm run dev             # http://localhost:5173
 ```
 
-Sign in with your work address. With no SMTP set, the sign-in link prints in terminal 2.
+Sign in with your work address. With no SMTP set (`GW_SMTP_HOST` empty), the sign-in link prints in
+terminal 2. The API also reads `.env` at the repo root if there is one; the settings on the command
+line above win over it.
 
 ## 2. Walk through it
 
 1. **Share files.** Upload a real spreadsheet. Open Library, click it, and check the first read
    lists its sheets, hidden sheets, formulas and links.
-2. **Overview map.** Maps → "Overview of the whole process". Type these into the Live tab:
+2. **Overview map.** Process maps → "Overview of the whole process". Type these into the Live tab:
    - It starts when rent falls due
    - I check the bank feed for payments
    - The bank feed is sometimes a day behind  *(should go to the parking lot, not the map)*
@@ -54,8 +56,8 @@ Sign in with your work address. With no SMTP set, the sign-in link prints in ter
    check it links to the new rule step. Open **Document**: use or edit the revision.
 6. **Layers.** Hide "Issues, risks and workarounds" and check the saved map is unchanged when you
    show them again.
-7. **One person's views.** Create two "One person's view" maps for the same process, add a few
-   steps to each, then use **Combine** on the Maps page.
+7. **One person's views.** Create two "One person's view, in detail" maps for the same process, add
+   a few steps to each, then use **Combine** on the Process maps page.
 
 The stand-ins choose by keyword, so expect odd labels. You're testing the plumbing here.
 
@@ -68,6 +70,9 @@ review. Check both answer:
 ```bash
 cd backend && uv run python -m scripts.check_providers
 ```
+
+It also checks the mail account when `GW_SMTP_HOST` is set, and any pipeline services that are set.
+To email sign-in links through Gmail, follow "Run it locally" in the README.
 
 Restart terminal 2 without the stand-in settings (the API reads `.env`):
 
@@ -83,7 +88,11 @@ cd backend && uv run python -m scripts.live_eval scripts/eval/sample.jsonl
 
 Replace the sample sentences with ones from a recorded mock session and re-run. Compare against
 a local Laya or OpenJev server with `GW_DECISION_PROVIDER=jev`, `GW_DECISION_URL`,
-`GW_DECISION_MODEL` and `GW_DECISION_IS_LOCAL=true`.
+`GW_DECISION_MODEL` and `GW_DECISION_IS_LOCAL=true`. For Laya (`laya` in
+`deploy/inference-compose.yml`) also set `GW_DECISION_FLAVOUR=laya` and `GW_DECISION_MAX_OPTIONS=12`;
+[LIVE_MAPPING.md](LIVE_MAPPING.md) has the full settings and the last measured results. To compare
+decision models for extraction, run this from `backend/`:
+`uv run python -m scripts.extract_eval --gold-mentions scripts/eval/relations_sample.jsonl`.
 
 ## 4. What to note during the test
 

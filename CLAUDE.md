@@ -84,8 +84,8 @@ commit the lock file with the change.
 
 ## Checks
 
-CI runs these on every push and pull request (`.github/workflows/ci.yml`). Run them before you
-commit:
+CI runs these on every push to main and every pull request (`.github/workflows/ci.yml`), then
+builds the deploy image (`deploy/Dockerfile`). Run them before you commit:
 
 ```bash
 cd backend && uv run ruff check app tests scripts && uv run mypy app && uv run pytest -q

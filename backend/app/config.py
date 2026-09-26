@@ -68,7 +68,7 @@ class Settings(BaseSettings):
     extract_decision_api_key: str = ""
     extract_decision_is_local: bool = False
     extract_decision_model: str = ""  # empty uses decision_model; Laya: english or typed-decisions
-    extract_decision_flavour: str = ""  # empty: laya if extraction has its own URL and says so, else jev
+    extract_decision_flavour: str = ""  # empty: jev with its own URL, else the live-mapping flavour
     topics_min_chunks: int = 500  # BERTopic needs enough text to find stable themes
     neo4j_url: str = ""  # e.g. http://neo4j:7474 (the Query API); empty stops the pipeline after extraction
     neo4j_user: str = "neo4j"

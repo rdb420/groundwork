@@ -1,7 +1,7 @@
 # Self-hosted Supabase Storage for Groundwork
 
-Groundwork keeps originals, converted Markdown and images in object storage when
-`GW_STORAGE_BACKEND=s3`. It only uses Supabase Storage's S3 endpoint, so the rest of the Supabase
+Groundwork keeps originals, converted Markdown and images, and session audio in object storage
+when `GW_STORAGE_BACKEND=s3`. It only uses Supabase Storage's S3 endpoint, so the rest of the Supabase
 stack (Postgres, Studio, Auth) can stay as Supabase ships it.
 
 1. Run Supabase's self-hosted Docker stack on the office host or the inference box
@@ -20,6 +20,8 @@ stack (Postgres, Studio, Auth) can stay as Supabase ships it.
    GW_S3_ACCESS_KEY=<S3_PROTOCOL_ACCESS_KEY_ID>
    GW_S3_SECRET_KEY=<S3_PROTOCOL_ACCESS_KEY_SECRET>
    ```
+
+   If the endpoint uses HTTPS with a private CA, also set `GW_S3_CA_FILE` to that CA's certificate.
 
 5. Check it: `cd backend && uv run python -m scripts.check_providers`.
 

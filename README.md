@@ -5,11 +5,13 @@ from, and map how their work flows on a BPMN canvas. Mapping sessions can be rec
 transcribed, and AI drafts SOPs, map suggestions and follow-up questions for people to review.
 
 Read [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the design, security model and rollout plan,
-[docs/LIVE_MAPPING.md](docs/LIVE_MAPPING.md) for the live canvas driven by Jev, and
-[docs/TEST_RUN.md](docs/TEST_RUN.md) for a first test run with stand-in models, and
+[docs/LIVE_MAPPING.md](docs/LIVE_MAPPING.md) for the live canvas driven by Jev (or a local Laya),
+[docs/TEST_RUN.md](docs/TEST_RUN.md) for a first test run with stand-in models,
 [docs/INGESTION.md](docs/INGESTION.md) for the pipeline that turns files and sessions into Markdown,
-a search index and a knowledge graph, [docs/PRIVACY.md](docs/PRIVACY.md) for the draft privacy
-impact assessment, and [docs/AUDIT.md](docs/AUDIT.md) for the pre-pilot audit and its progress.
+a search index and a knowledge graph, [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md) for how the
+interface uses the YSH Internal Apps Design System, [docs/PRIVACY.md](docs/PRIVACY.md) for the draft
+privacy impact assessment, and [docs/AUDIT.md](docs/AUDIT.md) for the pre-pilot audit and its
+progress.
 
 ## Tooling
 
@@ -42,10 +44,18 @@ pnpm install
 pnpm run dev          # http://localhost:5173, proxies /api to :8000
 ```
 
-With no SMTP configured, sign-in links print to the API console. Copy the link into the browser.
-To send them through Gmail (Google Workspace), follow `backend/scripts/gmail_oauth.py`.
+With no SMTP configured (`GW_SMTP_HOST` empty), sign-in links print to the API console. Copy the
+link into the browser.
 
-To make yourself an analyst locally, start the API with `GW_ANALYST_EMAILS=you@example.com.au`.
+To send them through Gmail (Google Workspace), set `GW_SMTP_AUTH=xoauth2` and sign in with OAuth 2.0.
+Follow the Google Cloud steps at the top of `backend/scripts/gmail_oauth.py`, then from `backend/`
+run `uv run python -m scripts.gmail_oauth url` and `uv run python -m scripts.gmail_oauth exchange
+'<address>'`. That saves `GW_SMTP_OAUTH_REFRESH_TOKEN` in `.env`. `scripts.check_providers` then
+confirms the mail server accepts the sign-in. A Google app password still works with
+`GW_SMTP_AUTH=password`.
+
+To make yourself an analyst locally, start the API with `GW_ANALYST_EMAILS=you@example.com.au`, or
+`GW_ADMIN_EMAILS` for an admin (the Pipeline, People and Retention pages).
 
 ## Deploy on one host
 
@@ -60,13 +70,18 @@ everything except `caddy` and follow the comment there). Schedule `deploy/backup
 [Backups](#backups).
 
 To catch sign-in emails while testing: `docker compose --profile dev up -d`, set
-`GW_SMTP_HOST=mailpit`, `GW_SMTP_PORT=1025`, `GW_SMTP_STARTTLS=false`, and open port 8025.
+`GW_SMTP_HOST=mailpit`, `GW_SMTP_PORT=1025`, `GW_SMTP_STARTTLS=false`, `GW_SMTP_AUTH=password`,
+clear `GW_SMTP_USER` (Mailpit doesn't offer sign-in, so any user makes sending fail), and open port
+8025.
 
 ## Backups
 
 `deploy/backup.sh` takes a consistent snapshot of the database and every stored file, checks it,
 and keeps `GW_BACKUP_KEEP_DAYS` of them in `data/backups/`. Schedule it nightly from the host's
-crontab.
+crontab. With `GW_STORAGE_BACKEND=s3` the files live in Supabase Storage, so the backup covers the
+database only; back up that stack's storage separately (`deploy/supabase/README.md`). Qdrant and
+Neo4j are rebuilt from the database (**Reprocess** on the Pipeline page), so they need no backup of
+their own.
 
 Backups hold tenant and borrower information, so encrypt them before they leave the host:
 
@@ -82,16 +97,20 @@ Backups hold tenant and borrower information, so encrypt them before they leave 
 
 Off by default. With the services running (office host: `docker compose --profile pipeline up -d`;
 inference box: `docker compose -f deploy/inference-compose.yml up -d --build`), set the `GW_MINERU_*`,
-`GW_EMBED_URL`, `GW_QDRANT_*`, `GW_EXTRACT_URL` and `GW_NEO4J_*` settings, check them with
+`GW_GOTENBERG_URL`, `GW_EMBED_URL`, `GW_QDRANT_*`, `GW_EXTRACT_URL` and `GW_NEO4J_*` settings (plus
+`QDRANT_API_KEY` and `NEO4J_PASSWORD` for the containers), check them with
 `uv run python -m scripts.check_providers`, then set `GW_PIPELINE_ENABLED=true`. The admin Pipeline
-page shows progress and queues older files. See [docs/INGESTION.md](docs/INGESTION.md).
+page shows progress and queues older files. Terms the ontology doesn't have yet become proposals on
+the analyst Terms page. Relationship questions can go to their own decision model
+(`GW_EXTRACT_DECISION_*`), such as a local Laya, so files with personal information stay on-prem.
+See [docs/INGESTION.md](docs/INGESTION.md).
 
 ## AI and transcription
 
 | Setting | Values |
 |---|---|
 | `GW_AI_PROVIDER` | `none`, `openai` (OpenAI with `GW_OPENAI_API_KEY` and `GW_OPENAI_MODEL`, or any OpenAI-compatible endpoint), `ollama` (local, point `GW_OLLAMA_URL` at the inference box), `anthropic` |
-| `GW_DECISION_PROVIDER` | `none`, `openrouter` (TypeSafe Jev through OpenRouter's System One API, with `GW_OPENROUTER_API_KEY`), `jev` (TypeSafe directly, or a Laya or OpenJev server via `GW_DECISION_URL`) |
+| `GW_DECISION_PROVIDER` | `none`, `openrouter` (TypeSafe Jev through OpenRouter's System One API, with `GW_OPENROUTER_API_KEY`), `jev` (TypeSafe directly, or a Laya or OpenJev server via `GW_DECISION_URL`; for Laya also set `GW_DECISION_FLAVOUR=laya`, see [docs/LIVE_MAPPING.md](docs/LIVE_MAPPING.md)) |
 | `GW_TRANSCRIPTION_PROVIDER` | `none`, `parakeet` (rdb420/parakeet-transcription-app, `GW_PARAKEET_URL`), `faster_whisper` (build with `WITH_WHISPER=true`, or `uv sync --extra whisper` locally), `openai_compatible` (a Whisper server URL) |
 
 The default set-up runs live mapping on Jev through OpenRouter and drafting and review on OpenAI.
@@ -106,7 +125,8 @@ Maps and files flagged as holding personal information never go to a cloud model
 
 ## Checks
 
-CI runs the same checks on every push and pull request.
+CI (`.github/workflows/ci.yml`) runs the same checks on every push to `main` and every pull
+request, then builds the deploy image.
 
 ```bash
 cd backend && uv run ruff check app tests scripts && uv run mypy app && uv run pytest -q
@@ -121,7 +141,10 @@ backend/app/
   config.py            every setting (env prefix GW_)
   models.py            tables
   security.py          tokens, sessions, roles, CSRF header
-  routers/             auth, artifacts, processes (catalogue, merge), boards (maps, recordings, AI), admin (coverage, retention, purge)
+  routers/             auth, artifacts, processes (catalogue, merge), boards (maps, recordings, AI), admin (coverage, retention, purge),
+                       ontology (term proposals)
+  mailer.py            sign-in emails over SMTP (password or OAuth 2.0)
+  httpclient.py        HTTP clients for outside services; tests swap in the fakes in tests/fakes.py
   ai/context.py        canvas to structured text
   ai/generate.py       prompts, personal-info guard, draft storage
   ai/providers.py      Ollama, Anthropic and OpenAI-compatible over HTTP
@@ -136,14 +159,18 @@ backend/app/
   storage.py, s3.py    local or S3 (self-hosted Supabase Storage) file storage
   access.py            who may open a map
   ingest/              pipeline stages: convert, chunk, embed, Qdrant, extract, graph, topics, purge
-                       (see docs/INGESTION.md)
-backend/ontology/      pinned property ontology snapshots (scripts/vendor_ontology.py)
+                       (see docs/INGESTION.md); ingest/data/ holds the BERT tokenizer the chunker counts with
   seed.py              starter process catalogue (confirm with the business)
+backend/ontology/      pinned property ontology snapshots (scripts/vendor_ontology.py)
+frontend/design-system/  vendored YSH Internal Apps Design System snapshot: tokens, fonts, logos (never edit;
+                       see docs/DESIGN_SYSTEM.md)
 frontend/src/
   pages/               Login, Verify, Home, Share, Library, Boards, BoardPage, Coverage, ProcessList, Terms,
                        Pipeline, People, Retention
   canvas/              BPMN and context nodes, palette, op engine, live, recording, document and AI panels
-backend/scripts/       check_providers.py, live_eval.py, extract_eval.py, vendor_ontology.py, fake_models.py
+  ui/                  typed design-system components; screens import controls from here
+backend/scripts/       check_providers.py, gmail_oauth.py, live_eval.py, extract_eval.py, vendor_ontology.py,
+                       fake_models.py
 deploy/                Dockerfile, Caddyfile, backup script, inference-compose.yml (GPU services),
                        extraction-sidecar/, qdrant/, supabase/
 docs/ARCHITECTURE.md

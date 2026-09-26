@@ -7,7 +7,8 @@ Two ways to sign in to the mail server (GW_SMTP_AUTH):
   cached until shortly before it expires.
 
 TLS is always verified against the system's certificate store: STARTTLS on port 587, or TLS from
-the first byte on port 465. Sign-in links and tokens are never logged.
+the first byte on port 465. Sign-in links and tokens are never logged, except that with no mail server
+set and GW_DEV_LOG_MAGIC_LINKS on (a development setting), the link prints to the log instead.
 """
 import logging
 import smtplib
